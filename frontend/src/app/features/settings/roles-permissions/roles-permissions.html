@@ -1,0 +1,69 @@
+<div class="roles-perms">
+  <div class="roles-perms__header">
+    <div>
+      <h1>Roles &amp; Permissions</h1>
+      <p class="text-muted">Choose a role, then tick which actions that role is allowed to perform.</p>
+    </div>
+    <mat-form-field appearance="outline" class="roles-perms__role-select">
+      <mat-label>Role</mat-label>
+      <mat-select [ngModel]="selectedRoleId()" (ngModelChange)="selectRole($event)">
+        @for (role of roles(); track role.id) {
+          <mat-option [value]="role.id">{{ role.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  @if (selectedRole()?.is_system_role) {
+    <div class="roles-perms__notice glass-card">
+      <mat-icon>shield</mat-icon>
+      <span>{{ selectedRole()?.name }} is a protected system role with full access — its permissions can't be changed, to prevent accidental lockout.</span>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="roles-perms__loading">
+      <mat-progress-spinner mode="indeterminate" diameter="32" />
+    </div>
+  } @else {
+    <div class="roles-perms__groups">
+      @for (group of groupedPermissions(); track group.module) {
+        <div class="roles-perms__group surface-card">
+          <div class="roles-perms__group-header">
+            <mat-checkbox
+              [checked]="isModuleFullyChecked(group)"
+              [indeterminate]="isModulePartiallyChecked(group)"
+              [disabled]="!!selectedRole()?.is_system_role"
+              (change)="toggleModule(group, $event.checked)"
+            >
+              <strong>{{ formatModuleName(group.module) }}</strong>
+            </mat-checkbox>
+          </div>
+          <div class="roles-perms__actions">
+            @for (perm of group.permissions; track perm.id) {
+              <mat-checkbox
+                [checked]="isChecked(perm.id)"
+                [disabled]="!!selectedRole()?.is_system_role"
+                (change)="toggle(perm.id)"
+              >
+                {{ perm.action }}
+              </mat-checkbox>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (!selectedRole()?.is_system_role) {
+      <div class="roles-perms__save">
+        <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
+          @if (saving()) {
+            <mat-progress-spinner diameter="18" mode="indeterminate" />
+          } @else {
+            <span>Save Permissions</span>
+          }
+        </button>
+      </div>
+    }
+  }
+</div>

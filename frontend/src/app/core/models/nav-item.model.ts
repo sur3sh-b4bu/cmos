@@ -16,4 +16,5 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Death Certificates', icon: 'church', route: '/certificates/death', permissions: ['death_certificates.view'] },
   { label: 'Reports', icon: 'bar_chart', route: '/reports', permissions: ['reports.view'] },
   { label: 'Masters', icon: 'tune', route: '/masters', permissions: ['masters.view'] },
+  { label: 'Settings', icon: 'settings', route: '/settings' },
 ];

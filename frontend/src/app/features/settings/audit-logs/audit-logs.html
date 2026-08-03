@@ -1,0 +1,44 @@
+<div class="audit-logs">
+  <div class="audit-logs__header">
+    <div>
+      <h1>Audit Logs</h1>
+      <p class="text-muted">A record of who did what, and when — logins, creates, updates, deletes, and prints across the system.</p>
+    </div>
+    <mat-form-field appearance="outline" class="audit-logs__module-filter">
+      <mat-label>Module</mat-label>
+      <mat-select [ngModel]="moduleFilter()" (ngModelChange)="onModuleFilterChange($event)">
+        <mat-option value="">All modules</mat-option>
+        @for (m of modules; track m) {
+          <mat-option [value]="m">{{ m }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <coms-data-table
+    tableId="audit-logs"
+    exportFileName="audit-logs"
+    emptyMessage="No activity recorded yet."
+    [columns]="columns"
+    [rows]="rows()"
+    [total]="total()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [loading]="loading()"
+    [cellTemplates]="cellTemplates"
+    (pageChange)="onPageChange($event)"
+    (searchChange)="onSearchChange($event)"
+  />
+</div>
+
+<ng-template #actionTpl let-row>
+  <span class="status-chip" [style.background]="actionColor(row.action) + '22'" [style.color]="actionColor(row.action)">
+    {{ row.action }}
+  </span>
+</ng-template>
+
+<ng-template #detailTpl let-row>
+  <button mat-icon-button matTooltip="View detail" (click)="viewDetail(row)">
+    <mat-icon>visibility</mat-icon>
+  </button>
+</ng-template>

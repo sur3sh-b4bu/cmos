@@ -20,7 +20,7 @@ async function record({ userId, username, action, module, entityType, entityId, 
   );
 }
 
-async function list({ page = 1, pageSize = 25, userId, module, fromDate, toDate }) {
+async function list({ page = 1, pageSize = 25, userId, module, fromDate, toDate, search }) {
   const conditions = [];
   const params = [];
   if (userId) {
@@ -38,6 +38,10 @@ async function list({ page = 1, pageSize = 25, userId, module, fromDate, toDate 
   if (toDate) {
     conditions.push('created_at <= ?');
     params.push(toDate);
+  }
+  if (search) {
+    conditions.push('(username_snapshot LIKE ? OR action LIKE ? OR entity_type LIKE ?)');
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
   }
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
   const offset = (page - 1) * pageSize;

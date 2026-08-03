@@ -139,6 +139,52 @@ export const routes: Routes = [
           },
         ],
       },
+      {
+        path: 'settings',
+        data: { breadcrumb: 'Settings' },
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/settings/settings-hub/settings-hub').then((m) => m.SettingsHubComponent),
+          },
+          {
+            path: 'users',
+            canActivate: [permissionGuard],
+            data: { breadcrumb: 'Users', permissions: ['users.view'] },
+            children: [
+              {
+                path: '',
+                loadComponent: () => import('./features/settings/users/users-list').then((m) => m.UsersListComponent),
+              },
+              {
+                path: 'new',
+                canActivate: [permissionGuard],
+                data: { breadcrumb: 'New', permissions: ['users.create'] },
+                loadComponent: () => import('./features/settings/users/user-form').then((m) => m.UserFormComponent),
+              },
+              {
+                path: ':id/edit',
+                canActivate: [permissionGuard],
+                data: { breadcrumb: 'Edit', permissions: ['users.update'] },
+                loadComponent: () => import('./features/settings/users/user-form').then((m) => m.UserFormComponent),
+              },
+            ],
+          },
+          {
+            path: 'roles',
+            canActivate: [permissionGuard],
+            data: { breadcrumb: 'Roles & Permissions', permissions: ['roles.view'] },
+            loadComponent: () =>
+              import('./features/settings/roles-permissions/roles-permissions').then((m) => m.RolesPermissionsComponent),
+          },
+          {
+            path: 'audit-logs',
+            canActivate: [permissionGuard],
+            data: { breadcrumb: 'Audit Logs', permissions: ['audit_logs.view'] },
+            loadComponent: () => import('./features/settings/audit-logs/audit-logs').then((m) => m.AuditLogsComponent),
+          },
+        ],
+      },
     ],
   },
   {

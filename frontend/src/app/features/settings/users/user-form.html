@@ -1,0 +1,91 @@
+<div class="user-form">
+  <div class="user-form__header">
+    <a routerLink="/settings/users" class="user-form__back">
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+    <h1>{{ editId() ? 'Edit User' : 'New User' }}</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="user-form__loading">
+      <mat-progress-spinner mode="indeterminate" diameter="36" />
+    </div>
+  } @else {
+    <form class="user-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="user-form__grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Full Name</mat-label>
+          <input matInput formControlName="full_name" required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="username" required />
+          @if (editId()) {
+            <mat-hint>Username cannot be changed after creation</mat-hint>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Phone</mat-label>
+          <input matInput formControlName="phone" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Employee Code</mat-label>
+          <input matInput formControlName="employee_code" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Role</mat-label>
+          <mat-select formControlName="role_id" required>
+            @for (role of roles(); track role.id) {
+              <mat-option [value]="role.id">{{ role.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Church</mat-label>
+          <mat-select formControlName="church_id" required>
+            @for (church of churches(); track church.id) {
+              <mat-option [value]="church.id">{{ church.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Branch</mat-label>
+          <mat-select formControlName="branch_id">
+            @for (branch of branches(); track branch.id) {
+              <mat-option [value]="branch.id">{{ branch.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      @if (!editId()) {
+        <p class="user-form__hint text-muted">
+          <mat-icon>info</mat-icon>
+          A temporary password will be generated automatically — you'll see it once after saving, to share with the new user.
+        </p>
+      }
+
+      <div class="user-form__actions">
+        <a mat-button routerLink="/settings/users">Cancel</a>
+        <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+          @if (saving()) {
+            <mat-progress-spinner diameter="18" mode="indeterminate" />
+          } @else {
+            <span>{{ editId() ? 'Save Changes' : 'Create User' }}</span>
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

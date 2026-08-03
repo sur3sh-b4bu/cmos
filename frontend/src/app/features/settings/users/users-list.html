@@ -1,0 +1,61 @@
+<div class="users-list">
+  <div class="users-list__header">
+    <div>
+      <h1>User Management</h1>
+      <p class="text-muted">Office staff accounts, roles, and access.</p>
+    </div>
+    @if (authService.hasPermission('users.create')) {
+      <a mat-flat-button color="primary" routerLink="/settings/users/new">
+        <mat-icon>person_add</mat-icon>
+        New User
+      </a>
+    }
+  </div>
+
+  <coms-data-table
+    tableId="users"
+    exportFileName="users"
+    emptyMessage="No users found."
+    [columns]="columns"
+    [rows]="rows()"
+    [total]="total()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [loading]="loading()"
+    [cellTemplates]="cellTemplates"
+    (pageChange)="onPageChange($event)"
+    (searchChange)="onSearchChange($event)"
+  />
+</div>
+
+<ng-template #statusTpl let-row>
+  <span
+    class="status-chip"
+    [style.background]="(row.is_active ? 'var(--coms-color-success)' : 'var(--coms-text-muted)') + '22'"
+    [style.color]="row.is_active ? 'var(--coms-color-success)' : 'var(--coms-text-muted)'"
+  >
+    {{ row.is_active ? 'Active' : 'Inactive' }}
+  </span>
+</ng-template>
+
+<ng-template #actionsTpl let-row>
+  <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()">
+    <mat-icon>more_vert</mat-icon>
+  </button>
+  <mat-menu #rowMenu="matMenu">
+    @if (authService.hasPermission('users.update')) {
+      <a mat-menu-item [routerLink]="['/settings/users', row.id, 'edit']">
+        <mat-icon>edit</mat-icon>
+        <span>Edit</span>
+      </a>
+      <button mat-menu-item (click)="resetPassword(row)">
+        <mat-icon>vpn_key</mat-icon>
+        <span>Reset Password</span>
+      </button>
+      <button mat-menu-item (click)="toggleActive(row)">
+        <mat-icon>{{ row.is_active ? 'block' : 'check_circle' }}</mat-icon>
+        <span>{{ row.is_active ? 'Deactivate' : 'Activate' }}</span>
+      </button>
+    }
+  </mat-menu>
+</ng-template>

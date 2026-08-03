@@ -1,0 +1,18 @@
+<div class="settings-hub">
+  <div class="settings-hub__header">
+    <h1>Settings</h1>
+    <p class="text-muted">System configuration, user access, and activity history.</p>
+  </div>
+
+  <div class="settings-hub__grid">
+    @for (card of visibleCards(); track card.route) {
+      <a class="settings-hub__card glass-card glass-card--interactive" [routerLink]="card.route">
+        <mat-icon>{{ card.icon }}</mat-icon>
+        <div>
+          <h2>{{ card.label }}</h2>
+          <p>{{ card.description }}</p>
+        </div>
+      </a>
+    }
+  </div>
+</div>

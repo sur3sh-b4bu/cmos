@@ -48,4 +48,6 @@ export interface DashboardStats {
   pendingCount: number;
   monthlyCollections: number;
   upcoming: PrayerIntention[];
+  collectionsTrend: { date: string; total: number }[];
+  intentionsByMass: { massName: string; count: number }[];
 }

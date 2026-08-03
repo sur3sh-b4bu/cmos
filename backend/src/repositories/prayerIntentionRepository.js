@@ -192,12 +192,40 @@ async function getDashboardStats(churchId) {
     [churchId]
   );
 
+  const [trendRows] = await pool.query(
+    `SELECT prayer_date, COALESCE(SUM(offering_amount),0) AS total
+     FROM prayer_intentions
+     WHERE church_id = ? AND is_deleted = 0 AND prayer_date BETWEEN DATE_SUB(?, INTERVAL 6 DAY) AND ?
+     GROUP BY prayer_date`,
+    [churchId, today, today]
+  );
+  const trendByDate = new Map(trendRows.map((r) => [r.prayer_date, Number(r.total)]));
+  const collectionsTrend = [];
+  for (let i = 6; i >= 0; i -= 1) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const iso = d.toISOString().slice(0, 10);
+    collectionsTrend.push({ date: iso, total: trendByDate.get(iso) ?? 0 });
+  }
+
+  const [intentionsByMass] = await pool.query(
+    `SELECT m.name AS massName, COUNT(pi.id) AS count
+     FROM masses m
+     LEFT JOIN prayer_intentions pi ON pi.mass_id = m.id AND pi.is_deleted = 0 AND pi.church_id = ?
+     WHERE m.church_id = ? AND m.is_deleted = 0
+     GROUP BY m.id, m.name, m.sort_order
+     ORDER BY m.sort_order ASC`,
+    [churchId, churchId]
+  );
+
   return {
     todayCount: todayCount.c,
     todayCollections: Number(todayCollections.total),
     pendingCount: pendingCount.c,
     monthlyCollections: Number(monthlyCollections.total),
     upcoming,
+    collectionsTrend,
+    intentionsByMass: intentionsByMass.map((r) => ({ massName: r.massName, count: Number(r.count) })),
   };
 }
 

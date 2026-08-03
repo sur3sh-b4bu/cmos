@@ -4,6 +4,18 @@
   gap: 24px;
   max-width: 1200px;
   margin: 0 auto;
+  animation: dashboard-fade-in 320ms ease;
+}
+
+@keyframes dashboard-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dashboard__welcome {
@@ -15,7 +27,8 @@
 
   h1 {
     margin: 0 0 4px;
-    font-size: 22px;
+    font-size: 23px;
+    font-weight: 700;
   }
 
   p {
@@ -42,35 +55,63 @@
 
 .dashboard__stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 18px;
 }
 
 .stat-card {
-  padding: 20px;
+  padding: 22px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  position: relative;
+  align-items: center;
+  gap: 16px;
 }
 
 .stat-card__icon {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  color: var(--coms-text-muted);
-  opacity: 0.5;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--coms-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+  }
+
+  &--primary {
+    background: color-mix(in srgb, var(--coms-color-primary) 14%, transparent);
+    color: var(--coms-color-primary);
+  }
+
+  &--gold {
+    background: color-mix(in srgb, var(--coms-color-gold) 16%, transparent);
+    color: var(--coms-color-gold-dark, var(--coms-color-gold));
+  }
+}
+
+.stat-card__body {
+  min-width: 0;
 }
 
 .stat-card__value {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--coms-text);
+  line-height: 1.2;
 }
 
 .stat-card__label {
   font-size: 13px;
   color: var(--coms-text-muted);
+}
+
+.dashboard__charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
 }
 
 .dashboard__panel {
@@ -84,13 +125,20 @@
   margin-bottom: 12px;
 
   h2 {
-    font-size: 16px;
+    font-size: 15px;
+    font-weight: 700;
     margin: 0;
   }
 
   a {
     font-size: 13px;
     text-decoration: none;
+    color: var(--coms-color-primary);
+    font-weight: 600;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 
@@ -117,6 +165,14 @@
 
   tr:last-child td {
     border-bottom: none;
+  }
+
+  tr {
+    transition: background-color var(--coms-transition-fast);
+  }
+
+  tbody tr:hover {
+    background: var(--coms-surface-alt);
   }
 }
 

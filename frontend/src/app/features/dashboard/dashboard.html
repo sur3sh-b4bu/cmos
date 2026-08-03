@@ -22,25 +22,65 @@
     </div>
   } @else if (stats(); as s) {
     <div class="dashboard__stats">
-      <div class="stat-card glass-card accent-bar-primary">
-        <mat-icon class="stat-card__icon">volunteer_activism</mat-icon>
-        <div class="stat-card__value">{{ s.todayCount }}</div>
-        <div class="stat-card__label">Today's Prayer Intentions</div>
+      <div class="stat-card glass-card glass-card--interactive">
+        <div class="stat-card__icon stat-card__icon--primary">
+          <mat-icon>volunteer_activism</mat-icon>
+        </div>
+        <div class="stat-card__body">
+          <div class="stat-card__value">{{ s.todayCount }}</div>
+          <div class="stat-card__label">Today's Prayer Intentions</div>
+        </div>
       </div>
-      <div class="stat-card glass-card accent-bar-gold">
-        <mat-icon class="stat-card__icon">payments</mat-icon>
-        <div class="stat-card__value">{{ s.todayCollections | currencyInr }}</div>
-        <div class="stat-card__label">Today's Collections</div>
+      <div class="stat-card glass-card glass-card--interactive">
+        <div class="stat-card__icon stat-card__icon--gold">
+          <mat-icon>payments</mat-icon>
+        </div>
+        <div class="stat-card__body">
+          <div class="stat-card__value">{{ s.todayCollections | currencyInr }}</div>
+          <div class="stat-card__label">Today's Collections</div>
+        </div>
       </div>
-      <div class="stat-card glass-card accent-bar-primary">
-        <mat-icon class="stat-card__icon">pending_actions</mat-icon>
-        <div class="stat-card__value">{{ s.pendingCount }}</div>
-        <div class="stat-card__label">Pending Prayer Intentions</div>
+      <div class="stat-card glass-card glass-card--interactive">
+        <div class="stat-card__icon stat-card__icon--primary">
+          <mat-icon>pending_actions</mat-icon>
+        </div>
+        <div class="stat-card__body">
+          <div class="stat-card__value">{{ s.pendingCount }}</div>
+          <div class="stat-card__label">Pending Prayer Intentions</div>
+        </div>
       </div>
-      <div class="stat-card glass-card accent-bar-gold">
-        <mat-icon class="stat-card__icon">savings</mat-icon>
-        <div class="stat-card__value">{{ s.monthlyCollections | currencyInr }}</div>
-        <div class="stat-card__label">Monthly Collections</div>
+      <div class="stat-card glass-card glass-card--interactive">
+        <div class="stat-card__icon stat-card__icon--gold">
+          <mat-icon>savings</mat-icon>
+        </div>
+        <div class="stat-card__body">
+          <div class="stat-card__value">{{ s.monthlyCollections | currencyInr }}</div>
+          <div class="stat-card__label">Monthly Collections</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard__charts">
+      <div class="dashboard__panel surface-card">
+        <div class="dashboard__panel-header">
+          <h2>Collections — Last 7 Days</h2>
+        </div>
+        <coms-bar-chart
+          [data]="collectionsTrendData()"
+          [valueFormatter]="currencyFormatter"
+          ariaLabel="Daily collections over the last 7 days"
+        />
+      </div>
+
+      <div class="dashboard__panel surface-card">
+        <div class="dashboard__panel-header">
+          <h2>Prayer Intentions by Mass</h2>
+        </div>
+        <coms-bar-chart
+          [data]="intentionsByMassData()"
+          color="var(--coms-color-gold)"
+          ariaLabel="Total prayer intentions recorded per Mass"
+        />
       </div>
     </div>
 

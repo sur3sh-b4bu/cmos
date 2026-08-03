@@ -53,6 +53,21 @@
   --coms-sidebar-gradient-start: #082a66;
   --coms-sidebar-gradient-end: #0b3d91;
 
+  // Angular Material's bundled M3 palettes (blue/yellow) don't match our
+  // exact brand hex -- override the system tokens so every Material
+  // component (buttons, focused inputs, checkboxes, tabs, spinners...)
+  // renders in the SAME blue/gold as our own --coms-* driven components,
+  // instead of two different blues fighting each other on screen.
+  --mat-sys-primary: var(--coms-color-primary);
+  --mat-sys-on-primary: var(--coms-text-on-primary);
+  --mat-sys-primary-container: color-mix(in srgb, var(--coms-color-primary) 14%, var(--coms-surface));
+  --mat-sys-on-primary-container: var(--coms-color-primary);
+  --mat-sys-tertiary: var(--coms-color-gold);
+  --mat-sys-on-tertiary: var(--coms-text-on-gold);
+  --mat-sys-tertiary-container: color-mix(in srgb, var(--coms-color-gold) 16%, var(--coms-surface));
+  --mat-sys-on-tertiary-container: var(--coms-color-gold-dark);
+  --mat-sys-error: var(--coms-color-danger);
+
   color-scheme: light;
 }
 

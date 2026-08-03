@@ -1,0 +1,110 @@
+.bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bar-chart__plot {
+  position: relative;
+}
+
+.bar-chart__svg {
+  width: 100%;
+  height: 200px;
+  overflow: visible;
+}
+
+.bar-chart__gridline {
+  stroke: var(--coms-border);
+  stroke-width: 1;
+}
+
+.bar-chart__tick {
+  font-size: 9px;
+  fill: var(--coms-text-muted);
+}
+
+.bar-chart__label {
+  font-size: 10px;
+  fill: var(--coms-text-muted);
+  // text-anchor is set per-bar via [attr.text-anchor] (middle when
+  // horizontal, end when rotated) -- must not be hardcoded here, since a
+  // CSS presentation property always wins over the SVG attribute.
+}
+
+.bar-chart__bar {
+  transition: opacity 150ms ease, filter 150ms ease;
+  outline: none;
+  cursor: pointer;
+}
+
+.bar-chart__bar:hover,
+.bar-chart__bar:focus-visible,
+.bar-chart__bar--active {
+  filter: brightness(1.12);
+}
+
+.bar-chart__hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.bar-chart__tooltip {
+  position: absolute;
+  top: -4px;
+  transform: translate(-50%, -100%);
+  background: var(--coms-surface);
+  border: 1px solid var(--coms-border);
+  border-radius: var(--coms-radius-sm);
+  box-shadow: var(--coms-shadow-md);
+  padding: 6px 10px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 5;
+
+  strong {
+    font-size: 13px;
+    color: var(--coms-text);
+  }
+  span {
+    color: var(--coms-text-muted);
+    font-size: 11px;
+  }
+}
+
+.bar-chart__table-toggle {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  color: var(--coms-color-primary);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 0;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.bar-chart__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--coms-border);
+  }
+}
+
+.bar-chart__empty {
+  padding: 40px 0;
+  text-align: center;
+}

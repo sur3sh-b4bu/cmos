@@ -1,0 +1,92 @@
+<div class="bar-chart">
+  @if (bars().length) {
+    <div class="bar-chart__plot">
+      <svg
+        [attr.viewBox]="'0 0 ' + viewBoxWidth + ' ' + totalHeight"
+        [attr.role]="'img'"
+        [attr.aria-label]="ariaLabel"
+        preserveAspectRatio="none"
+        class="bar-chart__svg"
+      >
+        <!-- gridlines -->
+        @for (line of gridlines(); track line.y) {
+          <line
+            class="bar-chart__gridline"
+            [attr.x1]="0"
+            [attr.x2]="viewBoxWidth"
+            [attr.y1]="line.y"
+            [attr.y2]="line.y"
+          />
+          <text class="bar-chart__tick" [attr.x]="2" [attr.y]="line.y - 4">{{ line.label }}</text>
+        }
+
+        <!-- bars -->
+        @for (bar of bars(); track bar.label) {
+          <path
+            class="bar-chart__bar"
+            [class.bar-chart__bar--active]="tooltip()?.label === bar.label"
+            [attr.d]="barTopPath(bar)"
+            [style.fill]="color"
+            tabindex="0"
+            [attr.aria-label]="bar.label + ': ' + valueFormatter(bar.value)"
+            (pointerenter)="showTooltip(bar, $event)"
+            (pointerleave)="hideTooltip()"
+            (focus)="showTooltip(bar, $event)"
+            (blur)="hideTooltip()"
+          />
+          <!-- wider, invisible hit target -->
+          <rect
+            class="bar-chart__hit"
+            [attr.x]="bar.x - 4"
+            [attr.y]="12"
+            [attr.width]="bar.barWidth + 8"
+            [attr.height]="plotHeight"
+            (pointerenter)="showTooltip(bar, $event)"
+            (pointerleave)="hideTooltip()"
+          />
+          <text
+            class="bar-chart__label"
+            [attr.x]="bar.labelX"
+            [attr.y]="bar.labelY"
+            [attr.text-anchor]="bar.labelAnchor"
+            [attr.transform]="bar.labelTransform"
+          >
+            {{ bar.label }}
+          </text>
+        }
+      </svg>
+
+      @if (tooltip(); as tip) {
+        <div class="bar-chart__tooltip" [style.left.px]="tip.left">
+          <strong>{{ tip.value }}</strong>
+          <span>{{ tip.label }}</span>
+        </div>
+      }
+    </div>
+
+    <button type="button" class="bar-chart__table-toggle" (click)="toggleTable()">
+      {{ showTable() ? 'Hide data table' : 'View as table' }}
+    </button>
+
+    @if (showTable()) {
+      <table class="bar-chart__table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (point of data; track point.label) {
+            <tr>
+              <td>{{ point.label }}</td>
+              <td>{{ valueFormatter(point.value) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  } @else {
+    <p class="bar-chart__empty text-muted">No data to display yet.</p>
+  }
+</div>

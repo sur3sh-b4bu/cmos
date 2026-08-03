@@ -24,12 +24,20 @@
   fill: var(--coms-text-muted);
 }
 
-.bar-chart__label {
-  font-size: 10px;
+.bar-chart__label,
+.bar-chart__row-label {
+  font-size: 11px;
   fill: var(--coms-text-muted);
-  // text-anchor is set per-bar via [attr.text-anchor] (middle when
-  // horizontal, end when rotated) -- must not be hardcoded here, since a
-  // CSS presentation property always wins over the SVG attribute.
+}
+
+.bar-chart__value-label {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--coms-text-muted);
+
+  &--inside {
+    fill: #ffffff;
+  }
 }
 
 .bar-chart__bar {

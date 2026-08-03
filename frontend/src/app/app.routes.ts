@@ -103,6 +103,12 @@ export const routes: Routes = [
           },
         ],
       },
+      {
+        path: 'reports',
+        canActivate: [permissionGuard],
+        data: { breadcrumb: 'Reports', permissions: ['reports.view'] },
+        loadComponent: () => import('./features/reports/reports').then((m) => m.ReportsComponent),
+      },
     ],
   },
   {

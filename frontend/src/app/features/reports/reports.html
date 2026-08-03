@@ -1,0 +1,150 @@
+<div class="reports">
+  <div class="reports__header">
+    <div>
+      <h1>Reports</h1>
+      <p class="text-muted">Prayer, collection and certificate reports for any date range — daily, monthly, yearly or custom.</p>
+    </div>
+    <coms-date-range-filter (rangeChange)="onRangeChange($event)" />
+  </div>
+
+  <mat-tab-group animationDuration="150ms">
+    <mat-tab label="Prayer Intentions">
+      <div class="reports__tab-content">
+        @if (prayerData(); as data) {
+          <div class="reports__summary">
+            <div class="reports__summary-card glass-card">
+              <mat-icon>volunteer_activism</mat-icon>
+              <div>
+                <div class="reports__summary-value">{{ data.summary.totalCount }}</div>
+                <div class="reports__summary-label">Prayer Intentions</div>
+              </div>
+            </div>
+            <div class="reports__summary-card glass-card">
+              <mat-icon>payments</mat-icon>
+              <div>
+                <div class="reports__summary-value">{{ currency(data.summary.totalOffering) }}</div>
+                <div class="reports__summary-label">Total Offering</div>
+              </div>
+            </div>
+          </div>
+
+          <coms-data-table
+            tableId="report-prayer-intentions"
+            exportFileName="prayer-intentions-report"
+            emptyMessage="No prayer intentions in this date range."
+            [columns]="prayerColumns"
+            [rows]="prayerRowsPage()"
+            [total]="data.rows.length"
+            [pageIndex]="prayerPage()"
+            [pageSize]="prayerPageSize()"
+            [showExport]="true"
+            [exportAllFn]="asyncPrayerAll"
+            (pageChange)="onPrayerPageChange($event)"
+          />
+        } @else {
+          <div class="reports__loading"><mat-progress-spinner mode="indeterminate" diameter="32" /></div>
+        }
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Collections / Donations">
+      <div class="reports__tab-content">
+        @if (collectionsData(); as data) {
+          <div class="reports__summary">
+            <div class="reports__summary-card glass-card">
+              <mat-icon>receipt_long</mat-icon>
+              <div>
+                <div class="reports__summary-value">{{ data.summary.totalCount }}</div>
+                <div class="reports__summary-label">Total Entries</div>
+              </div>
+            </div>
+            <div class="reports__summary-card glass-card">
+              <mat-icon>payments</mat-icon>
+              <div>
+                <div class="reports__summary-value">{{ currency(data.summary.totalOffering) }}</div>
+                <div class="reports__summary-label">Total Collected</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="reports__charts">
+            <div class="surface-card reports__chart-card">
+              <h3>Collections by Day</h3>
+              <coms-bar-chart [data]="collectionsByDayChart()" [valueFormatter]="currency" ariaLabel="Collections by day" />
+            </div>
+            <div class="surface-card reports__chart-card">
+              <h3>By Payment Method</h3>
+              <coms-bar-chart
+                [data]="paymentMethodChart()"
+                [valueFormatter]="currency"
+                orientation="horizontal"
+                color="var(--coms-color-gold)"
+                ariaLabel="Collections by payment method"
+              />
+            </div>
+          </div>
+
+          <coms-data-table
+            tableId="report-collections"
+            exportFileName="collections-report"
+            emptyMessage="No collections in this date range."
+            [columns]="collectionColumns"
+            [rows]="collectionsRowsPage()"
+            [total]="data.byDay.length"
+            [pageIndex]="collectionsPage()"
+            [pageSize]="collectionsPageSize()"
+            [exportAllFn]="asyncCollectionsAll"
+            (pageChange)="onCollectionsPageChange($event)"
+          />
+        } @else {
+          <div class="reports__loading"><mat-progress-spinner mode="indeterminate" diameter="32" /></div>
+        }
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Certificates">
+      <div class="reports__tab-content">
+        @if (certificatesData(); as data) {
+          <div class="reports__summary">
+            <div class="reports__summary-card glass-card">
+              <mat-icon>water_drop</mat-icon>
+              <div>
+                <div class="reports__summary-value">{{ data.summary['baptism'] || 0 }}</div>
+                <div class="reports__summary-label">Baptisms</div>
+              </div>
+            </div>
+            <div class="reports__summary-card glass-card">
+              <mat-icon>favorite</mat-icon>
+              <div>
+                <div class="reports__summary-value">{{ data.summary['marriage'] || 0 }}</div>
+                <div class="reports__summary-label">Marriages</div>
+              </div>
+            </div>
+            <div class="reports__summary-card glass-card">
+              <mat-icon>church</mat-icon>
+              <div>
+                <div class="reports__summary-value">{{ data.summary['death'] || 0 }}</div>
+                <div class="reports__summary-label">Deaths</div>
+              </div>
+            </div>
+          </div>
+
+          <coms-data-table
+            tableId="report-certificates"
+            exportFileName="certificates-report"
+            emptyMessage="No certificates issued in this date range."
+            [columns]="certificateColumns"
+            [rows]="certificatesRowsPage()"
+            [total]="data.rows.length"
+            [pageIndex]="certificatesPage()"
+            [pageSize]="certificatesPageSize()"
+            [exportAllFn]="asyncCertificatesAll"
+            (pageChange)="onCertificatesPageChange($event)"
+          />
+        } @else {
+          <div class="reports__loading"><mat-progress-spinner mode="indeterminate" diameter="32" /></div>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

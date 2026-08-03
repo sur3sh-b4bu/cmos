@@ -137,4 +137,14 @@ async function reorder(config, orderedIds, userId) {
   }
 }
 
-module.exports = { list, getById, create, update, softDelete, reorder };
+module.exports = {
+  list,
+  getById,
+  create,
+  update,
+  softDelete,
+  reorder,
+  assertSafeIdentifier,
+  buildSelectClause,
+  buildJoinClause,
+};

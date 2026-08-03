@@ -1,0 +1,128 @@
+-- =============================================================================
+-- Migration 001: Geography & Church structure master tables
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS countries (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  iso_code VARCHAR(3) NOT NULL,
+  phone_code VARCHAR(10) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by INT UNSIGNED NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_by INT UNSIGNED NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  UNIQUE KEY uq_countries_iso (iso_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS states (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  country_id INT UNSIGNED NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  code VARCHAR(10) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by INT UNSIGNED NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_by INT UNSIGNED NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  KEY idx_states_country (country_id),
+  CONSTRAINT fk_states_country FOREIGN KEY (country_id) REFERENCES countries(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS districts (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  state_id INT UNSIGNED NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  code VARCHAR(10) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by INT UNSIGNED NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_by INT UNSIGNED NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  KEY idx_districts_state (state_id),
+  CONSTRAINT fk_districts_state FOREIGN KEY (state_id) REFERENCES states(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS churches (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(200) NOT NULL,
+  registration_no VARCHAR(100) NULL,
+  address_line1 VARCHAR(200) NULL,
+  address_line2 VARCHAR(200) NULL,
+  city VARCHAR(100) NULL,
+  district_id INT UNSIGNED NULL,
+  state_id INT UNSIGNED NULL,
+  country_id INT UNSIGNED NULL,
+  pincode VARCHAR(20) NULL,
+  phone VARCHAR(20) NULL,
+  email VARCHAR(150) NULL,
+  website VARCHAR(200) NULL,
+  logo_url VARCHAR(255) NULL,
+  established_date DATE NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by INT UNSIGNED NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_by INT UNSIGNED NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  CONSTRAINT fk_churches_district FOREIGN KEY (district_id) REFERENCES districts(id),
+  CONSTRAINT fk_churches_state FOREIGN KEY (state_id) REFERENCES states(id),
+  CONSTRAINT fk_churches_country FOREIGN KEY (country_id) REFERENCES countries(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS branches (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  church_id INT UNSIGNED NOT NULL,
+  name VARCHAR(150) NOT NULL,
+  code VARCHAR(30) NULL,
+  address VARCHAR(255) NULL,
+  phone VARCHAR(20) NULL,
+  email VARCHAR(150) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by INT UNSIGNED NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_by INT UNSIGNED NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  KEY idx_branches_church (church_id),
+  CONSTRAINT fk_branches_church FOREIGN KEY (church_id) REFERENCES churches(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS priests (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  church_id INT UNSIGNED NOT NULL,
+  name VARCHAR(150) NOT NULL,
+  title VARCHAR(50) NULL DEFAULT 'Rev. Fr.',
+  phone VARCHAR(20) NULL,
+  email VARCHAR(150) NULL,
+  is_parish_priest TINYINT(1) NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by INT UNSIGNED NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_by INT UNSIGNED NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  KEY idx_priests_church (church_id),
+  CONSTRAINT fk_priests_church FOREIGN KEY (church_id) REFERENCES churches(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS masses (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  church_id INT UNSIGNED NOT NULL,
+  branch_id INT UNSIGNED NULL,
+  name VARCHAR(100) NOT NULL,
+  mass_time TIME NOT NULL,
+  day_type ENUM('Daily','Sunday','Special') NOT NULL DEFAULT 'Daily',
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by INT UNSIGNED NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_by INT UNSIGNED NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+  KEY idx_masses_church (church_id),
+  CONSTRAINT fk_masses_church FOREIGN KEY (church_id) REFERENCES churches(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

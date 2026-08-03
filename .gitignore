@@ -1,0 +1,20 @@
+## Node / backend
+node_modules/
+backend/.env
+backend/logs/*.log
+npm-debug.log*
+
+## Angular / frontend
+frontend/.angular/
+frontend/dist/
+frontend/node_modules/
+
+## Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+## Misc
+*.log
+coverage/

@@ -1,0 +1,108 @@
+.login-page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.login-page__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--coms-color-gold) 18%, transparent) 0%, transparent 45%),
+    radial-gradient(circle at 85% 80%, color-mix(in srgb, var(--coms-color-primary) 25%, transparent) 0%, transparent 50%),
+    linear-gradient(135deg, var(--coms-color-primary-dark) 0%, var(--coms-color-primary) 55%, var(--coms-color-primary-light) 100%);
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: rise 480ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-card__brand {
+  text-align: center;
+
+  .login-card__crest {
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: var(--coms-text);
+    background: linear-gradient(90deg, var(--coms-color-primary), var(--coms-color-gold));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+  }
+}
+
+.login-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.login-card__error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--coms-radius-sm);
+  background: color-mix(in srgb, var(--coms-color-danger) 12%, transparent);
+  color: var(--coms-color-danger);
+  font-size: 13px;
+  margin-bottom: 8px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.login-card__submit {
+  height: 44px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-top: 4px;
+}
+
+.login-card__footer {
+  text-align: center;
+  font-size: 12px;
+  margin: 0;
+}

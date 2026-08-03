@@ -1,0 +1,72 @@
+<div class="login-page">
+  <div class="login-page__backdrop" aria-hidden="true"></div>
+
+  <div class="login-card glass-card">
+    <div class="login-card__brand">
+      <div class="login-card__crest">⛪</div>
+      <h1>Church Office Management System</h1>
+      <p class="text-muted">Sign in to manage prayer intentions, certificates &amp; records</p>
+    </div>
+
+    <form class="login-card__form" (ngSubmit)="submit()" #loginForm="ngForm">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Username</mat-label>
+        <input
+          matInput
+          name="username"
+          [(ngModel)]="username"
+          required
+          autocomplete="username"
+          autofocus
+        />
+        <mat-icon matSuffix>person</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Password</mat-label>
+        <input
+          matInput
+          name="password"
+          [type]="hidePassword() ? 'password' : 'text'"
+          [(ngModel)]="password"
+          required
+          autocomplete="current-password"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="togglePasswordVisibility()"
+          [attr.aria-label]="'Toggle password visibility'"
+        >
+          <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </mat-form-field>
+
+      @if (errorMessage()) {
+        <div class="login-card__error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      <button
+        mat-flat-button
+        color="primary"
+        class="login-card__submit"
+        type="submit"
+        [disabled]="loginForm.invalid || loading()"
+      >
+        @if (loading()) {
+          <mat-progress-spinner diameter="20" mode="indeterminate" />
+        } @else {
+          <span>Sign In</span>
+        }
+      </button>
+    </form>
+
+    <p class="login-card__footer text-muted">
+      Forgot your password? Contact your office administrator.
+    </p>
+  </div>
+</div>

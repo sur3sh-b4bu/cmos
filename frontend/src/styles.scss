@@ -1,0 +1,73 @@
+// Include theming for Angular Material with `mat.theme()`. Blue is the
+// closest bundled M3 palette to our brand primary; yellow is the closest
+// bundled tertiary to our gold accent. Exact brand hex values are then
+// layered on top via the --coms-* custom properties in _tokens.scss, which
+// COMS-authored components read directly instead of the Material tokens.
+@use '@angular/material' as mat;
+@use './styles/tokens';
+@use './styles/glassmorphism';
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$blue-palette,
+        tertiary: mat.$yellow-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  // color-scheme is intentionally NOT hardcoded here -- it's set dynamically
+  // on :root by ThemeService (light/dark), and Angular Material's M3 tokens
+  // use CSS light-dark() which resolves against that inherited value.
+  // Overriding it here would break every Material overlay in dark mode.
+  background-color: var(--coms-bg);
+  color: var(--coms-text);
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  height: 100%;
+  transition: background-color var(--coms-transition-base), color var(--coms-transition-base);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--coms-border);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--coms-text-muted);
+}
+
+a {
+  color: var(--coms-color-primary);
+}
+
+/* Printer-friendly reset used by receipt/register print views */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

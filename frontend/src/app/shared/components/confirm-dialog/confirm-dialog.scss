@@ -1,0 +1,21 @@
+.confirm-dialog {
+  padding: 8px 4px;
+  max-width: 420px;
+}
+
+.confirm-dialog__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--coms-color-primary) 12%, transparent);
+  color: var(--coms-color-primary);
+  margin-bottom: 8px;
+
+  &--danger {
+    background: color-mix(in srgb, var(--coms-color-danger) 12%, transparent);
+    color: var(--coms-color-danger);
+  }
+}

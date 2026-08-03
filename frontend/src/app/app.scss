@@ -1,0 +1,13 @@
+.app-splash {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--coms-bg);
+}
+
+.app-splash__crest {
+  font-size: 44px;
+}

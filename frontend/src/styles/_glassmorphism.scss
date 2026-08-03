@@ -1,0 +1,50 @@
+// Reusable glassmorphism + elevation utility classes shared across modules.
+
+.glass-card {
+  background: var(--coms-glass-bg);
+  border: 1px solid var(--coms-glass-border);
+  border-radius: var(--coms-radius-lg);
+  backdrop-filter: blur(var(--coms-glass-blur));
+  -webkit-backdrop-filter: blur(var(--coms-glass-blur));
+  box-shadow: var(--coms-shadow-md);
+  transition: transform var(--coms-transition-base), box-shadow var(--coms-transition-base);
+}
+
+.glass-card--interactive {
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--coms-shadow-lg);
+  }
+}
+
+.surface-card {
+  background: var(--coms-surface);
+  border: 1px solid var(--coms-border);
+  border-radius: var(--coms-radius-md);
+  box-shadow: var(--coms-shadow-sm);
+}
+
+.accent-bar-gold {
+  border-top: 3px solid var(--coms-color-gold);
+}
+
+.accent-bar-primary {
+  border-top: 3px solid var(--coms-color-primary);
+}
+
+.text-muted {
+  color: var(--coms-text-muted);
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}

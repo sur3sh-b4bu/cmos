@@ -1,0 +1,8 @@
+@if (authService.initializing()) {
+  <div class="app-splash">
+    <div class="app-splash__crest">⛪</div>
+    <mat-progress-spinner mode="indeterminate" diameter="32" />
+  </div>
+} @else {
+  <router-outlet />
+}

@@ -1,0 +1,30 @@
+<aside class="sidebar" [class.sidebar--collapsed]="collapsed">
+  <div class="sidebar__brand">
+    <span class="sidebar__crest">⛪</span>
+    @if (!collapsed) {
+      <span class="sidebar__title">COMS</span>
+    }
+  </div>
+
+  <nav class="sidebar__nav">
+    @for (item of navItems; track item.route) {
+      <a
+        class="sidebar__link"
+        [routerLink]="item.route"
+        routerLinkActive="sidebar__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [matTooltip]="collapsed ? item.label : ''"
+        matTooltipPosition="right"
+      >
+        <mat-icon>{{ item.icon }}</mat-icon>
+        @if (!collapsed) {
+          <span>{{ item.label }}</span>
+        }
+      </a>
+    }
+  </nav>
+
+  <button class="sidebar__collapse-btn" type="button" (click)="toggleCollapsed()">
+    <mat-icon>{{ collapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+  </button>
+</aside>

@@ -1,0 +1,10 @@
+<div class="shell">
+  <coms-sidebar [collapsed]="collapsed()" (collapsedChange)="onCollapsedChange($event)" />
+
+  <div class="shell__main">
+    <coms-header />
+    <main class="shell__content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

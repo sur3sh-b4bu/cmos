@@ -1,0 +1,24 @@
+<div class="command-palette">
+  <div class="command-palette__input">
+    <mat-icon>search</mat-icon>
+    <input
+      type="text"
+      placeholder="Search modules, actions... (Esc to close)"
+      [ngModel]="query()"
+      (ngModelChange)="query.set($event)"
+      (keydown.escape)="close()"
+      autofocus
+    />
+  </div>
+
+  <div class="command-palette__results">
+    @for (item of results(); track item.route) {
+      <button class="command-palette__item" type="button" (click)="select(item)">
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span>{{ item.label }}</span>
+      </button>
+    } @empty {
+      <p class="command-palette__empty text-muted">No matches found.</p>
+    }
+  </div>
+</div>

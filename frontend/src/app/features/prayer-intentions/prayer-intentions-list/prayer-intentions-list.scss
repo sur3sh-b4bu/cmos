@@ -1,0 +1,39 @@
+.pi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.pi-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 20px;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.pi-list__actions {
+  display: flex;
+  gap: 12px;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+::ng-deep .pi-list__delete {
+  color: var(--coms-color-danger) !important;
+}

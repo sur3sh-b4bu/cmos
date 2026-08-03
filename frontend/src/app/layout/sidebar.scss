@@ -1,0 +1,94 @@
+.sidebar {
+  position: relative;
+  width: var(--coms-sidebar-width);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, var(--coms-sidebar-gradient-start), var(--coms-sidebar-gradient-end));
+  color: #ffffff;
+  transition: width var(--coms-transition-base);
+  flex-shrink: 0;
+  overflow: hidden;
+
+  &--collapsed {
+    width: var(--coms-sidebar-width-collapsed);
+  }
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  height: var(--coms-header-height);
+  font-weight: 700;
+  font-size: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+}
+
+.sidebar__crest {
+  font-size: 24px;
+}
+
+.sidebar__title {
+  background: linear-gradient(90deg, #ffffff, var(--coms-color-gold-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.04em;
+}
+
+.sidebar__nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 12px;
+  border-radius: var(--coms-radius-sm);
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color var(--coms-transition-fast), color var(--coms-transition-fast);
+
+  mat-icon {
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+  }
+
+  &--active {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    box-shadow: inset 3px 0 0 var(--coms-color-gold);
+  }
+}
+
+.sidebar__collapse-btn {
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--coms-transition-fast);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+}

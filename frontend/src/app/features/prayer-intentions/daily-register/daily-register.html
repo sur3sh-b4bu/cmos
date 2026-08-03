@@ -1,0 +1,81 @@
+<div class="register">
+  <div class="register__header no-print">
+    <div>
+      <h1>Daily Prayer Register</h1>
+      <p class="text-muted">Printable register grouped by Mass, ready for the priest before service.</p>
+    </div>
+
+    <div class="register__controls">
+      <mat-form-field appearance="outline" class="register__date">
+        <mat-label>Date</mat-label>
+        <input matInput [matDatepicker]="picker" [ngModel]="selectedDate()" (ngModelChange)="onDateChange($event)" />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+      </mat-form-field>
+
+      @if (authService.hasPermission('prayer_intentions.update') && entries().length > 0) {
+        <button mat-stroked-button (click)="markAllCompleted()">
+          <mat-icon>task_alt</mat-icon>
+          Mark All Completed
+        </button>
+      }
+      <button mat-flat-button color="primary" (click)="printRegister()" [disabled]="printing() || entries().length === 0">
+        <mat-icon>print</mat-icon>
+        Print Register
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="register__loading">
+      <mat-progress-spinner mode="indeterminate" diameter="36" />
+    </div>
+  } @else if (entries().length === 0) {
+    <div class="register__empty surface-card">
+      <mat-icon>event_busy</mat-icon>
+      <p>No prayer intentions recorded for {{ dateParam }}.</p>
+    </div>
+  } @else {
+    <div class="register__summary text-muted">
+      {{ entries().length }} intention(s) · Total offering ₹{{ totalOffering().toFixed(2) }}
+    </div>
+
+    @for (group of groups(); track group.massId) {
+      <div class="register__group surface-card">
+        <div class="register__group-header">
+          <mat-icon>church</mat-icon>
+          <h2>{{ group.massName }}</h2>
+          <span class="text-muted">{{ group.massTime }}</span>
+        </div>
+        <table class="register__table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Prayer Intention</th>
+              <th>Offering</th>
+              <th>Receipt No.</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of group.entries; track entry.id; let i = $index) {
+              <tr>
+                <td>{{ i + 1 }}</td>
+                <td class="register__name">{{ entry.name }}</td>
+                <td>{{ intentionText(entry) }}</td>
+                <td>₹{{ entry.offering_amount }}</td>
+                <td class="text-muted">{{ entry.receipt_no }}</td>
+                <td>
+                  <span class="status-chip" [style.background]="entry.status_color + '22'" [style.color]="entry.status_color">
+                    {{ entry.status_label }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

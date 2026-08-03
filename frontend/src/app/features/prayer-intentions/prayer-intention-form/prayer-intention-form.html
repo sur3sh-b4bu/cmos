@@ -1,0 +1,110 @@
+<div class="pi-form">
+  <div class="pi-form__header">
+    <a routerLink="/prayer-intentions" class="pi-form__back">
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+    <h1>{{ editId() ? 'Edit Prayer Intention' : 'New Prayer Intention' }}</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="pi-form__loading">
+      <mat-progress-spinner mode="indeterminate" diameter="36" />
+    </div>
+  } @else {
+    @if (justSavedReceiptNo() && !editId()) {
+      <div class="pi-form__success glass-card">
+        <mat-icon>check_circle</mat-icon>
+        <div>
+          <strong>Saved successfully — Receipt {{ justSavedReceiptNo() }}</strong>
+          <p class="text-muted">Print the receipt now, or continue entering the next prayer intention below.</p>
+        </div>
+        <button mat-flat-button color="primary" (click)="printReceipt()">
+          <mat-icon>print</mat-icon>
+          Print Receipt
+        </button>
+      </div>
+    }
+
+    <form class="pi-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="pi-form__grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" maxlength="150" required />
+          @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+            <mat-error>Name is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Phone Number</mat-label>
+          <input matInput formControlName="phone" maxlength="20" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Prayer Date</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="prayerDate" required />
+          <mat-datepicker-toggle matIconSuffix [for]="picker" />
+          <mat-datepicker #picker />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Mass</mat-label>
+          <mat-select formControlName="massId" required>
+            @for (mass of masses(); track mass.id) {
+              <mat-option [value]="mass.id">{{ mass.name }} ({{ mass.mass_time }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Prayer Intention</mat-label>
+          <mat-select formControlName="prayerIntentionMasterId">
+            @for (opt of intentionOptions(); track opt.id) {
+              <mat-option [value]="opt.id">{{ opt.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Offering Amount (₹)</mat-label>
+          <input matInput type="number" min="0.01" step="0.01" formControlName="offeringAmount" required />
+          @if (form.controls.offeringAmount.hasError('min') && form.controls.offeringAmount.touched) {
+            <mat-error>Offering must be greater than 0</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Payment Method</mat-label>
+          <mat-select formControlName="paymentMethodId">
+            @for (pm of paymentMethods(); track pm.id) {
+              <mat-option [value]="pm.id">{{ pm.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (selectedIntentionIsCustom) {
+          <mat-form-field appearance="outline" class="pi-form__span-2">
+            <mat-label>Describe the intention</mat-label>
+            <textarea matInput rows="3" formControlName="customIntention" required></textarea>
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline" class="pi-form__span-2">
+          <mat-label>Remarks</mat-label>
+          <textarea matInput rows="2" formControlName="remarks"></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="pi-form__actions">
+        <a mat-button routerLink="/prayer-intentions">Cancel</a>
+        <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+          @if (saving()) {
+            <mat-progress-spinner diameter="18" mode="indeterminate" />
+          } @else {
+            <span>{{ editId() ? 'Save Changes' : 'Save & Generate Receipt' }}</span>
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

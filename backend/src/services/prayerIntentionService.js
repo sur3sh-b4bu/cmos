@@ -46,7 +46,7 @@ async function create(payload, req) {
     });
     if (duplicate) {
       throw ApiError.conflict(
-        `A prayer intention for "${payload.name}" on this date and Mass already exists (Receipt ${duplicate.receipt_no}). Resubmit with allowDuplicate to add it anyway.`
+        `A prayer intention for "${payload.name}" on this date and Mass already exists (Receipt ${duplicate.receipt_no}).`
       );
     }
   }

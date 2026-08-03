@@ -1,0 +1,64 @@
+<header class="app-header">
+  <div class="app-header__breadcrumb">
+    @for (crumb of breadcrumbService.breadcrumbs(); track crumb.url; let last = $last) {
+      <a [routerLink]="crumb.url" class="app-header__crumb" [class.app-header__crumb--active]="last">
+        {{ crumb.label }}
+      </a>
+      @if (!last) {
+        <mat-icon class="app-header__crumb-sep">chevron_right</mat-icon>
+      }
+    }
+  </div>
+
+  <div class="app-header__actions">
+    <button
+      class="app-header__search"
+      type="button"
+      matTooltip="Quick search / command palette"
+      (click)="openCommandPalette()"
+    >
+      <mat-icon>search</mat-icon>
+      <span>Search or jump to...</span>
+      <kbd>Ctrl K</kbd>
+    </button>
+
+    <button mat-icon-button matTooltip="Toggle dark mode" (click)="toggleTheme()">
+      <mat-icon>{{ themeService.mode() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <button mat-icon-button matTooltip="Pending prayer intentions" [matMenuTriggerFor]="notificationsMenu">
+      <mat-icon [matBadge]="pendingCount() > 0 ? pendingCount() : null" matBadgeColor="warn" matBadgeSize="small">
+        notifications
+      </mat-icon>
+    </button>
+    <mat-menu #notificationsMenu="matMenu">
+      <div class="app-header__menu-heading">Notifications</div>
+      @if (pendingCount() > 0) {
+        <a mat-menu-item routerLink="/prayer-intentions" [queryParams]="{ status: 'PENDING' }">
+          <mat-icon>volunteer_activism</mat-icon>
+          <span>{{ pendingCount() }} pending prayer intention(s)</span>
+        </a>
+      } @else {
+        <div class="app-header__menu-empty">You're all caught up 🎉</div>
+      }
+    </mat-menu>
+
+    <button mat-icon-button [matMenuTriggerFor]="profileMenu" matTooltip="Account">
+      <div class="app-header__avatar">{{ (authService.currentUser()?.fullName || '?').charAt(0) }}</div>
+    </button>
+    <mat-menu #profileMenu="matMenu">
+      <div class="app-header__menu-heading">
+        {{ authService.currentUser()?.fullName }}
+        <div class="text-muted">{{ authService.currentUser()?.roleName }}</div>
+      </div>
+      <a mat-menu-item routerLink="/change-password">
+        <mat-icon>lock_reset</mat-icon>
+        <span>Change Password</span>
+      </a>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Sign Out</span>
+      </button>
+    </mat-menu>
+  </div>
+</header>

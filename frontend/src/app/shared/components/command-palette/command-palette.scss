@@ -1,0 +1,54 @@
+.command-palette {
+  width: 560px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+}
+
+.command-palette__input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--coms-border);
+
+  input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 16px;
+    color: var(--coms-text);
+  }
+}
+
+.command-palette__results {
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.command-palette__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px;
+  border: none;
+  background: transparent;
+  border-radius: var(--coms-radius-sm);
+  font-size: 14px;
+  color: var(--coms-text);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--coms-transition-fast);
+
+  &:hover {
+    background: var(--coms-surface-alt);
+  }
+}
+
+.command-palette__empty {
+  padding: 24px;
+  text-align: center;
+}

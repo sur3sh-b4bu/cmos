@@ -1,0 +1,123 @@
+// =============================================================================
+// COMS design tokens: White / Blue / Gold brand palette, light + dark mode.
+// The toggle stamps `data-theme` on <html>; that always wins over the
+// prefers-color-scheme fallback so a user's explicit choice sticks.
+// =============================================================================
+
+:root {
+  --coms-color-primary: #0b3d91;
+  --coms-color-primary-light: #2f5fc4;
+  --coms-color-primary-dark: #082a66;
+  --coms-color-gold: #b08d2b;
+  --coms-color-gold-light: #d4af37;
+  --coms-color-gold-dark: #8a6f22;
+
+  --coms-color-success: #2e7d32;
+  --coms-color-warning: #f5a623;
+  --coms-color-danger: #c62828;
+  --coms-color-info: #2f5fc4;
+
+  --coms-bg: #f4f6fb;
+  --coms-bg-elevated: #ffffff;
+  --coms-surface: #ffffff;
+  --coms-surface-alt: #f0f3fa;
+  --coms-border: #e2e8f0;
+
+  --coms-text: #1a1f36;
+  --coms-text-muted: #64748b;
+  --coms-text-on-primary: #ffffff;
+  --coms-text-on-gold: #ffffff;
+
+  --coms-glass-bg: rgba(255, 255, 255, 0.65);
+  --coms-glass-border: rgba(255, 255, 255, 0.5);
+  --coms-glass-blur: 16px;
+
+  --coms-radius-sm: 8px;
+  --coms-radius-md: 14px;
+  --coms-radius-lg: 20px;
+
+  --coms-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+  --coms-shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08), 0 2px 4px rgba(16, 24, 40, 0.06);
+  --coms-shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.12), 0 4px 8px rgba(16, 24, 40, 0.06);
+
+  --coms-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --coms-transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  --coms-sidebar-width: 268px;
+  --coms-sidebar-width-collapsed: 76px;
+  --coms-header-height: 64px;
+
+  // The sidebar is a fixed brand element (like a permanent nav rail) and
+  // intentionally does NOT flip with light/dark mode -- only --coms-color-primary
+  // (used for buttons/links/accents elsewhere) adapts per theme.
+  --coms-sidebar-gradient-start: #082a66;
+  --coms-sidebar-gradient-end: #0b3d91;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --coms-color-primary: #5b8def;
+  --coms-color-primary-light: #7ba4f2;
+  --coms-color-primary-dark: #3d6bc9;
+  --coms-color-gold: #e8c468;
+  --coms-color-gold-light: #f2d68a;
+  --coms-color-gold-dark: #c9a24d;
+
+  --coms-color-success: #4caf50;
+  --coms-color-warning: #ffb84d;
+  --coms-color-danger: #ef5350;
+  --coms-color-info: #7ba4f2;
+
+  --coms-bg: #0f172a;
+  --coms-bg-elevated: #16213a;
+  --coms-surface: #1a2740;
+  --coms-surface-alt: #223154;
+  --coms-border: rgba(255, 255, 255, 0.08);
+
+  --coms-text: #e6ebf5;
+  --coms-text-muted: #94a3b8;
+  --coms-text-on-primary: #0b1626;
+  --coms-text-on-gold: #1a1400;
+
+  --coms-glass-bg: rgba(26, 39, 64, 0.6);
+  --coms-glass-border: rgba(255, 255, 255, 0.08);
+
+  --coms-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --coms-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --coms-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --coms-color-primary: #5b8def;
+    --coms-color-primary-light: #7ba4f2;
+    --coms-color-primary-dark: #3d6bc9;
+    --coms-color-gold: #e8c468;
+    --coms-color-gold-light: #f2d68a;
+    --coms-color-gold-dark: #c9a24d;
+
+    --coms-color-success: #4caf50;
+    --coms-color-warning: #ffb84d;
+    --coms-color-danger: #ef5350;
+    --coms-color-info: #7ba4f2;
+
+    --coms-bg: #0f172a;
+    --coms-bg-elevated: #16213a;
+    --coms-surface: #1a2740;
+    --coms-surface-alt: #223154;
+    --coms-border: rgba(255, 255, 255, 0.08);
+
+    --coms-text: #e6ebf5;
+    --coms-text-muted: #94a3b8;
+    --coms-text-on-primary: #0b1626;
+    --coms-text-on-gold: #1a1400;
+
+    --coms-glass-bg: rgba(26, 39, 64, 0.6);
+    --coms-glass-border: rgba(255, 255, 255, 0.08);
+
+    color-scheme: dark;
+  }
+}

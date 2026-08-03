@@ -65,6 +65,44 @@ export const routes: Routes = [
           },
         ],
       },
+      {
+        path: 'certificates/:certType',
+        canActivate: [permissionGuard],
+        data: {
+          breadcrumb: 'Certificates',
+          breadcrumbParam: 'certType',
+          permissionFromParam: { param: 'certType', suffix: '_certificates.view' },
+        },
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/certificates/certificate-list/certificate-list').then((m) => m.CertificateListComponent),
+          },
+          {
+            path: 'new',
+            canActivate: [permissionGuard],
+            data: {
+              breadcrumb: 'New',
+              breadcrumbParam: undefined, // don't inherit the parent's certType prefix here
+              permissionFromParam: { param: 'certType', suffix: '_certificates.create' },
+            },
+            loadComponent: () =>
+              import('./features/certificates/certificate-form/certificate-form').then((m) => m.CertificateFormComponent),
+          },
+          {
+            path: ':id/edit',
+            canActivate: [permissionGuard],
+            data: {
+              breadcrumb: 'Edit',
+              breadcrumbParam: undefined, // don't inherit the parent's certType prefix here
+              permissionFromParam: { param: 'certType', suffix: '_certificates.update' },
+            },
+            loadComponent: () =>
+              import('./features/certificates/certificate-form/certificate-form').then((m) => m.CertificateFormComponent),
+          },
+        ],
+      },
     ],
   },
   {

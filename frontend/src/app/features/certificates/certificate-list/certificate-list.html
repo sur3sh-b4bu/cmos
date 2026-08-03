@@ -1,0 +1,53 @@
+<div class="cert-list">
+  <div class="cert-list__header">
+    <div>
+      <h1>{{ config.title }}</h1>
+      <p class="text-muted">Search, print, reprint, or manage {{ config.title.toLowerCase() }}.</p>
+    </div>
+    @if (authService.hasPermission(config.permissionPrefix + '.create')) {
+      <a mat-flat-button color="primary" [routerLink]="['/certificates', certType, 'new']">
+        <mat-icon>add</mat-icon>
+        New Certificate
+      </a>
+    }
+  </div>
+
+  <coms-data-table
+    [tableId]="'certificates-' + certType"
+    [exportFileName]="certType + '-certificates'"
+    emptyMessage="No certificates recorded yet."
+    [columns]="columns"
+    [rows]="rows()"
+    [total]="total()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [loading]="loading()"
+    [cellTemplates]="cellTemplates"
+    (pageChange)="onPageChange($event)"
+    (searchChange)="onSearchChange($event)"
+  />
+</div>
+
+<ng-template #actionsTpl let-row>
+  <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()">
+    <mat-icon>more_vert</mat-icon>
+  </button>
+  <mat-menu #rowMenu="matMenu">
+    <button mat-menu-item (click)="printCertificate(row)">
+      <mat-icon>print</mat-icon>
+      <span>Print / Export PDF</span>
+    </button>
+    @if (authService.hasPermission(config.permissionPrefix + '.update')) {
+      <a mat-menu-item [routerLink]="['/certificates', certType, row.id, 'edit']">
+        <mat-icon>edit</mat-icon>
+        <span>Edit</span>
+      </a>
+    }
+    @if (authService.hasPermission(config.permissionPrefix + '.delete')) {
+      <button mat-menu-item class="cert-list__delete" (click)="deleteRow(row)">
+        <mat-icon>delete</mat-icon>
+        <span>Delete</span>
+      </button>
+    }
+  </mat-menu>
+</ng-template>

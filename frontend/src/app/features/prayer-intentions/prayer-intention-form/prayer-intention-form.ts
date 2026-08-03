@@ -1,6 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroupDirective, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -55,6 +55,14 @@ interface PaymentMethodOption {
   styleUrl: './prayer-intention-form.scss',
 })
 export class PrayerIntentionFormComponent implements OnInit {
+  // Material's default ErrorStateMatcher shows an error once EITHER the
+  // control is touched OR the enclosing FormGroupDirective has ever been
+  // submitted -- FormGroup.reset() only clears the former, so a plain
+  // reset() leaves every required-and-empty field showing red forever
+  // after the first successful save. FormGroupDirective.resetForm()
+  // clears both; see submit() below.
+  @ViewChild(FormGroupDirective) private formGroupDirective?: FormGroupDirective;
+
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -165,7 +173,7 @@ export class PrayerIntentionFormComponent implements OnInit {
         this.notification.success(`Saved. Receipt ${created.receipt_no} generated.`);
         this.justSavedId.set(created.id);
         this.justSavedReceiptNo.set(created.receipt_no);
-        this.form.reset({
+        this.formGroupDirective?.resetForm({
           name: '',
           phone: '',
           prayerDate: new Date(),

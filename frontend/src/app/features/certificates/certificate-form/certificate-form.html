@@ -1,0 +1,76 @@
+<div class="cert-form">
+  <div class="cert-form__header">
+    <a [routerLink]="['/certificates', certType]" class="cert-form__back">
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+    <h1>{{ editId() ? 'Edit' : 'New' }} {{ config.singularTitle }}</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="cert-form__loading">
+      <mat-progress-spinner mode="indeterminate" diameter="36" />
+    </div>
+  } @else {
+    @if (justSavedCertNo() && !editId()) {
+      <div class="cert-form__success glass-card">
+        <mat-icon>check_circle</mat-icon>
+        <div>
+          <strong>Saved successfully — Certificate {{ justSavedCertNo() }}</strong>
+          <p class="text-muted">Print the certificate now, or continue adding the next one below.</p>
+        </div>
+        <button mat-flat-button color="primary" (click)="printCertificate()">
+          <mat-icon>print</mat-icon>
+          Print Certificate
+        </button>
+      </div>
+    }
+
+    <form class="cert-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="cert-form__grid">
+        @for (field of config.formFields; track field.key) {
+          <mat-form-field appearance="outline" [class.cert-form__span-2]="field.span2">
+            <mat-label>{{ field.label }}</mat-label>
+
+            @switch (field.type) {
+              @case ('text') {
+                <input matInput [formControlName]="field.key" />
+              }
+              @case ('textarea') {
+                <textarea matInput rows="3" [formControlName]="field.key"></textarea>
+              }
+              @case ('date') {
+                <ng-container>
+                  <input matInput [matDatepicker]="picker" [formControlName]="field.key" />
+                  <mat-datepicker-toggle matIconSuffix [for]="picker" />
+                  <mat-datepicker #picker />
+                </ng-container>
+              }
+              @case ('select') {
+                <mat-select [formControlName]="field.key">
+                  @for (opt of optionsFor(field); track opt.id) {
+                    <mat-option [value]="opt.id">{{ opt.name }}</mat-option>
+                  }
+                </mat-select>
+              }
+            }
+
+            @if (field.required && form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
+              <mat-error>{{ field.label }} is required</mat-error>
+            }
+          </mat-form-field>
+        }
+      </div>
+
+      <div class="cert-form__actions">
+        <a mat-button [routerLink]="['/certificates', certType]">Cancel</a>
+        <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+          @if (saving()) {
+            <mat-progress-spinner diameter="18" mode="indeterminate" />
+          } @else {
+            <span>{{ editId() ? 'Save Changes' : 'Save & Generate Certificate' }}</span>
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

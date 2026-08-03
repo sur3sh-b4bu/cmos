@@ -5,14 +5,18 @@
       <p class="text-muted">{{ today | date: 'EEEE, MMMM d, y' }}</p>
     </div>
     <div class="dashboard__quick-actions">
-      <a mat-flat-button color="primary" routerLink="/prayer-intentions/new">
-        <mat-icon>add</mat-icon>
-        New Prayer Intention
-      </a>
-      <a mat-stroked-button routerLink="/prayer-intentions/register">
-        <mat-icon>print</mat-icon>
-        Today's Register
-      </a>
+      @if (authService.hasPermission('prayer_intentions.create')) {
+        <a mat-flat-button color="primary" routerLink="/prayer-intentions/new">
+          <mat-icon>add</mat-icon>
+          New Prayer Intention
+        </a>
+      }
+      @if (authService.hasPermission('prayer_register.view')) {
+        <a mat-stroked-button routerLink="/prayer-intentions/register">
+          <mat-icon>print</mat-icon>
+          Today's Register
+        </a>
+      }
     </div>
   </div>
 

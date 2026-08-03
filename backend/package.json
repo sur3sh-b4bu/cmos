@@ -10,6 +10,8 @@
     "migrate": "node database/migrate.js",
     "seed": "node database/seed.js",
     "db:setup": "npm run migrate && npm run seed",
+    "fonts:extract": "node scripts/extractFonts.js",
+    "postinstall": "node scripts/extractFonts.js",
     "test": "jest --runInBand"
   },
   "dependencies": {

@@ -1,0 +1,55 @@
+.master-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.master-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  h1 {
+    margin: 4px 0 0;
+    font-size: 20px;
+  }
+}
+
+.master-list__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--coms-text-muted);
+  text-decoration: none;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    color: var(--coms-color-primary);
+  }
+}
+
+.master-list__chip {
+  background: color-mix(in srgb, var(--coms-color-success) 15%, transparent) !important;
+  color: var(--coms-color-success) !important;
+  font-size: 11px !important;
+  min-height: 22px !important;
+}
+
+.master-list__chip--inactive {
+  background: color-mix(in srgb, var(--coms-text-muted) 15%, transparent) !important;
+  color: var(--coms-text-muted) !important;
+}
+
+::ng-deep .master-list__delete {
+  color: var(--coms-color-danger) !important;
+}

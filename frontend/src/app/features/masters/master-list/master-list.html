@@ -1,0 +1,59 @@
+<div class="master-list">
+  <div class="master-list__header">
+    <div>
+      <a routerLink="/masters" class="master-list__back">
+        <mat-icon>arrow_back</mat-icon>
+        <span>All Masters</span>
+      </a>
+      <h1>{{ config.label }}</h1>
+    </div>
+    @if (authService.hasPermission('masters.create')) {
+      <a mat-flat-button color="primary" [routerLink]="['/masters', masterKey, 'new']">
+        <mat-icon>add</mat-icon>
+        New {{ config.singularLabel }}
+      </a>
+    }
+  </div>
+
+  <coms-data-table
+    [tableId]="'master-' + masterKey"
+    [exportFileName]="masterKey"
+    emptyMessage="No records yet."
+    [columns]="columns"
+    [rows]="rows()"
+    [total]="total()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [loading]="loading() || reordering()"
+    [cellTemplates]="cellTemplates"
+    (pageChange)="onPageChange($event)"
+    (searchChange)="onSearchChange($event)"
+  />
+</div>
+
+<ng-template #activeTpl let-row>
+  <mat-chip [class.master-list__chip--inactive]="!row.is_active" class="master-list__chip">
+    {{ row.is_active ? 'Active' : 'Inactive' }}
+  </mat-chip>
+</ng-template>
+
+<ng-template #actionsTpl let-row>
+  @if (config.hasSortOrder) {
+    <button mat-icon-button matTooltip="Move up" (click)="moveRow(row, -1)">
+      <mat-icon>arrow_upward</mat-icon>
+    </button>
+    <button mat-icon-button matTooltip="Move down" (click)="moveRow(row, 1)">
+      <mat-icon>arrow_downward</mat-icon>
+    </button>
+  }
+  @if (authService.hasPermission('masters.update')) {
+    <a mat-icon-button matTooltip="Edit" [routerLink]="['/masters', masterKey, row.id, 'edit']">
+      <mat-icon>edit</mat-icon>
+    </a>
+  }
+  @if (authService.hasPermission('masters.delete')) {
+    <button mat-icon-button matTooltip="Delete" class="master-list__delete" (click)="deleteRow(row)">
+      <mat-icon>delete</mat-icon>
+    </button>
+  }
+</ng-template>

@@ -109,6 +109,36 @@ export const routes: Routes = [
         data: { breadcrumb: 'Reports', permissions: ['reports.view'] },
         loadComponent: () => import('./features/reports/reports').then((m) => m.ReportsComponent),
       },
+      {
+        path: 'masters',
+        canActivate: [permissionGuard],
+        data: { breadcrumb: 'Masters', permissions: ['masters.view'] },
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/masters/masters-hub/masters-hub').then((m) => m.MastersHubComponent),
+          },
+          {
+            path: ':masterKey',
+            children: [
+              {
+                path: '',
+                loadComponent: () => import('./features/masters/master-list/master-list').then((m) => m.MasterListComponent),
+              },
+              {
+                path: 'new',
+                data: { breadcrumb: 'New' },
+                loadComponent: () => import('./features/masters/master-form/master-form').then((m) => m.MasterFormComponent),
+              },
+              {
+                path: ':id/edit',
+                data: { breadcrumb: 'Edit' },
+                loadComponent: () => import('./features/masters/master-form/master-form').then((m) => m.MasterFormComponent),
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
   {

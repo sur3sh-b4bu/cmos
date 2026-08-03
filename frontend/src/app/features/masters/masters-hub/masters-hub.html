@@ -1,0 +1,23 @@
+<div class="masters-hub">
+  <div class="masters-hub__header">
+    <h1>Masters</h1>
+    <p class="text-muted">Configurable dropdown values used throughout the app. Nothing here is hardcoded in the UI.</p>
+  </div>
+
+  @for (group of groups; track group.label) {
+    <div class="masters-hub__group">
+      <div class="masters-hub__group-header">
+        <mat-icon>{{ group.icon }}</mat-icon>
+        <h2>{{ group.label }}</h2>
+      </div>
+      <div class="masters-hub__grid">
+        @for (item of group.items; track item.key) {
+          <a class="masters-hub__card glass-card glass-card--interactive" [routerLink]="['/masters', item.key]">
+            <mat-icon>{{ configs[item.key].icon }}</mat-icon>
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      </div>
+    </div>
+  }
+</div>

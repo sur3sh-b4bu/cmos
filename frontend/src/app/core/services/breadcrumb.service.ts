@@ -21,7 +21,7 @@ export class BreadcrumbService {
   }
 
   private build(snapshot: ActivatedRouteSnapshot): Breadcrumb[] {
-    const crumbs: Breadcrumb[] = [];
+    const raw: Breadcrumb[] = [];
     let current: ActivatedRouteSnapshot | null = snapshot;
     let url = '';
 
@@ -32,15 +32,23 @@ export class BreadcrumbService {
       const label = breadcrumbParam
         ? this.titleCase(current.paramMap.get(breadcrumbParam) ?? '') + ' ' + current.data?.['breadcrumb']
         : current.data?.['breadcrumb'];
-      // Angular's default 'emptyOnly' param/data inheritance copies the
-      // parent's `data` onto empty-path child routes, which would otherwise
-      // duplicate the parent's crumb here -- only add a crumb when this
-      // node actually introduced a new URL segment (or is the first one).
-      const last = crumbs[crumbs.length - 1];
-      if (label && (segment || !last || last.label !== label)) {
-        crumbs.push({ label, url });
-      }
+      if (label) raw.push({ label, url });
       current = current.firstChild;
+    }
+
+    // Angular's route-data inheritance can repeat a parent's (or
+    // grandparent's, through an intermediate param segment) label onto a
+    // descendant node -- rather than trying to predict every shape that
+    // produces, collapse adjacent same-label crumbs here and keep the
+    // deepest (most specific) URL.
+    const crumbs: Breadcrumb[] = [];
+    for (const crumb of raw) {
+      const last = crumbs[crumbs.length - 1];
+      if (last && last.label === crumb.label) {
+        last.url = crumb.url;
+      } else {
+        crumbs.push({ ...crumb });
+      }
     }
     return crumbs;
   }

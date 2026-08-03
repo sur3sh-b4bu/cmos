@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table';
@@ -19,7 +20,7 @@ import { PrayerIntention } from '../prayer-intention.model';
 @Component({
   selector: 'coms-prayer-intentions-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatMenuModule, DataTableComponent],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule, DataTableComponent],
   templateUrl: './prayer-intentions-list.html',
   styleUrl: './prayer-intentions-list.scss',
 })

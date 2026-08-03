@@ -45,14 +45,13 @@
 </ng-template>
 
 <ng-template #actionsTpl let-row>
+  <button mat-icon-button matTooltip="Print Receipt" (click)="printReceipt(row); $event.stopPropagation()">
+    <mat-icon>print</mat-icon>
+  </button>
   <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()">
     <mat-icon>more_vert</mat-icon>
   </button>
   <mat-menu #rowMenu="matMenu">
-    <button mat-menu-item (click)="printReceipt(row)">
-      <mat-icon>print</mat-icon>
-      <span>Print Receipt</span>
-    </button>
     @if (authService.hasPermission('prayer_intentions.update')) {
       <a mat-menu-item [routerLink]="['/prayer-intentions', row.id, 'edit']">
         <mat-icon>edit</mat-icon>

@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table';
@@ -20,7 +21,7 @@ const DATE_KEYS = new Set(['date_of_birth', 'date_of_baptism', 'marriage_date', 
 @Component({
   selector: 'coms-certificate-list',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule, DataTableComponent],
+  imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule, DataTableComponent],
   templateUrl: './certificate-list.html',
   styleUrl: './certificate-list.scss',
 })

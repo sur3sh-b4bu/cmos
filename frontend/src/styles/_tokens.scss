@@ -71,11 +71,18 @@
   color-scheme: light;
 }
 
+// Dark mode uses a NEUTRAL near-black surface (like GitHub/Linear/VS Code
+// dark themes), not a tinted-navy one -- an earlier version shaded every
+// surface toward blue, which read as "everything is blue" rather than
+// "blue is the accent". Blue and gold now pop as accents against neutral
+// gray instead of blending into a blue-on-blue background. The sidebar
+// alone stays a fixed navy brand element (see --coms-sidebar-gradient-*
+// above), which is the one deliberate spot of full color.
 :root[data-theme='dark'] {
   --coms-color-primary: #5b8def;
   --coms-color-primary-light: #7ba4f2;
   --coms-color-primary-dark: #3d6bc9;
-  --coms-color-gold: #e8c468;
+  --coms-color-gold: #e0b85a;
   --coms-color-gold-light: #f2d68a;
   --coms-color-gold-dark: #c9a24d;
 
@@ -84,18 +91,18 @@
   --coms-color-danger: #ef5350;
   --coms-color-info: #7ba4f2;
 
-  --coms-bg: #0f172a;
-  --coms-bg-elevated: #16213a;
-  --coms-surface: #1a2740;
-  --coms-surface-alt: #223154;
+  --coms-bg: #131316;
+  --coms-bg-elevated: #1b1b1f;
+  --coms-surface: #1d1d21;
+  --coms-surface-alt: #26262b;
   --coms-border: rgba(255, 255, 255, 0.08);
 
-  --coms-text: #e6ebf5;
-  --coms-text-muted: #94a3b8;
+  --coms-text: #ebebee;
+  --coms-text-muted: #98989f;
   --coms-text-on-primary: #0b1626;
   --coms-text-on-gold: #1a1400;
 
-  --coms-glass-bg: rgba(26, 39, 64, 0.6);
+  --coms-glass-bg: rgba(29, 29, 33, 0.65);
   --coms-glass-border: rgba(255, 255, 255, 0.08);
 
   --coms-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -110,7 +117,7 @@
     --coms-color-primary: #5b8def;
     --coms-color-primary-light: #7ba4f2;
     --coms-color-primary-dark: #3d6bc9;
-    --coms-color-gold: #e8c468;
+    --coms-color-gold: #e0b85a;
     --coms-color-gold-light: #f2d68a;
     --coms-color-gold-dark: #c9a24d;
 
@@ -119,18 +126,18 @@
     --coms-color-danger: #ef5350;
     --coms-color-info: #7ba4f2;
 
-    --coms-bg: #0f172a;
-    --coms-bg-elevated: #16213a;
-    --coms-surface: #1a2740;
-    --coms-surface-alt: #223154;
+    --coms-bg: #131316;
+    --coms-bg-elevated: #1b1b1f;
+    --coms-surface: #1d1d21;
+    --coms-surface-alt: #26262b;
     --coms-border: rgba(255, 255, 255, 0.08);
 
-    --coms-text: #e6ebf5;
-    --coms-text-muted: #94a3b8;
+    --coms-text: #ebebee;
+    --coms-text-muted: #98989f;
     --coms-text-on-primary: #0b1626;
     --coms-text-on-gold: #1a1400;
 
-    --coms-glass-bg: rgba(26, 39, 64, 0.6);
+    --coms-glass-bg: rgba(29, 29, 33, 0.65);
     --coms-glass-border: rgba(255, 255, 255, 0.08);
 
     color-scheme: dark;

@@ -230,8 +230,8 @@ async function run() {
       `INSERT INTO masses (church_id, branch_id, name, mass_time, day_type, sort_order) VALUES
         (?,?,?,?,?,?), (?,?,?,?,?,?), (?,?,?,?,?,?), (?,?,?,?,?,?)`,
       [
-        churchId, branchId, 'Morning Mass', '06:00:00', 'Daily', 1,
-        churchId, branchId, 'Evening Mass', '18:00:00', 'Daily', 2,
+        churchId, branchId, 'Weekday Morning Mass', '06:00:00', 'Daily', 1,
+        churchId, branchId, 'Weekday Evening Mass', '18:00:00', 'Daily', 2,
         churchId, branchId, 'Sunday Morning Mass', '08:00:00', 'Sunday', 3,
         churchId, branchId, 'Sunday Evening Mass', '17:30:00', 'Sunday', 4,
       ]

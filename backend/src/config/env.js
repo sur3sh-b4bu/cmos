@@ -11,7 +11,7 @@ function required(name, fallback) {
 module.exports = {
   nodeEnv: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
-  port: Number(process.env.PORT || 4000),
+  port: process.env.PORT || 4000,
 
   db: {
     host: required('DB_HOST', '127.0.0.1'),

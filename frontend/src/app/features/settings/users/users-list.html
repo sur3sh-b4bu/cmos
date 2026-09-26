@@ -1,13 +1,13 @@
 <div class="users-list">
   <div class="users-list__header">
     <div>
-      <h1>User Management</h1>
-      <p class="text-muted">Office staff accounts, roles, and access.</p>
+      <h1>{{ 'settings.userManagement' | translate }}</h1>
+      <p class="text-muted">{{ 'settings.userListSubtitle' | translate }}</p>
     </div>
     @if (authService.hasPermission('users.create')) {
       <a mat-flat-button color="primary" routerLink="/settings/users/new">
         <mat-icon>person_add</mat-icon>
-        New User
+        {{ 'settings.newUser' | translate }}
       </a>
     }
   </div>
@@ -15,16 +15,20 @@
   <coms-data-table
     tableId="users"
     exportFileName="users"
-    emptyMessage="No users found."
+    emptyMessageKey="settings.noUsersFound"
     [columns]="columns"
     [rows]="rows()"
     [total]="total()"
     [pageIndex]="pageIndex()"
     [pageSize]="pageSize()"
-    [loading]="loading()"
+    [loading]="loading() || importing()"
     [cellTemplates]="cellTemplates"
+    [showImport]="authService.hasPermission('users.create')"
+    [importColumns]="importColumns"
+    [exportAllFn]="exportAllRows"
     (pageChange)="onPageChange($event)"
     (searchChange)="onSearchChange($event)"
+    (importRows)="onImportRows($event)"
   />
 </div>
 
@@ -34,7 +38,7 @@
     [style.background]="(row.is_active ? 'var(--coms-color-success)' : 'var(--coms-text-muted)') + '22'"
     [style.color]="row.is_active ? 'var(--coms-color-success)' : 'var(--coms-text-muted)'"
   >
-    {{ row.is_active ? 'Active' : 'Inactive' }}
+    {{ (row.is_active ? 'masters.active' : 'masters.inactive') | translate }}
   </span>
 </ng-template>
 
@@ -46,15 +50,15 @@
     @if (authService.hasPermission('users.update')) {
       <a mat-menu-item [routerLink]="['/settings/users', row.id, 'edit']">
         <mat-icon>edit</mat-icon>
-        <span>Edit</span>
+        <span>{{ 'common.edit' | translate }}</span>
       </a>
       <button mat-menu-item (click)="resetPassword(row)">
         <mat-icon>vpn_key</mat-icon>
-        <span>Reset Password</span>
+        <span>{{ 'settings.resetPassword' | translate }}</span>
       </button>
       <button mat-menu-item (click)="toggleActive(row)">
         <mat-icon>{{ row.is_active ? 'block' : 'check_circle' }}</mat-icon>
-        <span>{{ row.is_active ? 'Deactivate' : 'Activate' }}</span>
+        <span>{{ (row.is_active ? 'settings.deactivate' : 'settings.activate') | translate }}</span>
       </button>
     }
   </mat-menu>

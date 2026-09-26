@@ -1,0 +1,76 @@
+:host {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+.pi-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 12px;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.pi-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  h1 {
+    margin: 0 0 2px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  p {
+    margin: 0;
+    font-size: 12.5px;
+    color: #64748b;
+  }
+}
+
+.pi-list__header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pi-list__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  a,
+  [dataTableToolbarExtra] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 14px;
+    border-radius: 9px !important;
+  }
+}
+
+[dataTableToolbarExtra] {
+  border-radius: 9px !important;
+  height: 36px !important;
+}
+
+::ng-deep .pi-list__delete {
+  color: var(--coms-color-danger) !important;
+}

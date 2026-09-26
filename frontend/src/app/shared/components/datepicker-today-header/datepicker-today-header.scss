@@ -1,0 +1,43 @@
+// ViewEncapsulation.None (required -- see datepicker-today-header.ts), so
+// every selector here is scoped under .coms-today-header to avoid leaking
+// into the rest of the app's global styles.
+.coms-today-header {
+  display: flex;
+  flex-direction: column;
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    align-self: center;
+    margin: 4px 0 10px;
+    min-width: 120px;
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--coms-border);
+    background: var(--coms-surface);
+    color: var(--coms-color-primary);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    transition: all var(--coms-transition-fast);
+    box-shadow: var(--coms-shadow-xs);
+
+    &:hover {
+      background: color-mix(in srgb, var(--coms-color-primary) 8%, var(--coms-surface));
+      border-color: var(--coms-color-primary);
+      box-shadow: var(--coms-shadow-sm);
+      transform: translateY(-1px);
+    }
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: var(--coms-color-gold);
+    }
+  }
+}

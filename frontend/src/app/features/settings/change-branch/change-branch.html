@@ -1,0 +1,36 @@
+<div class="change-branch">
+  <div class="change-branch__header">
+    <h1>{{ 'settings.changeBranch' | translate }}</h1>
+    <p class="text-muted">{{ 'settings.changeBranchSubtitle' | translate }}</p>
+  </div>
+
+  <div class="change-branch__current surface-card">
+    <mat-icon>alt_route</mat-icon>
+    <div>
+      <span class="text-muted">{{ 'settings.currentlyViewingBranch' | translate }}</span>
+      @if (authService.adminActiveBranch(); as active) {
+        <strong>{{ active.name }}</strong>
+      } @else {
+        <strong>{{ 'settings.allBranches' | translate }}</strong>
+      }
+    </div>
+  </div>
+
+  <form class="change-branch__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'settings.selectBranch' | translate }}</mat-label>
+      <mat-select formControlName="branch_id">
+        <mat-option [value]="null">{{ 'settings.allBranches' | translate }}</mat-option>
+        @for (branch of branches(); track branch.id) {
+          <mat-option [value]="branch.id">{{ branch.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="change-branch__actions">
+      <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+        {{ 'settings.switchAndContinue' | translate }}
+      </button>
+    </div>
+  </form>
+</div>

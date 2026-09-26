@@ -1,0 +1,48 @@
+<div class="change-church-branch">
+  <div class="change-church-branch__header">
+    <h1>{{ 'settings.changeChurchBranch' | translate }}</h1>
+    <p class="text-muted">{{ 'settings.changeChurchBranchSubtitle' | translate }}</p>
+  </div>
+
+  <div class="change-church-branch__current surface-card">
+    <mat-icon>sync_alt</mat-icon>
+    <div>
+      <span class="text-muted">{{ 'settings.currentlyActingAs' | translate }}</span>
+      @if (authService.activeChurchBranch(); as active) {
+        <strong>{{ active.churchName }}{{ active.branchName ? ' / ' + active.branchName : ' — ' + ('settings.allBranches' | translate) }}</strong>
+      } @else {
+        <strong>{{ 'settings.centralManagement' | translate }}</strong>
+      }
+    </div>
+  </div>
+
+  <form class="change-church-branch__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="change-church-branch__grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'settings.selectChurch' | translate }}</mat-label>
+        <mat-select formControlName="church_id">
+          <mat-option [value]="null">{{ 'settings.centralManagement' | translate }}</mat-option>
+          @for (church of churches(); track church.id) {
+            <mat-option [value]="church.id">{{ church.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'settings.selectBranch' | translate }}</mat-label>
+        <mat-select formControlName="branch_id">
+          <mat-option [value]="null">{{ 'settings.allBranches' | translate }}</mat-option>
+          @for (branch of branches(); track branch.id) {
+            <mat-option [value]="branch.id">{{ branch.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="change-church-branch__actions">
+      <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+        {{ 'settings.switchAndContinue' | translate }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,21 +1,29 @@
 .confirm-dialog {
-  padding: 8px 4px;
-  max-width: 420px;
+  padding: 12px 6px 4px 6px;
+  max-width: 440px;
 }
 
 .confirm-dialog__icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--coms-color-primary) 12%, transparent);
-  color: var(--coms-color-primary);
-  margin-bottom: 8px;
+  background: #eff6ff;
+  color: var(--coms-color-primary, #072a63);
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(7, 42, 99, 0.14);
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
 
   &--danger {
-    background: color-mix(in srgb, var(--coms-color-danger) 12%, transparent);
-    color: var(--coms-color-danger);
+    background: #fef2f2;
+    color: var(--coms-color-danger, #dc2626);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
   }
 }

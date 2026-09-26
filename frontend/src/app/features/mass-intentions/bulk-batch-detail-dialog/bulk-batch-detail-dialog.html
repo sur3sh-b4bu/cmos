@@ -1,0 +1,148 @@
+<div class="bbdd-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon>playlist_add_check</mat-icon>
+    <div class="bbdd-dialog__title-text">
+      <span>{{ 'massIntentions.bulkBatchesTitle' | translate }}</span>
+      <span class="bbdd-dialog__title-meta">
+        {{ formattedDate }}
+        @if (data.batch.bookedBy) { · {{ data.batch.bookedBy }} }
+        @if (data.batch.phone) { · {{ data.batch.phone }} }
+      </span>
+    </div>
+  </h2>
+
+  <mat-dialog-content>
+    @if (loading()) {
+      <div class="bbdd-dialog__loading">
+        <mat-progress-spinner mode="indeterminate" diameter="32" />
+      </div>
+    } @else {
+      <table class="bbdd-dialog__table">
+        <thead>
+          <tr>
+            <th>{{ 'massIntentions.colReceiptNo' | translate }}</th>
+            <th>{{ 'massIntentions.colMassDate' | translate }}</th>
+            <th>{{ 'common.name' | translate }}</th>
+            <th>{{ 'dashboard.colMass' | translate }}</th>
+            <th>{{ 'massIntentions.colIntention' | translate }}</th>
+            <th class="bbdd-dialog__col-right">{{ 'massIntentions.colOffering' | translate }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rec of rows(); track rec.id) {
+            @if (editingId() === rec.id) {
+              <tr [formGroup]="editRowForm" class="bbdd-dialog__edit-row">
+                <td class="text-muted">{{ rec.receipt_no }}</td>
+                <td>
+                  <mat-form-field appearance="outline" class="bbdd-dialog__cell-field">
+                    <input matInput [matDatepicker]="editPicker" formControlName="prayerDate" required />
+                    <mat-datepicker-toggle matIconSuffix [for]="editPicker" />
+                    <mat-datepicker #editPicker [dateClass]="dateClass" [calendarHeaderComponent]="todayHeader" />
+                  </mat-form-field>
+                </td>
+                <td>
+                  <mat-form-field appearance="outline" class="bbdd-dialog__cell-field">
+                    <input matInput formControlName="name" maxlength="150" required />
+                  </mat-form-field>
+                </td>
+                <td>
+                  <mat-form-field appearance="outline" class="bbdd-dialog__cell-field">
+                    <mat-select formControlName="massId" required>
+                      @for (mass of masses(); track mass.id) {
+                        <mat-option [value]="mass.id">{{ mass.name }} ({{ mass.mass_time }})</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+                <td class="bbdd-dialog__intention-cell">
+                  <mat-form-field appearance="outline" class="bbdd-dialog__cell-field">
+                    <mat-select formControlName="prayerIntentionMasterId">
+                      @for (opt of intentionOptions(); track opt.id) {
+                        <mat-option [value]="opt.id">{{ opt.name }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                  @if (rowIsCustomIntention(editRowForm)) {
+                    <mat-form-field appearance="outline" class="bbdd-dialog__cell-field">
+                      <input matInput formControlName="customIntention" [placeholder]="'massIntentions.describeIntention' | translate" required />
+                    </mat-form-field>
+                  }
+                </td>
+                <td>
+                  <mat-form-field appearance="outline" class="bbdd-dialog__cell-field">
+                    <input matInput type="number" min="0.01" step="0.01" formControlName="offeringAmount" required />
+                  </mat-form-field>
+                </td>
+                <td class="bbdd-dialog__row-actions">
+                  <button mat-icon-button type="button" [matTooltip]="'common.save' | translate" (click)="saveEdit()">
+                    <mat-icon>check</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" [matTooltip]="'common.cancel' | translate" (click)="cancelEdit()">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </td>
+              </tr>
+              @if (rowRestrictedDate(editRowForm); as restricted) {
+                <tr class="bbdd-dialog__restricted-row-wrap">
+                  <td [attr.colspan]="7">
+                    <div class="bbdd-dialog__restricted-banner">
+                      <mat-icon>event_busy</mat-icon>
+                      <div>
+                        <strong>{{ 'massIntentions.restrictedDateSelected' | translate }}</strong>
+                        <div>{{ restricted.name }} -- {{ restricted.reason || defaultRestrictedDateReason }}</div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            } @else {
+              <tr>
+                <td>{{ rec.receipt_no }}</td>
+                <td>{{ formatDate(rec.prayer_date) }}</td>
+                <td>{{ rec.name }}</td>
+                <td>{{ rec.mass_name }}</td>
+                <td>{{ intentionText(rec) }}</td>
+                <td class="bbdd-dialog__col-right">{{ currency(rec.offering_amount) }}</td>
+                <td class="bbdd-dialog__row-actions">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [disabled]="!rec.is_paid"
+                    [matTooltip]="(rec.is_paid ? 'massIntentions.printReceipt' : 'massIntentions.receiptUnavailable') | translate"
+                    (click)="printRow(rec.id)"
+                  >
+                    <mat-icon>print</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" [matTooltip]="'common.edit' | translate" (click)="startEdit(rec)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" [matTooltip]="'common.delete' | translate" (click)="deleteRow(rec)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+
+      <div class="bbdd-dialog__total">
+        <span>{{ 'common.total' | translate }}</span>
+        <strong>{{ currency(total) }}</strong>
+      </div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="close()">{{ 'common.close' | translate }}</button>
+    <button mat-flat-button color="primary" type="button" [disabled]="loading() || printing() || !paidCount" (click)="print()">
+      @if (printing()) {
+        <mat-progress-spinner diameter="16" mode="indeterminate" />
+      } @else {
+        <mat-icon>print</mat-icon>
+      }
+      <span>{{ 'massIntentions.bulkPrintCombined' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</div>

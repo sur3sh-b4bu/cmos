@@ -16,6 +16,8 @@ const {
   DB_NAME = 'coms_db',
   SEED_ADMIN_USERNAME = 'admin',
   SEED_ADMIN_PASSWORD = 'Admin@12345',
+  SEED_MASTER_ADMIN_USERNAME = 'masteradmin',
+  SEED_MASTER_ADMIN_PASSWORD = 'MasterAdmin@12345',
 } = process.env;
 
 async function tableEmpty(conn, table) {
@@ -51,22 +53,34 @@ async function run() {
 
   console.log('Seeding roles & permissions...');
   await insertIgnore(conn, 'roles', ['name', 'code', 'description', 'is_system_role'], [
+    // Cross-church superuser -- not given any role_permissions rows below;
+    // authorize.js/auth.service.ts hard-code a bypass for this role_code so
+    // its access can never be narrowed by editing Roles & Permissions. Has
+    // no home church/branch (see the seeded user further down) -- acts as
+    // whichever church/branch it selects via the Settings > Change Church &
+    // Branch switcher.
+    { name: 'Master Administrator', code: 'MASTER_ADMIN', description: 'Cross-church superuser -- acts as any church/branch via the switcher', is_system_role: 1 },
     { name: 'Administrator', code: 'ADMIN', description: 'Full system access', is_system_role: 1 },
-    { name: 'Office Staff', code: 'OFFICE_STAFF', description: 'Day-to-day data entry: prayer intentions, certificates, receipts', is_system_role: 0 },
-    { name: 'Priest', code: 'PRIEST', description: 'Read-only access to the prayer register and reports', is_system_role: 0 },
+    { name: 'Office Staff', code: 'OFFICE_STAFF', description: 'Day-to-day data entry: mass intentions, certificates, receipts', is_system_role: 0 },
+    { name: 'Priest', code: 'PRIEST', description: 'Read-only access to the Mass register and reports', is_system_role: 0 },
     { name: 'Accountant', code: 'ACCOUNTANT', description: 'Views collections and financial reports', is_system_role: 0 },
   ]);
 
   const permissionDefs = {
     dashboard: ['view'],
-    prayer_intentions: ['view', 'create', 'update', 'delete', 'print'],
+    mass_intentions: ['view', 'create', 'update', 'delete', 'print'],
+    contributions: ['view', 'create', 'update', 'delete', 'print'],
     prayer_register: ['view', 'print'],
     receipts: ['view', 'print'],
     baptism_certificates: ['view', 'create', 'update', 'delete', 'print', 'export'],
     marriage_certificates: ['view', 'create', 'update', 'delete', 'print', 'export'],
     death_certificates: ['view', 'create', 'update', 'delete', 'print', 'export'],
     masters: ['view', 'create', 'update', 'delete'],
-    reports: ['view', 'export'],
+    // print_all gates the "day-wise, ALL users" Reports print button (shows
+    // who billed each row) -- ADMIN gets it automatically below along with
+    // every other permission; reports.view alone (every other role) only
+    // ever covers printing one's OWN billed transactions for a day.
+    reports: ['view', 'export', 'print_all'],
     users: ['view', 'create', 'update', 'delete'],
     roles: ['view', 'create', 'update', 'delete'],
     settings: ['view', 'update'],
@@ -92,7 +106,8 @@ async function run() {
     ADMIN: Object.keys(permIdByCode), // every permission
     OFFICE_STAFF: [
       'dashboard.view',
-      'prayer_intentions.view', 'prayer_intentions.create', 'prayer_intentions.update', 'prayer_intentions.delete', 'prayer_intentions.print',
+      'mass_intentions.view', 'mass_intentions.create', 'mass_intentions.update', 'mass_intentions.delete', 'mass_intentions.print',
+      'contributions.view', 'contributions.create', 'contributions.update', 'contributions.delete', 'contributions.print',
       'prayer_register.view', 'prayer_register.print',
       'receipts.view', 'receipts.print',
       'baptism_certificates.view', 'baptism_certificates.create', 'baptism_certificates.update', 'baptism_certificates.print', 'baptism_certificates.export',
@@ -101,7 +116,7 @@ async function run() {
       'reports.view', 'reports.export',
     ],
     PRIEST: ['dashboard.view', 'prayer_register.view', 'prayer_register.print', 'reports.view'],
-    ACCOUNTANT: ['dashboard.view', 'reports.view', 'reports.export', 'prayer_intentions.view'],
+    ACCOUNTANT: ['dashboard.view', 'reports.view', 'reports.export', 'mass_intentions.view', 'contributions.view'],
   };
   const rolePermRows = [];
   for (const [roleCode, permCodes] of Object.entries(rolePermCodes)) {
@@ -142,11 +157,18 @@ async function run() {
     { name: 'Cheque', code: 'CHEQUE' },
     { name: 'Bank Transfer', code: 'BANK_TRANSFER' },
   ]);
-  await insertIgnore(conn, 'donation_types', ['name', 'code', 'description'], [
-    { name: 'General Offering', code: 'GENERAL', description: 'General church offering' },
-    { name: 'Mass Offering', code: 'MASS_OFFERING', description: 'Offering tied to a prayer intention' },
-    { name: 'Building Fund', code: 'BUILDING_FUND', description: 'Church building/renovation fund' },
-    { name: 'Charity', code: 'CHARITY', description: 'Charity and outreach donations' },
+  // name_ta included directly -- same reasoning as masses/prayer_intention_master
+  // above (see masses' own comment): migration 030's UPDATE only backfills
+  // a database seeded before that migration existed, not a fresh db:setup.
+  await insertIgnore(conn, 'contribution_types', ['name', 'name_ta', 'code', 'description'], [
+    { name: 'General Offering', name_ta: 'பொது காணிக்கை', code: 'GENERAL', description: 'General church offering' },
+    { name: 'Building Fund', name_ta: 'கட்டிட நிதி', code: 'BUILDING_FUND', description: 'Church building/renovation fund' },
+    { name: 'Charity', name_ta: 'தொண்டு', code: 'CHARITY', description: 'Charity and outreach contributions' },
+    { name: 'Church Maintenance', name_ta: 'தேவாலய பராமரிப்பு', code: 'CHURCH_MAINTENANCE', description: 'Upkeep and maintenance of church property' },
+    // A Mass offering is recorded by a Mass Intention, so there is no "Mass Offering" type (retired in migration 040).
+    { name: 'Baptism Certificate', name_ta: 'ஞானஸ்நான சான்றிதழ்', code: 'BAPTISM_CERTIFICATE', description: 'Contribution received for a Baptism certificate' },
+    { name: 'Marriage Certificate', name_ta: 'திருமண சான்றிதழ்', code: 'MARRIAGE_CERTIFICATE', description: 'Contribution received for a Marriage certificate' },
+    { name: 'Death Certificate', name_ta: 'இறப்பு சான்றிதழ்', code: 'DEATH_CERTIFICATE', description: 'Contribution received for a Death certificate' },
   ]);
   await insertIgnore(conn, 'document_types', ['name', 'code'], [
     { name: 'ID Proof', code: 'ID_PROOF' },
@@ -184,12 +206,20 @@ async function run() {
   if (await tableEmpty(conn, 'churches')) {
     const [result] = await conn.query(
       `INSERT INTO churches
-        (name, registration_no, address_line1, city, district_id, state_id, country_id, pincode, phone, email, established_date)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+        (name, name_ta, registration_no, address_line1, address_ta, city, district_id, state_id, country_id, pincode, phone, email, established_date)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         "St. Mary's Church",
+        // Demo default -- a real installation renames this to its own
+        // church (see master-form.ts, Masters > Churches) and should
+        // replace this with its own actual Tamil name at that point; this
+        // just means a fresh install isn't blank/English-only on the
+        // printed receipt/register/header the moment Tamil is switched on,
+        // before anyone's touched Masters yet.
+        'புனித மரியாள் ஆலயம்',
         'REG-0001',
         '1 Church Street',
+        '1 சர்ச் தெரு, சென்னை',
         'Chennai',
         districtIdByName['Chennai'],
         stateIdByName['Tamil Nadu'],
@@ -226,14 +256,19 @@ async function run() {
   }
 
   if (await tableEmpty(conn, 'masses')) {
+    // name_ta set directly here (not left for migration 029's UPDATE to
+    // backfill) -- db:setup runs migrate THEN seed, so on a genuinely
+    // fresh install migration 029 ran against an empty masses table and
+    // matched nothing; without this, Masses stayed English-only until
+    // someone edited them by hand.
     await conn.query(
-      `INSERT INTO masses (church_id, branch_id, name, mass_time, day_type, sort_order) VALUES
-        (?,?,?,?,?,?), (?,?,?,?,?,?), (?,?,?,?,?,?), (?,?,?,?,?,?)`,
+      `INSERT INTO masses (church_id, branch_id, name, name_ta, mass_time, day_type, sort_order) VALUES
+        (?,?,?,?,?,?,?), (?,?,?,?,?,?,?), (?,?,?,?,?,?,?), (?,?,?,?,?,?,?)`,
       [
-        churchId, branchId, 'Weekday Morning Mass', '06:00:00', 'Daily', 1,
-        churchId, branchId, 'Weekday Evening Mass', '18:00:00', 'Daily', 2,
-        churchId, branchId, 'Sunday Morning Mass', '08:00:00', 'Sunday', 3,
-        churchId, branchId, 'Sunday Evening Mass', '17:30:00', 'Sunday', 4,
+        churchId, branchId, 'Weekday Morning Mass', 'காலை திருப்பலி', '06:00:00', 'Daily', 1,
+        churchId, branchId, 'Weekday Evening Mass', 'மாலை திருப்பலி', '18:00:00', 'Daily', 2,
+        churchId, branchId, 'Sunday Morning Mass', 'ஞாயிறு காலை திருப்பலி', '08:00:00', 'Sunday', 3,
+        churchId, branchId, 'Sunday Evening Mass', 'ஞாயிறு மாலை திருப்பலி', '17:30:00', 'Sunday', 4,
       ]
     );
   }
@@ -268,26 +303,41 @@ async function run() {
   const categoryIdByCode = await getIdMap(conn, 'prayer_categories', 'code');
 
   if (await tableEmpty(conn, 'prayer_intention_master')) {
+    // name_ta set directly here -- same reasoning as masses above (see its
+    // own comment): migration 029's UPDATE only helps a database that was
+    // already seeded before that migration ran, not a genuinely fresh
+    // db:setup.
     const intentions = [
-      ['Thanksgiving', categoryIdByCode.GENERAL, 1, 0],
-      ['Good Health', categoryIdByCode.HEALTH, 2, 0],
-      ['Healing from Illness', categoryIdByCode.HEALTH, 3, 0],
-      ['Birthday Blessings', categoryIdByCode.OCCASION, 4, 0],
-      ['Wedding Anniversary', categoryIdByCode.OCCASION, 5, 0],
-      ['Successful Examination', categoryIdByCode.OCCASION, 6, 0],
-      ['Employment / New Job', categoryIdByCode.OCCASION, 7, 0],
-      ['Safe Travel', categoryIdByCode.GENERAL, 8, 0],
-      ['Souls of the Departed', categoryIdByCode.DEPARTED, 9, 0],
-      ['Family Blessings', categoryIdByCode.FAMILY, 10, 0],
-      ['Others', null, 11, 1],
+      ['Thanksgiving', 'நன்றி செலுத்துதல்', categoryIdByCode.GENERAL, 1, 0],
+      ['Good Health', 'நல்ல ஆரோக்கியம்', categoryIdByCode.HEALTH, 2, 0],
+      ['Healing from Illness', 'நோய் நீக்கம்', categoryIdByCode.HEALTH, 3, 0],
+      ['Birthday Blessings', 'பிறந்தநாள் ஆசீர்வாதங்கள்', categoryIdByCode.OCCASION, 4, 0],
+      ['Wedding Anniversary', 'திருமண ஆண்டு விழா', categoryIdByCode.OCCASION, 5, 0],
+      ['Successful Examination', 'வெற்றிகரமான தேர்வு', categoryIdByCode.OCCASION, 6, 0],
+      ['Employment / New Job', 'வேலைவாய்ப்பு / புதிய வேலை', categoryIdByCode.OCCASION, 7, 0],
+      ['Safe Travel', 'பாதுகாப்பான பயணம்', categoryIdByCode.GENERAL, 8, 0],
+      ['Souls of the Departed', 'இறந்தோர் ஆன்மாக்களுக்காக', categoryIdByCode.DEPARTED, 9, 0],
+      ['Family Blessings', 'குடும்ப ஆசீர்வாதங்கள்', categoryIdByCode.FAMILY, 10, 0],
+      ['Others', 'மற்றவை', null, 11, 1],
     ];
-    for (const [name, categoryId, sortOrder, isCustom] of intentions) {
+    for (const [name, nameTa, categoryId, sortOrder, isCustom] of intentions) {
       await conn.query(
-        'INSERT INTO prayer_intention_master (category_id, name, sort_order, is_custom) VALUES (?,?,?,?)',
-        [categoryId, name, sortOrder, isCustom]
+        'INSERT INTO prayer_intention_master (category_id, name, name_ta, sort_order, is_custom) VALUES (?,?,?,?,?)',
+        [categoryId, name, nameTa, sortOrder, isCustom]
       );
     }
   }
+
+  // contribution_types (name/code/description) predates this feature -- already
+  // seeded with General Offering/Building Fund/Charity. Adds
+  // only the 'Others' row the Contribution form's custom-purpose text field
+  // keys off of (by code, same way certificate/day-type fixed values are
+  // matched elsewhere) -- insertIgnore so re-running this never duplicates
+  // it or disturbs whatever an administrator has since edited.
+  console.log('Seeding contribution type "Others" option...');
+  await insertIgnore(conn, 'contribution_types', ['name', 'name_ta', 'code', 'description'], [
+    { name: 'Others', name_ta: 'மற்றவை', code: 'OTHERS', description: 'Any other contribution purpose not listed above' },
+  ]);
 
   console.log('Seeding system settings...');
   await insertIgnore(conn, 'system_settings', ['setting_key', 'setting_value', 'description'], [
@@ -295,6 +345,10 @@ async function run() {
     { setting_key: 'DEFAULT_CHURCH_ID', setting_value: String(churchId), description: 'Church shown by default in new records' },
     { setting_key: 'RECEIPT_THANK_YOU_MESSAGE', setting_value: 'Thank you for your offering. God Bless You.', description: 'Footer message on printed receipts' },
     { setting_key: 'DATE_FORMAT', setting_value: 'DD-MM-YYYY', description: 'Display date format across the app' },
+    { setting_key: 'RECEIPT_QR_MODE', setting_value: 'calendar', description: 'Receipt QR contents: "calendar" = offline calendar event, "url" = link to the online page' },
+    { setting_key: 'DEFAULT_CURRENCY', setting_value: 'INR', description: 'Default currency for offerings, receipts, reports and the dashboard' },
+    { setting_key: 'UPI_VPA', setting_value: '', description: "Church's UPI ID (VPA), e.g. parish@okhdfcbank -- required for the UPI QR on prayer intention receipts" },
+    { setting_key: 'UPI_PAYEE_NAME', setting_value: '', description: 'Payee name shown in the paying UPI app (defaults to the church name if left blank)' },
   ]);
 
   console.log('Seeding admin user...');
@@ -322,6 +376,41 @@ async function run() {
     console.log('----------------------------------------------------------');
   } else {
     console.log('Users table already has data — skipping admin creation.');
+  }
+
+  // Not gated by tableEmpty (unlike the ADMIN user above) so re-running this
+  // script on an existing database -- upgrading to add the Master
+  // Administrator feature -- still creates the account. Guarded instead by
+  // its own existence check so re-running never duplicates it or resets its
+  // password. church_id/branch_id stay NULL: this role has no home church,
+  // it acts as whichever church/branch it picks via Settings > Change
+  // Church & Branch (see authenticate.js).
+  console.log('Seeding master administrator user...');
+  const [existingMasterAdmins] = await conn.query('SELECT id FROM users WHERE role_id = ? AND is_deleted = 0 LIMIT 1', [
+    roleIdByCode.MASTER_ADMIN,
+  ]);
+  if (!existingMasterAdmins.length) {
+    const masterAdminPasswordHash = await bcrypt.hash(SEED_MASTER_ADMIN_PASSWORD, 12);
+    await conn.query(
+      `INSERT INTO users
+        (church_id, branch_id, role_id, employee_code, full_name, username, email, password_hash, must_change_password)
+       VALUES (NULL, NULL, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        roleIdByCode.MASTER_ADMIN,
+        'EMP-0000',
+        'Master Administrator',
+        SEED_MASTER_ADMIN_USERNAME,
+        'masteradmin@coms.example.org',
+        masterAdminPasswordHash,
+        1,
+      ]
+    );
+    console.log('----------------------------------------------------------');
+    console.log(`Master Administrator login created -> username: ${SEED_MASTER_ADMIN_USERNAME}  password: ${SEED_MASTER_ADMIN_PASSWORD}`);
+    console.log('You will be required to change this password on first login.');
+    console.log('----------------------------------------------------------');
+  } else {
+    console.log('Master Administrator user already exists — skipping.');
   }
 
   console.log('Seed complete.');

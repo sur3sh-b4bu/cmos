@@ -1,27 +1,63 @@
 // =============================================================================
-// COMS design tokens: White / Blue / Gold brand palette, light + dark mode.
-// The toggle stamps `data-theme` on <html>; that always wins over the
-// prefers-color-scheme fallback so a user's explicit choice sticks.
+// COMS design tokens: White / Blue / Gold brand palette.
+//
+// Single light theme by design -- the app is used on shared office machines
+// and printed from constantly, so one predictable set of surfaces beats a
+// per-user preference here. The one axis that *does* vary is brand color per
+// church (Masters > Churches > Theme Color, e.g. St. Thomas Church = green,
+// St. Mary Church = blue) -- see the [data-brand-theme] block at the bottom,
+// applied by ThemeService from the logged-in user's own church.
 // =============================================================================
 
 :root {
-  --coms-color-primary: #0b3d91;
-  --coms-color-primary-light: #2f5fc4;
-  --coms-color-primary-dark: #082a66;
+  // Deep navy rather than royal blue -- reads more formal against white, and
+  // gives the gold accents enough contrast to actually look gilded.
+  --coms-color-primary: #072a63;
+  --coms-color-primary-light: #1f4a9b;
+  --coms-color-primary-dark: #04173d;
   --coms-color-gold: #b08d2b;
   --coms-color-gold-light: #d4af37;
   --coms-color-gold-dark: #8a6f22;
+
+  // Gilded finish. Real gold reads as a *gradient with a bright band*, never a
+  // flat yellow -- these three ramps give surfaces, edges and text the same
+  // highlight-to-shadow sweep so the sheen looks like one material.
+  --coms-gold-gradient: linear-gradient(
+    135deg,
+    #f6e7a8 0%,
+    #d4af37 30%,
+    #a8802a 52%,
+    #e3c96f 74%,
+    #f6e7a8 100%
+  );
+  --coms-gold-edge: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(212, 175, 55, 0.55) 18%,
+    #e8cf82 50%,
+    rgba(212, 175, 55, 0.55) 82%,
+    transparent 100%
+  );
+  // Low-opacity diagonal band swept across navy surfaces for the "shine".
+  --coms-gold-sheen: linear-gradient(
+    118deg,
+    transparent 30%,
+    rgba(232, 207, 130, 0.09) 44%,
+    rgba(246, 231, 168, 0.16) 50%,
+    rgba(232, 207, 130, 0.09) 56%,
+    transparent 70%
+  );
 
   --coms-color-success: #2e7d32;
   --coms-color-warning: #f5a623;
   --coms-color-danger: #c62828;
   --coms-color-info: #2f5fc4;
 
-  --coms-bg: #f4f6fb;
+  --coms-bg: color-mix(in srgb, var(--coms-color-primary) 3.5%, #f8fafc);
   --coms-bg-elevated: #ffffff;
   --coms-surface: #ffffff;
-  --coms-surface-alt: #f0f3fa;
-  --coms-border: #e2e8f0;
+  --coms-surface-alt: color-mix(in srgb, var(--coms-color-primary) 5%, #f8fafc);
+  --coms-border: color-mix(in srgb, var(--coms-color-primary) 10%, #e2e8f0);
 
   --coms-text: #1a1f36;
   --coms-text-muted: #64748b;
@@ -32,26 +68,39 @@
   --coms-glass-border: rgba(255, 255, 255, 0.5);
   --coms-glass-blur: 16px;
 
+  --coms-radius-xs: 6px;
   --coms-radius-sm: 8px;
   --coms-radius-md: 14px;
-  --coms-radius-lg: 20px;
+  --coms-radius-lg: 18px;
+  --coms-radius-xl: 24px;
+  --coms-radius-full: 9999px;
 
-  --coms-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
-  --coms-shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08), 0 2px 4px rgba(16, 24, 40, 0.06);
-  --coms-shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.12), 0 4px 8px rgba(16, 24, 40, 0.06);
+  --coms-border-subtle: rgba(226, 232, 240, 0.8);
+  --coms-border-accent: rgba(212, 175, 55, 0.35);
+
+  --coms-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --coms-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --coms-shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+  --coms-shadow-lg: 0 12px 30px -4px rgba(15, 23, 42, 0.09), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+  --coms-shadow-xl: 0 20px 40px -8px rgba(15, 23, 42, 0.14), 0 8px 16px -4px rgba(15, 23, 42, 0.06);
+  --coms-shadow-hover: 0 14px 34px -4px rgba(7, 42, 99, 0.12), 0 6px 14px -2px rgba(15, 23, 42, 0.06);
+  --coms-shadow-gold: 0 4px 16px rgba(212, 175, 55, 0.22);
+  --coms-shadow-primary: 0 4px 16px rgba(7, 42, 99, 0.24);
 
   --coms-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --coms-transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  --coms-transition-smooth: 300ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  --coms-sidebar-width: 268px;
-  --coms-sidebar-width-collapsed: 76px;
-  --coms-header-height: 64px;
+  --coms-sidebar-width: 222px;
+  --coms-sidebar-width-collapsed: 66px;
+  --coms-header-height: 57px;
 
-  // The sidebar is a fixed brand element (like a permanent nav rail) and
-  // intentionally does NOT flip with light/dark mode -- only --coms-color-primary
-  // (used for buttons/links/accents elsewhere) adapts per theme.
-  --coms-sidebar-gradient-start: #082a66;
-  --coms-sidebar-gradient-end: #0b3d91;
+  // The sidebar is a fixed brand element -- a permanent deep-navy nav rail
+  // against the light content area, gilded with --coms-gold-sheen on top.
+  // Both stops stay deep -- an end stop light enough to read as royal blue
+  // undoes the darkening and leaves the gold with nothing to sit against.
+  --coms-sidebar-gradient-start: #020d24;
+  --coms-sidebar-gradient-end: #062250;
 
   // Angular Material's bundled M3 palettes (blue/yellow) don't match our
   // exact brand hex -- override the system tokens so every Material
@@ -68,78 +117,166 @@
   --mat-sys-on-tertiary-container: var(--coms-color-gold-dark);
   --mat-sys-error: var(--coms-color-danger);
 
+  // The M3 neutral/surface family is auto-*computed* by mat.theme() from the
+  // primary+tertiary hues when not given explicitly -- for this blue+gold
+  // pair that computation lands on #fcf8fd, a barely-there PINK/lavender,
+  // not neutral white. Every un-styled Material surface (mat-table,
+  // mat-paginator, card/grid internals) inherits it, which is the "pink
+  // tint on tables and grids" this section replaces with our own neutral/
+  // light-blue surfaces -- the identical technique used for primary/tertiary
+  // above, just extended to the surface tokens nothing had overridden yet.
+  --mat-sys-surface: var(--coms-surface);
+  --mat-sys-surface-dim: var(--coms-surface-alt);
+  --mat-sys-surface-bright: var(--coms-surface);
+  --mat-sys-surface-container-lowest: var(--coms-surface);
+  --mat-sys-surface-container-low: var(--coms-surface-alt);
+  --mat-sys-surface-container: var(--coms-surface-alt);
+  --mat-sys-surface-container-high: color-mix(in srgb, var(--coms-color-primary) 6%, var(--coms-surface-alt));
+  --mat-sys-surface-container-highest: color-mix(in srgb, var(--coms-color-primary) 10%, var(--coms-surface-alt));
+  --mat-sys-on-surface: var(--coms-text);
+  --mat-sys-on-surface-variant: var(--coms-text-muted);
+  --mat-sys-surface-variant: var(--coms-surface-alt);
+  --mat-sys-outline: var(--coms-border);
+  --mat-sys-outline-variant: var(--coms-border);
+  --mat-sys-background: var(--coms-bg);
+  --mat-sys-on-background: var(--coms-text);
+
   color-scheme: light;
 }
 
-// Dark mode uses a NEUTRAL near-black surface (like GitHub/Linear/VS Code
-// dark themes), not a tinted-navy one -- an earlier version shaded every
-// surface toward blue, which read as "everything is blue" rather than
-// "blue is the accent". Blue and gold now pop as accents against neutral
-// gray instead of blending into a blue-on-blue background. The sidebar
-// alone stays a fixed navy brand element (see --coms-sidebar-gradient-*
-// above), which is the one deliberate spot of full color.
-:root[data-theme='dark'] {
-  --coms-color-primary: #5b8def;
-  --coms-color-primary-light: #7ba4f2;
-  --coms-color-primary-dark: #3d6bc9;
-  --coms-color-gold: #e0b85a;
-  --coms-color-gold-light: #f2d68a;
-  --coms-color-gold-dark: #c9a24d;
+// Green + Gold brand variant (e.g. St. Thomas Church). Overrides only the
+// "primary" hue and its sidebar gradient -- every other token (gold ramps,
+// surfaces, --mat-sys-* Material overrides) is already expressed in terms of
+// var(--coms-color-primary) above, so it re-derives automatically instead of
+// needing its own copy here. Same deep-tone-vs-gold contrast relationship as
+// the default navy: a dark, formal green rather than a bright/kelly green,
+// so the gold accents still read as gilded against it.
+:root[data-brand-theme='green'] {
+  --coms-color-primary: #0b4d2c;
+  --coms-color-primary-light: #1f8a52;
+  --coms-color-primary-dark: #052818;
 
-  --coms-color-success: #4caf50;
-  --coms-color-warning: #ffb84d;
-  --coms-color-danger: #ef5350;
-  --coms-color-info: #7ba4f2;
-
-  --coms-bg: #131316;
-  --coms-bg-elevated: #1b1b1f;
-  --coms-surface: #1d1d21;
-  --coms-surface-alt: #26262b;
-  --coms-border: rgba(255, 255, 255, 0.08);
-
-  --coms-text: #ebebee;
-  --coms-text-muted: #98989f;
-  --coms-text-on-primary: #0b1626;
-  --coms-text-on-gold: #1a1400;
-
-  --coms-glass-bg: rgba(29, 29, 33, 0.65);
-  --coms-glass-border: rgba(255, 255, 255, 0.08);
-
-  --coms-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --coms-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-  --coms-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
-
-  color-scheme: dark;
+  --coms-sidebar-gradient-start: #02150c;
+  --coms-sidebar-gradient-end: #0a3d24;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --coms-color-primary: #5b8def;
-    --coms-color-primary-light: #7ba4f2;
-    --coms-color-primary-dark: #3d6bc9;
-    --coms-color-gold: #e0b85a;
-    --coms-color-gold-light: #f2d68a;
-    --coms-color-gold-dark: #c9a24d;
+// Same idea as green above, one deep/formal jewel-tone block per remaining
+// Theme Color option (Masters > Churches). Each only redefines the primary
+// hue + its sidebar gradient; gold and everything else re-derives.
+:root[data-brand-theme='red'] {
+  --coms-color-primary: #7a1620;
+  --coms-color-primary-light: #b02a3a;
+  --coms-color-primary-dark: #4a0d14;
 
-    --coms-color-success: #4caf50;
-    --coms-color-warning: #ffb84d;
-    --coms-color-danger: #ef5350;
-    --coms-color-info: #7ba4f2;
-
-    --coms-bg: #131316;
-    --coms-bg-elevated: #1b1b1f;
-    --coms-surface: #1d1d21;
-    --coms-surface-alt: #26262b;
-    --coms-border: rgba(255, 255, 255, 0.08);
-
-    --coms-text: #ebebee;
-    --coms-text-muted: #98989f;
-    --coms-text-on-primary: #0b1626;
-    --coms-text-on-gold: #1a1400;
-
-    --coms-glass-bg: rgba(29, 29, 33, 0.65);
-    --coms-glass-border: rgba(255, 255, 255, 0.08);
-
-    color-scheme: dark;
-  }
+  --coms-sidebar-gradient-start: #1f0509;
+  --coms-sidebar-gradient-end: #5c1019;
 }
+
+:root[data-brand-theme='violet'] {
+  --coms-color-primary: #3a2472;
+  --coms-color-primary-light: #6b46b3;
+  --coms-color-primary-dark: #22154a;
+
+  --coms-sidebar-gradient-start: #0f0a24;
+  --coms-sidebar-gradient-end: #2c1a58;
+}
+
+:root[data-brand-theme='orange'] {
+  --coms-color-primary: #8a3d12;
+  --coms-color-primary-light: #c1591c;
+  --coms-color-primary-dark: #5c280c;
+
+  --coms-sidebar-gradient-start: #240f03;
+  --coms-sidebar-gradient-end: #6b3009;
+}
+
+:root[data-brand-theme='purple'] {
+  --coms-color-primary: #5c1a6b;
+  --coms-color-primary-light: #8f2fa8;
+  --coms-color-primary-dark: #380f40;
+
+  --coms-sidebar-gradient-start: #170519;
+  --coms-sidebar-gradient-end: #451350;
+}
+
+:root[data-brand-theme='pink'] {
+  --coms-color-primary: #7a1450;
+  --coms-color-primary-light: #b32478;
+  --coms-color-primary-dark: #4a0c30;
+
+  --coms-sidebar-gradient-start: #1f0515;
+  --coms-sidebar-gradient-end: #5c0f3d;
+}
+
+:root[data-brand-theme='teal'] {
+  --coms-color-primary: #0c504b;
+  --coms-color-primary-light: #17857d;
+  --coms-color-primary-dark: #062b28;
+
+  --coms-sidebar-gradient-start: #021614;
+  --coms-sidebar-gradient-end: #093d39;
+}
+
+:root[data-brand-theme='maroon'] {
+  --coms-color-primary: #5c0d1e;
+  --coms-color-primary-light: #8a1b33;
+  --coms-color-primary-dark: #380611;
+
+  --coms-sidebar-gradient-start: #170307;
+  --coms-sidebar-gradient-end: #420915;
+}
+
+:root[data-brand-theme='slate'] {
+  --coms-color-primary: #24303f;
+  --coms-color-primary-light: #3d4f66;
+  --coms-color-primary-dark: #141c26;
+
+  --coms-sidebar-gradient-start: #0a0e14;
+  --coms-sidebar-gradient-end: #1b2430;
+}
+
+:root[data-brand-theme='amber'] {
+  --coms-color-primary: #784c08;
+  --coms-color-primary-light: #ab7013;
+  --coms-color-primary-dark: #472c03;
+
+  --coms-sidebar-gradient-start: #1d1201;
+  --coms-sidebar-gradient-end: #573604;
+}
+
+:root[data-brand-theme='cyan'] {
+  --coms-color-primary: #0b4f6c;
+  --coms-color-primary-light: #187ea8;
+  --coms-color-primary-dark: #062d3e;
+
+  --coms-sidebar-gradient-start: #02141c;
+  --coms-sidebar-gradient-end: #083c52;
+}
+
+:root[data-brand-theme='olive'] {
+  --coms-color-primary: #334d1b;
+  --coms-color-primary-light: #547a30;
+  --coms-color-primary-dark: #1d2e0e;
+
+  --coms-sidebar-gradient-start: #0c1406;
+  --coms-sidebar-gradient-end: #263b14;
+}
+
+:root[data-brand-theme='bronze'] {
+  --coms-color-primary: #4d2e14;
+  --coms-color-primary-light: #7d4c24;
+  --coms-color-primary-dark: #2e1a0a;
+
+  --coms-sidebar-gradient-start: #140b04;
+  --coms-sidebar-gradient-end: #38210d;
+}
+
+:root[data-brand-theme='plum'] {
+  --coms-color-primary: #48164b;
+  --coms-color-primary-light: #782a7d;
+  --coms-color-primary-dark: #2b0c2d;
+
+  --coms-sidebar-gradient-start: #130414;
+  --coms-sidebar-gradient-end: #361038;
+}
+

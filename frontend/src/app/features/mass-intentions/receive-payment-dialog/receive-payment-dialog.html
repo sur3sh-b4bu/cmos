@@ -1,0 +1,37 @@
+<div class="pay-dialog">
+  <h2 mat-dialog-title>{{ 'massIntentions.receivePayment' | translate }}</h2>
+
+  <mat-dialog-content>
+    <div class="pay-dialog__summary">
+      <div>
+        <span class="text-muted">{{ 'massIntentions.colReceiptNo' | translate }}</span>
+        <strong>{{ data.intention.receipt_no }}</strong>
+      </div>
+      <div>
+        <span class="text-muted">{{ 'common.name' | translate }}</span>
+        <strong>{{ data.intention.name }}</strong>
+      </div>
+      <div>
+        <span class="text-muted">{{ 'payment.amount' | translate }}</span>
+        <strong class="pay-dialog__amount">{{ data.intention.offering_amount | currencyInr }}</strong>
+      </div>
+      <div>
+        <span class="text-muted">{{ 'massIntentions.paymentMethod' | translate }}</span>
+        <strong>{{ method()?.name || ('payment.notSet' | translate) }}</strong>
+      </div>
+    </div>
+
+    <coms-payment-confirm-panel
+      [method]="method()"
+      [amount]="+data.intention.offering_amount"
+      [purposeText]="purposeText"
+      [entityId]="data.intention.id"
+      [receivePayment]="receivePaymentFn"
+      (confirmed)="onConfirmed($event)"
+    />
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="close()">{{ 'common.close' | translate }}</button>
+  </mat-dialog-actions>
+</div>

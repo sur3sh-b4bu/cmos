@@ -2,6 +2,8 @@
 node_modules/
 backend/.env
 backend/logs/*.log
+backend/uploads/
+backend/backups/
 npm-debug.log*
 
 ## Angular / frontend
@@ -18,3 +20,4 @@ Thumbs.db
 ## Misc
 *.log
 coverage/
+screenshot_ref.png

@@ -1,9 +1,22 @@
+:host {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
 .master-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 1300px;
-  margin: 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 12px;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .master-list__header {
@@ -11,21 +24,37 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
 
   h1 {
     margin: 4px 0 0;
     font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  a[mat-flat-button] {
+    font-weight: 600;
+    font-size: 13px;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 14px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
 }
 
 .master-list__back {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-size: 13px;
-  color: var(--coms-text-muted);
+  font-weight: 500;
+  color: #64748b;
   text-decoration: none;
+  transition: color 150ms ease;
 
   mat-icon {
     font-size: 16px;
@@ -34,20 +63,38 @@
   }
 
   &:hover {
-    color: var(--coms-color-primary);
+    color: var(--coms-color-primary, #072a63);
   }
 }
 
 .master-list__chip {
-  background: color-mix(in srgb, var(--coms-color-success) 15%, transparent) !important;
-  color: var(--coms-color-success) !important;
+  background: #f0fdf4 !important;
+  color: #166534 !important;
+  border: 1px solid #bbf7d0 !important;
   font-size: 11px !important;
-  min-height: 22px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  min-height: 24px !important;
+  border-radius: 999px !important;
 }
 
 .master-list__chip--inactive {
-  background: color-mix(in srgb, var(--coms-text-muted) 15%, transparent) !important;
-  color: var(--coms-text-muted) !important;
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.master-list__chip--default {
+  background: #fefce8 !important;
+  color: #854d0e !important;
+  border: 1px solid #fef08a !important;
+
+  mat-icon {
+    font-size: 14px !important;
+    width: 14px !important;
+    height: 14px !important;
+    color: #ca8a04 !important;
+  }
 }
 
 ::ng-deep .master-list__delete {

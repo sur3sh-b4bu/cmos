@@ -1,0 +1,254 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.pi-form {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+.pi-form__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+  }
+}
+
+.pi-form__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 150ms ease;
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateX(-2px);
+  }
+}
+
+.pi-form__loading {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.pi-form__success {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  border-radius: var(--coms-radius-lg, 18px);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+
+  mat-icon {
+    color: #16a34a;
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+  }
+
+  p {
+    margin: 3px 0 0;
+    font-size: 13px;
+  }
+
+  button {
+    margin-left: auto;
+  }
+}
+
+.pi-form__success-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.pi-form__restricted-banner {
+  display: flex;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: var(--coms-radius-md);
+  background: color-mix(in srgb, var(--coms-color-danger) 8%, var(--coms-surface));
+  border: 1px solid color-mix(in srgb, var(--coms-color-danger) 30%, transparent);
+
+  > mat-icon {
+    flex-shrink: 0;
+    color: var(--coms-color-danger);
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+  }
+}
+
+.pi-form__restricted-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+
+  strong {
+    color: var(--coms-color-danger);
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: var(--coms-text-muted);
+  }
+}
+
+.pi-form__restricted-row {
+  span {
+    color: var(--coms-text-muted);
+    margin-right: 4px;
+  }
+}
+
+.pi-form__form {
+  padding: 24px;
+}
+
+.pi-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 20px;
+}
+
+.pi-form__span-2 {
+  grid-column: span 2;
+}
+
+@media (max-width: 720px) {
+  .pi-form__grid {
+    grid-template-columns: 1fr;
+  }
+  .pi-form__span-2 {
+    grid-column: span 1;
+  }
+}
+
+/** The selected Mass's Offering Description (Masters > Masses) -- a plain
+ * document-flow block (not a mat-hint) so multi-line text simply grows the
+ * grid row instead of overlapping the field below it; see
+ * mass-intention-form.ts's selectedMassOfferingDescription. */
+.pi-form__offering-description {
+  display: flex;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-top: -4px;
+  border-radius: var(--coms-radius-sm);
+  background: var(--coms-surface-alt);
+  color: var(--coms-text-muted);
+  font-size: 12.5px;
+
+  > mat-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+  }
+
+  strong {
+    display: block;
+    color: var(--coms-text);
+    font-size: 12.5px;
+    margin-bottom: 2px;
+  }
+
+  p {
+    margin: 0;
+    white-space: pre-wrap;
+  }
+}
+
+.pi-form__payment-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.pi-form__payment-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--coms-radius-sm);
+  background: var(--coms-surface-alt);
+  color: var(--coms-text-muted);
+  font-size: 12.5px;
+  align-self: stretch;
+
+  mat-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.pi-form__save-failed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--coms-radius-sm);
+  background: color-mix(in srgb, var(--coms-color-danger) 8%, var(--coms-surface));
+  border: 1px solid color-mix(in srgb, var(--coms-color-danger) 30%, transparent);
+  color: var(--coms-color-danger);
+  font-size: 13px;
+  align-self: stretch;
+
+  > mat-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  span {
+    flex: 1;
+  }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+}
+
+.pi-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--coms-border);
+}
+

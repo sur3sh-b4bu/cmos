@@ -1,0 +1,70 @@
+<div class="bbl">
+  <div class="bbl__header">
+    <a routerLink="/mass-intentions" class="bbl__back">
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+    <div>
+      <h1>{{ 'massIntentions.bulkBatchesTitle' | translate }}</h1>
+      <p class="text-muted">{{ 'massIntentions.bulkBatchesSubtitle' | translate }}</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="bbl__loading">
+      <mat-progress-spinner mode="indeterminate" diameter="36" />
+    </div>
+  } @else if (batches().length) {
+    <div class="bbl__table-wrap surface-card">
+      <table class="bbl__table">
+        <thead>
+          <tr>
+            <th>{{ 'common.date' | translate }}</th>
+            <th>{{ 'massIntentions.bookedBy' | translate }}</th>
+            <th>{{ 'massIntentions.phoneNumber' | translate }}</th>
+            <th class="bbl__col-right">{{ 'massIntentions.bulkBatchCount' | translate }}</th>
+            <th class="bbl__col-right">{{ 'common.total' | translate }}</th>
+            <th class="bbl__col-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (b of batches(); track b.batchId) {
+            <tr class="bbl__row" role="button" tabindex="0" (click)="openBatch(b)" (keydown.enter)="openBatch(b)">
+              <td>{{ formatDate(b.createdAt) }}</td>
+              <td>{{ b.bookedBy || '-' }}</td>
+              <td>{{ b.phone || '-' }}</td>
+              <td class="bbl__col-right">
+                {{ b.count }}
+                @if (b.paidCount < b.count) {
+                  <span
+                    class="bbl__unpaid-note"
+                    [matTooltip]="'massIntentions.bulkBatchUnpaidNote' | translate: { paid: b.paidCount, count: b.count }"
+                  >
+                    ({{ b.paidCount }} {{ 'massIntentions.bulkBatchPaid' | translate }})
+                  </span>
+                }
+              </td>
+              <td class="bbl__col-right">{{ currency(b.total) }}</td>
+              <td class="bbl__col-actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [disabled]="!b.paidCount || printingBatchId() === b.batchId"
+                  [matTooltip]="(b.paidCount ? 'massIntentions.bulkPrintCombined' : 'massIntentions.receiptUnavailable') | translate"
+                  (click)="print(b, $event)"
+                >
+                  @if (printingBatchId() === b.batchId) {
+                    <mat-progress-spinner diameter="18" mode="indeterminate" />
+                  } @else {
+                    <mat-icon>print</mat-icon>
+                  }
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="bbl__empty surface-card">{{ 'massIntentions.bulkBatchesEmpty' | translate }}</div>
+  }
+</div>

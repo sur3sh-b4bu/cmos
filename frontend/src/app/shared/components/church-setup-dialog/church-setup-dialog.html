@@ -1,0 +1,243 @@
+<div class="setup" data-testid="church-setup-dialog">
+  <h2 mat-dialog-title class="setup__title">
+    <mat-icon>church</mat-icon>
+    {{ 'churchSetup.title' | translate: { church: status()?.churchName ?? data.churchName ?? '' } }}
+  </h2>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <mat-dialog-content class="setup__content">
+    @if (loadError(); as error) {
+      <p class="setup__error" data-testid="setup-load-error">{{ error }}</p>
+    } @else if (credentials(); as c) {
+      <section class="setup__credentials" data-testid="setup-credentials">
+        <h3>{{ 'churchSetup.adminCreatedTitle' | translate }}</h3>
+        <p>{{ 'churchSetup.adminCreatedIntro' | translate }}</p>
+        <dl class="setup__cred-list">
+          <dt>{{ 'churchSetup.username' | translate }}</dt>
+          <dd>
+            <code data-testid="setup-cred-username">{{ c.username }}</code>
+            <button mat-icon-button type="button" (click)="copy(c.username)" [attr.aria-label]="'churchSetup.copy' | translate"><mat-icon>content_copy</mat-icon></button>
+          </dd>
+          <dt>{{ 'churchSetup.tempPassword' | translate }}</dt>
+          <dd>
+            <code data-testid="setup-cred-password">{{ c.tempPassword }}</code>
+            <button mat-icon-button type="button" (click)="copy(c.tempPassword)" [attr.aria-label]="'churchSetup.copy' | translate"><mat-icon>content_copy</mat-icon></button>
+          </dd>
+        </dl>
+        <p class="setup__cred-note">
+          <mat-icon>info</mat-icon>
+          {{ 'churchSetup.adminOnlyOnce' | translate }}
+        </p>
+        @if (copied()) {
+          <p class="setup__done">{{ 'churchSetup.copied' | translate }}</p>
+        }
+      </section>
+    } @else if (status(); as s) {
+      <p class="setup__intro">{{ 'churchSetup.intro' | translate }}</p>
+
+      @if (s.missing.receiptSeries) {
+        <section class="setup__section" data-testid="setup-receipt">
+          <h3>{{ 'churchSetup.receiptTitle' | translate }}</h3>
+          <p class="setup__hint">{{ 'churchSetup.receiptHint' | translate }}</p>
+          <div class="setup__series" [formGroup]="receipt">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'churchSetup.prefix' | translate }}</mat-label>
+              <input matInput formControlName="prefix" data-testid="setup-receipt-prefix" />
+              @if (invalid(receipt, 'prefix')) {
+                <mat-error>{{ 'churchSetup.invalidPrefix' | translate }}</mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'churchSetup.startNumber' | translate }}</mat-label>
+              <input matInput type="number" min="1" formControlName="startNumber" />
+              @if (invalid(receipt, 'startNumber')) {
+                <mat-error>{{ 'churchSetup.invalidNumber' | translate }}</mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'churchSetup.digits' | translate }}</mat-label>
+              <input matInput type="number" min="1" max="10" formControlName="padding" />
+              @if (invalid(receipt, 'padding')) {
+                <mat-error>{{ 'churchSetup.invalidDigits' | translate }}</mat-error>
+              }
+            </mat-form-field>
+            <span class="setup__preview">{{ 'churchSetup.firstNumber' | translate }} <strong>{{ preview(receipt) }}</strong></span>
+          </div>
+        </section>
+      }
+
+      @if (s.missing.certificateSeries.length) {
+        <section class="setup__section" data-testid="setup-certificates">
+          <h3>{{ 'churchSetup.certificateTitle' | translate }}</h3>
+          <p class="setup__hint">{{ 'churchSetup.certificateHint' | translate }}</p>
+          @for (type of s.missing.certificateSeries; track type) {
+            <div class="setup__series" [formGroup]="certificates[type]!" [attr.data-testid]="'setup-cert-' + type">
+              <span class="setup__type">{{ 'churchSetup.type' + type | translate }}</span>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'churchSetup.prefix' | translate }}</mat-label>
+                <input matInput formControlName="prefix" />
+                @if (invalid(certificates[type], 'prefix')) {
+                  <mat-error>{{ 'churchSetup.invalidPrefix' | translate }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'churchSetup.startNumber' | translate }}</mat-label>
+                <input matInput type="number" min="1" formControlName="startNumber" />
+                @if (invalid(certificates[type], 'startNumber')) {
+                  <mat-error>{{ 'churchSetup.invalidNumber' | translate }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'churchSetup.digits' | translate }}</mat-label>
+                <input matInput type="number" min="1" max="10" formControlName="padding" />
+                @if (invalid(certificates[type], 'padding')) {
+                  <mat-error>{{ 'churchSetup.invalidDigits' | translate }}</mat-error>
+                }
+              </mat-form-field>
+              <span class="setup__preview">{{ 'churchSetup.firstNumber' | translate }} <strong>{{ preview(certificates[type]) }}</strong></span>
+            </div>
+          }
+        </section>
+      }
+
+      @if (s.missing.masses) {
+        <section class="setup__section" data-testid="setup-masses">
+          <h3>{{ 'churchSetup.massesTitle' | translate }}</h3>
+          <p class="setup__hint">{{ 'churchSetup.massesHint' | translate }}</p>
+          @for (mass of masses.controls; track mass; let i = $index) {
+            <div class="setup__mass" [formGroup]="mass" [attr.data-testid]="'setup-mass-' + i">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="setup__mass-name">
+                <mat-label>{{ 'churchSetup.massName' | translate }}</mat-label>
+                <input matInput formControlName="name" [attr.data-testid]="'setup-mass-name-' + i" />
+                @if (invalid(mass, 'name')) {
+                  <mat-error>{{ 'churchSetup.required' | translate }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="setup__mass-name">
+                <mat-label>{{ 'churchSetup.massNameTa' | translate }}</mat-label>
+                <input matInput formControlName="nameTa" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="setup__mass-time">
+                <mat-label>{{ 'churchSetup.massTime' | translate }}</mat-label>
+                <input matInput type="time" formControlName="massTime" />
+                @if (invalid(mass, 'massTime')) {
+                  <mat-error>{{ 'churchSetup.required' | translate }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="setup__mass-day">
+                <mat-label>{{ 'churchSetup.dayType' | translate }}</mat-label>
+                <mat-select formControlName="dayType">
+                  @for (day of dayTypes; track day) {
+                    <mat-option [value]="day">{{ 'churchSetup.day' + day | translate }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="setup__mass-amount">
+                <mat-label>{{ 'churchSetup.usualOffering' | translate }}</mat-label>
+                <input matInput type="number" min="0" formControlName="defaultOfferingAmount" />
+              </mat-form-field>
+              <button mat-icon-button type="button" (click)="removeMass(i)" [attr.aria-label]="'churchSetup.removeMass' | translate">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          }
+          <button mat-stroked-button type="button" (click)="addMass()" data-testid="setup-add-mass">
+            <mat-icon>add</mat-icon>
+            {{ 'churchSetup.addMass' | translate }}
+          </button>
+        </section>
+      }
+
+      @if (s.missing.admin) {
+        <section class="setup__section" data-testid="setup-admin">
+          <h3>{{ 'churchSetup.adminTitle' | translate }}</h3>
+          <p class="setup__hint">{{ 'churchSetup.adminHint' | translate }}</p>
+          <div class="setup__extras" [formGroup]="adminForm">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'churchSetup.adminFullName' | translate }}</mat-label>
+              <input matInput formControlName="fullName" data-testid="setup-admin-name" />
+              @if (adminInvalid('fullName')) {
+                <mat-error>{{ 'churchSetup.required' | translate }}</mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'churchSetup.username' | translate }}</mat-label>
+              <input matInput formControlName="username" autocomplete="off" data-testid="setup-admin-username" />
+              @if (adminInvalid('username')) {
+                <mat-error>{{ 'churchSetup.invalidUsername' | translate }}</mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'churchSetup.adminEmail' | translate }}</mat-label>
+              <input matInput type="email" formControlName="email" data-testid="setup-admin-email" />
+              @if (adminInvalid('email')) {
+                <mat-error>{{ 'churchSetup.invalidEmail' | translate }}</mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'churchSetup.adminPhone' | translate }}</mat-label>
+              <span matTextPrefix class="phone-country-code">+91&nbsp;</span>
+              <input matInput type="tel" inputmode="numeric" maxlength="10" formControlName="phone" placeholder="9876543210" />
+              @if (adminInvalid('phone')) {
+                <mat-error>{{ 'common.phoneInvalid' | translate }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </section>
+      }
+
+      @if (s.missing.branch || s.missing.priest) {
+        <section class="setup__section" data-testid="setup-extras">
+          <h3>{{ 'churchSetup.optionalTitle' | translate }}</h3>
+          <p class="setup__hint">{{ 'churchSetup.optionalHint' | translate }}</p>
+          <div class="setup__extras" [formGroup]="extras">
+            @if (s.missing.branch) {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'churchSetup.branchName' | translate }}</mat-label>
+                <input matInput formControlName="branchName" data-testid="setup-branch-name" />
+              </mat-form-field>
+            }
+            @if (s.missing.priest) {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'churchSetup.priestName' | translate }}</mat-label>
+                <input matInput formControlName="priestName" data-testid="setup-priest-name" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="setup__priest-title">
+                <mat-label>{{ 'churchSetup.priestTitle' | translate }}</mat-label>
+                <input matInput formControlName="priestTitle" />
+              </mat-form-field>
+            }
+          </div>
+        </section>
+      }
+
+      @if (s.complete && !s.missing.branch && !s.missing.priest) {
+        <p class="setup__done" data-testid="setup-nothing-missing">{{ 'churchSetup.allDone' | translate }}</p>
+      }
+
+      @if (saveError(); as error) {
+        <p class="setup__error" data-testid="setup-save-error">{{ error }}</p>
+      }
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    @if (credentials()) {
+      <button mat-flat-button color="primary" type="button" (click)="done()" data-testid="setup-done">
+        <mat-icon>check</mat-icon>
+        {{ 'churchSetup.done' | translate }}
+      </button>
+    } @else {
+    <button mat-button type="button" (click)="later()" data-testid="setup-later">{{ 'churchSetup.later' | translate }}</button>
+    @if (status()) {
+      <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="save()" data-testid="setup-save">
+        <mat-icon>check</mat-icon>
+        {{ 'churchSetup.save' | translate }}
+      </button>
+    }
+    }
+  </mat-dialog-actions>
+</div>

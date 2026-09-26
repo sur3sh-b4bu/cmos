@@ -1,0 +1,184 @@
+.import-map {
+  min-width: min(880px, 94vw);
+}
+
+.import-map__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--coms-text);
+
+  mat-icon {
+    color: var(--coms-color-primary);
+    background: color-mix(in srgb, var(--coms-color-primary) 8%, transparent);
+    padding: 6px;
+    border-radius: 8px;
+    box-sizing: content-box;
+  }
+}
+
+.import-map__file {
+  margin: 0 0 6px;
+  color: var(--coms-text-muted);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.import-map__dot {
+  margin: 0 6px;
+}
+
+.import-map__intro {
+  margin: 0 0 16px;
+  color: var(--coms-text-muted);
+  font-size: 13.5px;
+}
+
+.import-map__empty {
+  margin: 12px 0;
+  color: var(--coms-color-danger);
+  font-weight: 500;
+}
+
+.import-map__table-wrap {
+  max-height: min(58vh, 540px);
+  overflow: auto;
+  border: 1px solid var(--coms-border);
+  border-radius: var(--coms-radius-lg);
+  box-shadow: var(--coms-shadow-xs);
+}
+
+.import-map__table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 13.5px;
+
+  th,
+  td {
+    padding: 10px 14px;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--coms-border);
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f8fafc;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--coms-text-muted);
+  }
+
+  tr:hover td {
+    background-color: #f8fafc;
+  }
+}
+
+.import-map__check {
+  width: 72px;
+  text-align: center !important;
+}
+
+.import-map__field {
+  width: 30%;
+}
+
+.import-map__label {
+  font-weight: 600;
+  color: var(--coms-text);
+}
+
+.import-map__fieldhint {
+  display: block;
+  margin-top: 2px;
+  color: var(--coms-text-muted);
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.import-map__req {
+  margin-left: 4px;
+  color: var(--coms-color-danger);
+  font-weight: 700;
+}
+
+.import-map__pick {
+  width: 280px;
+}
+
+.import-map__select {
+  width: 100%;
+  font-size: 13px;
+}
+
+.import-map__problem {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--coms-color-danger);
+}
+
+.import-map__warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: color-mix(in srgb, var(--coms-color-warning) 75%, var(--coms-text));
+
+  .mat-icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    color: var(--coms-color-warning);
+  }
+}
+
+.import-map__banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: var(--coms-radius-md);
+  background: color-mix(in srgb, var(--coms-color-warning) 12%, var(--coms-surface));
+  border: 1px solid color-mix(in srgb, var(--coms-color-warning) 30%, transparent);
+  font-size: 13px;
+  color: var(--coms-text);
+
+  .mat-icon {
+    flex: none;
+    color: var(--coms-color-warning);
+  }
+}
+
+.import-map__sample {
+  color: var(--coms-text-muted);
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-map__row--off {
+  opacity: 0.65;
+
+  .import-map__label {
+    color: var(--coms-text-muted);
+    font-weight: 400;
+  }
+}
+
+.import-map__reset {
+  margin-right: auto;
+}

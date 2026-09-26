@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const { clampPageSize, clampPage } = require('../utils/pagination');
 
 const BASE_SELECT = `
   SELECT u.id, u.church_id, u.branch_id, u.role_id, u.employee_code, u.full_name, u.username, u.email, u.phone,
@@ -11,9 +12,22 @@ const BASE_SELECT = `
   LEFT JOIN churches c ON c.id = u.church_id
 `;
 
-async function list({ page = 1, pageSize = 25, search }) {
+/** A plain admin only ever sees their own church's users -- unconditional.
+ * Master Administrator's reads are otherwise unrestricted across every
+ * church (same "reads are unrestricted for that role" reasoning as
+ * genericMasterRepository's addChurchScope), so this is a no-op for it. */
+function addChurchScope(conditions, params, { churchId, isMasterAdmin }) {
+  if (isMasterAdmin) return;
+  conditions.push('u.church_id = ?');
+  params.push(churchId);
+}
+
+async function list({ page = 1, pageSize = 25, search }, churchScope) {
+  page = clampPage(page);
+  pageSize = clampPageSize(pageSize);
   const conditions = ['u.is_deleted = 0'];
   const params = [];
+  addChurchScope(conditions, params, churchScope);
   if (search) {
     conditions.push('(u.full_name LIKE ? OR u.username LIKE ? OR u.email LIKE ?)');
     params.push(`%${search}%`, `%${search}%`, `%${search}%`);
@@ -29,8 +43,13 @@ async function list({ page = 1, pageSize = 25, search }) {
   return { rows, total, page, pageSize };
 }
 
-async function getById(id) {
-  const [rows] = await pool.query(`${BASE_SELECT} WHERE u.id = ? AND u.is_deleted = 0 LIMIT 1`, [id]);
+async function getById(id, churchScope) {
+  const conditions = ['u.id = ?', 'u.is_deleted = 0'];
+  const params = [id];
+  if (churchScope) {
+    addChurchScope(conditions, params, churchScope);
+  }
+  const [rows] = await pool.query(`${BASE_SELECT} WHERE ${conditions.join(' AND ')} LIMIT 1`, params);
   return rows[0] || null;
 }
 

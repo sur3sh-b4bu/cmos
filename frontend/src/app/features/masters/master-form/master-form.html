@@ -3,7 +3,7 @@
     <a [routerLink]="['/masters', masterKey]" class="master-form__back">
       <mat-icon>arrow_back</mat-icon>
     </a>
-    <h1>{{ editId() ? 'Edit' : 'New' }} {{ config.singularLabel }}</h1>
+    <h1>{{ (editId() ? 'common.edit' : 'common.new') | translate }} {{ config.singularLabel | translate }}</h1>
   </div>
 
   @if (loading()) {
@@ -12,36 +12,141 @@
     </div>
   } @else {
     <form class="master-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
+      @if (config.logoUpload) {
+        <div class="master-form__logo">
+          <div class="master-form__logo-preview">
+            @if (logoUrl()) {
+              <img [src]="logoUrl()" alt="Church logo" />
+            } @else {
+              <mat-icon>church</mat-icon>
+            }
+          </div>
+
+          <div class="master-form__logo-body">
+            <div class="master-form__logo-label">{{ 'masters.churchLogo' | translate }}</div>
+            <input
+              #logoInput
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              hidden
+              (change)="onLogoSelected($event)"
+            />
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="uploadingLogo()"
+              (click)="logoInput.click()"
+            >
+              @if (uploadingLogo()) {
+                <mat-progress-spinner diameter="16" mode="indeterminate" />
+              } @else {
+                <mat-icon>upload</mat-icon>
+              }
+              <span>{{ (logoUrl() ? 'masters.changeLogo' : 'masters.uploadLogo') | translate }}</span>
+            </button>
+            <div class="master-form__logo-hint">
+              {{ (editId() ? 'masters.logoHint' : 'masters.logoUploadOnSave') | translate }}
+            </div>
+          </div>
+        </div>
+      }
+
       <div class="master-form__grid">
         @for (field of config.formFields; track field.key) {
           @if (field.type === 'checkbox') {
-            <mat-checkbox [formControlName]="field.key" class="master-form__checkbox">{{ field.label }}</mat-checkbox>
+            <mat-checkbox [formControlName]="field.key" class="master-form__checkbox">{{ field.label | translate }}</mat-checkbox>
+          } @else if (isChurchMultiField(field)) {
+            <div class="master-form__multi-church">
+              <div class="master-form__multi-church-label">{{ field.label | translate }}</div>
+              <div class="master-form__multi-church-list">
+                <mat-checkbox
+                  [checked]="isAllChurchesSelected(field)"
+                  [indeterminate]="isSomeChurchesSelected(field)"
+                  (change)="toggleAllChurches(field, $event.checked)"
+                >
+                  <strong>{{ 'masters.selectAllChurches' | translate }}</strong>
+                </mat-checkbox>
+                <div class="master-form__multi-church-divider"></div>
+                @for (opt of optionsFor(field); track opt.id) {
+                  <mat-checkbox [checked]="isChurchSelected(opt.id)" (change)="toggleChurchSelection(opt.id)">
+                    {{ opt.name }}
+                  </mat-checkbox>
+                }
+              </div>
+              @if (submitted() && selectedChurchIds().size === 0) {
+                <div class="master-form__multi-church-error">{{ 'masters.selectAtLeastOneChurch' | translate }}</div>
+              }
+              <div class="master-form__multi-church-hint text-muted">{{ 'masters.selectAllChurchesHint' | translate }}</div>
+            </div>
           } @else {
             <mat-form-field appearance="outline" [class.master-form__span-2]="field.span2">
-              <mat-label>{{ field.label }}</mat-label>
+              <mat-label>{{ field.label | translate }}</mat-label>
 
               @switch (field.type) {
                 @case ('text') {
-                  <input matInput [formControlName]="field.key" />
+                  @if (field.key === 'phone') {
+                    <span matTextPrefix class="phone-country-code">+91&nbsp;</span>
+                    <input matInput type="tel" inputmode="numeric" maxlength="10" [formControlName]="field.key" placeholder="9876543210" />
+                  } @else {
+                    <input
+                      matInput
+                      [formControlName]="field.key"
+                      [class.bamini-font]="field.bamini && baminiSignal(field.key)()"
+                      (blur)="field.bamini && convertBaminiOnBlur(field.key)"
+                    />
+                    @if (field.bamini) {
+                      <button
+                        mat-icon-button
+                        matSuffix
+                        type="button"
+                        [color]="baminiSignal(field.key)() ? 'primary' : undefined"
+                        [matTooltip]="'massIntentions.typeInBamini' | translate"
+                        (click)="toggleBamini(field.key)"
+                      >
+                        <mat-icon>keyboard</mat-icon>
+                      </button>
+                    }
+                  }
                 }
                 @case ('number') {
                   <input matInput type="number" [formControlName]="field.key" />
                 }
+                @case ('time') {
+                  <input matInput type="time" [formControlName]="field.key" />
+                }
                 @case ('textarea') {
-                  <textarea matInput rows="3" [formControlName]="field.key"></textarea>
+                  <textarea
+                    matInput
+                    rows="3"
+                    [formControlName]="field.key"
+                    [class.bamini-font]="field.bamini && baminiSignal(field.key)()"
+                    (blur)="field.bamini && convertBaminiOnBlur(field.key)"
+                  ></textarea>
+                  @if (field.bamini) {
+                    <button
+                      mat-icon-button
+                      matSuffix
+                      type="button"
+                      [color]="baminiSignal(field.key)() ? 'primary' : undefined"
+                      [matTooltip]="'massIntentions.typeInBamini' | translate"
+                      (click)="toggleBamini(field.key)"
+                    >
+                      <mat-icon>keyboard</mat-icon>
+                    </button>
+                  }
                 }
                 @case ('date') {
                   <ng-container>
                     <input matInput [matDatepicker]="picker" [formControlName]="field.key" />
                     <mat-datepicker-toggle matIconSuffix [for]="picker" />
-                    <mat-datepicker #picker />
+                    <mat-datepicker #picker [calendarHeaderComponent]="todayHeader" />
                   </ng-container>
                 }
                 @case ('select') {
                   <mat-select [formControlName]="field.key">
                     @if (field.options) {
                       @for (opt of field.options; track opt.value) {
-                        <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                        <mat-option [value]="opt.value">{{ opt.label | translate }}</mat-option>
                       }
                     } @else {
                       @for (opt of optionsFor(field); track opt.id) {
@@ -53,7 +158,10 @@
               }
 
               @if (field.required && form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
-                <mat-error>{{ field.label }} is required</mat-error>
+                <mat-error>{{ 'certificates.common.fieldRequired' | translate: { field: (field.label | translate) } }}</mat-error>
+              }
+              @if (form.get(field.key)?.hasError('phone') && form.get(field.key)?.touched) {
+                <mat-error>{{ 'common.phoneInvalid' | translate }}</mat-error>
               }
             </mat-form-field>
           }
@@ -61,12 +169,12 @@
       </div>
 
       <div class="master-form__actions">
-        <a mat-button [routerLink]="['/masters', masterKey]">Cancel</a>
+        <a mat-button [routerLink]="['/masters', masterKey]">{{ 'common.cancel' | translate }}</a>
         <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
           @if (saving()) {
             <mat-progress-spinner diameter="18" mode="indeterminate" />
           } @else {
-            <span>{{ editId() ? 'Save Changes' : 'Create' }}</span>
+            <span>{{ (editId() ? 'common.saveChanges' : 'masters.create') | translate }}</span>
           }
         </button>
       </div>

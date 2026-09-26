@@ -1,21 +1,32 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe } from '@ngx-translate/core';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'coms-error-page',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatIconModule],
+  imports: [RouterLink, MatButtonModule, MatIconModule, TranslatePipe],
   template: `
     <div class="error-page">
       <mat-icon class="error-page__icon">{{ icon }}</mat-icon>
-      <h1>{{ title }}</h1>
-      <p class="text-muted">{{ message }}</p>
-      <a mat-flat-button color="primary" routerLink="/dashboard">
-        <mat-icon>home</mat-icon>
-        Back to Dashboard
-      </a>
+      <h1>{{ title | translate }}</h1>
+      <p class="text-muted">{{ message | translate }}</p>
+      <!-- A signed-out visitor sent to /dashboard just bounces to /login, so
+           point them there directly. -->
+      @if (authService.isAuthenticated()) {
+        <a mat-flat-button color="primary" routerLink="/dashboard">
+          <mat-icon>home</mat-icon>
+          {{ 'staticPages.backToDashboard' | translate }}
+        </a>
+      } @else {
+        <a mat-flat-button color="primary" routerLink="/login">
+          <mat-icon>login</mat-icon>
+          {{ 'staticPages.backToLogin' | translate }}
+        </a>
+      }
     </div>
   `,
   styles: [
@@ -48,7 +59,10 @@ import { MatIconModule } from '@angular/material/icon';
   ],
 })
 export class ErrorPageComponent {
+  authService = inject(AuthService);
+
   @Input() icon = 'error_outline';
-  @Input() title = 'Something went wrong';
+  /** Translation keys (route data binds these directly -- see app.routes.ts), resolved via the `translate` pipe above. */
+  @Input() title = 'staticPages.somethingWentWrong';
   @Input() message = '';
 }

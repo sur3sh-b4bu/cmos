@@ -1,0 +1,112 @@
+<div class="import-map" data-testid="import-mapping-dialog">
+  <h2 mat-dialog-title class="import-map__title">
+    <mat-icon>table_view</mat-icon>
+    {{ 'common.importMapTitle' | translate }}
+  </h2>
+
+  <mat-dialog-content>
+    <p class="import-map__file">
+      {{ data.fileName }}
+      <span class="import-map__dot">·</span>
+      {{ 'common.importMapRows' | translate: { count: data.preview.rowCount } }}
+      <span class="import-map__dot">·</span>
+      {{ 'common.importMapAutoMatched' | translate: { matched: autoMatchedCount, total: data.preview.fields.length } }}
+    </p>
+    <p class="import-map__intro">{{ 'common.importMapIntro' | translate }}</p>
+
+    @if (!columns.length) {
+      <p class="import-map__empty" data-testid="import-map-no-columns">{{ 'common.importMapNoColumns' | translate }}</p>
+    }
+
+    @if (warningCount() > 0) {
+      <p class="import-map__banner" data-testid="import-map-banner">
+        <mat-icon>warning</mat-icon>
+        {{ 'common.importMapSharedBanner' | translate }}
+      </p>
+    }
+
+    <div class="import-map__table-wrap">
+      <table class="import-map__table">
+        <thead>
+          <tr>
+            <th class="import-map__check">{{ 'common.importMapImportField' | translate }}</th>
+            <th>{{ 'common.importMapField' | translate }}</th>
+            <th>{{ 'common.importMapColumn' | translate }}</th>
+            <th>{{ 'common.importMapSample' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.field.key; let i = $index) {
+            <tr [class.import-map__row--off]="!row.enabled" [attr.data-testid]="'import-map-row-' + row.field.key">
+              <td class="import-map__check">
+                <mat-checkbox
+                  [checked]="row.enabled"
+                  [disabled]="row.field.required"
+                  (change)="toggle(i, $event.checked)"
+                  [attr.aria-label]="row.field.label"
+                  [attr.data-testid]="'import-map-check-' + row.field.key"
+                />
+              </td>
+              <td class="import-map__field">
+                <span class="import-map__label">{{ row.field.label }}</span>
+                @if (row.field.required) {
+                  <span class="import-map__req" [attr.title]="'common.importMapRequired' | translate">*</span>
+                }
+                @if (row.field.hint) {
+                  <span class="import-map__fieldhint" [attr.data-testid]="'import-map-hint-' + row.field.key">{{ row.field.hint }}</span>
+                }
+              </td>
+              <td class="import-map__pick">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="import-map__select">
+                  <mat-select
+                    [value]="row.column"
+                    (selectionChange)="choose(i, $event.value)"
+                    [placeholder]="'common.importMapChoose' | translate"
+                    [attr.aria-label]="row.field.label"
+                    [attr.data-testid]="'import-map-select-' + row.field.key"
+                    panelWidth=""
+                  >
+                    <mat-option [value]="null">{{ 'common.importMapNotMapped' | translate }}</mat-option>
+                    @for (column of columns; track column.number) {
+                      <mat-option [value]="column.number">{{ optionLabel(column) }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                @if (problems().has(row.field.key)) {
+                  <span class="import-map__problem" [attr.data-testid]="'import-map-problem-' + row.field.key">
+                    {{ 'common.importMapChoose' | translate }}
+                  </span>
+                } @else if (sharedColumns().get(row.field.key); as others) {
+                  <span class="import-map__warning" [attr.data-testid]="'import-map-warning-' + row.field.key">
+                    <mat-icon>warning</mat-icon>
+                    {{ 'common.importMapAlsoUsedBy' | translate: { fields: others.join(', ') } }}
+                  </span>
+                }
+              </td>
+              <td class="import-map__sample">
+                @if (row.enabled) {
+                  {{ samplesOf(row.column) }}
+                } @else {
+                  <em>{{ 'common.importMapSkipped' | translate }}</em>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" class="import-map__reset" (click)="reset()" data-testid="import-map-reset">
+      {{ 'common.importMapReset' | translate }}
+    </button>
+    <button mat-button type="button" (click)="cancel()" data-testid="import-map-cancel">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button mat-flat-button color="primary" type="button" [disabled]="!canImport()" (click)="confirm()" data-testid="import-map-confirm">
+      <mat-icon>upload_file</mat-icon>
+      {{ 'common.importMapRun' | translate: { count: mappedCount() } }}
+    </button>
+  </mat-dialog-actions>
+</div>

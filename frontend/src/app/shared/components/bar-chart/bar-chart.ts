@@ -1,4 +1,5 @@
-import { Component, Input, OnChanges, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, ViewChild, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 export interface BarChartPoint {
   label: string;
@@ -10,6 +11,8 @@ interface VerticalBarViewModel extends BarChartPoint {
   barWidth: number;
   barHeight: number;
   y: number;
+  displayLabel: string;
+  showLabel: boolean;
 }
 
 interface HorizontalBarViewModel extends BarChartPoint {
@@ -35,7 +38,17 @@ const BAR_RADIUS = 4;
 const AVG_CHAR_WIDTH_PX = 5.6;
 const LABEL_AREA_MAX = 150;
 const LABEL_AREA_MIN = 60;
-const ROW_HEIGHT = 34;
+// A horizontal chart's row height stretches to fill the same PLOT_HEIGHT
+// budget a vertical chart always uses, clamped to stay readable -- without
+// this, e.g. 4 categories at the old fixed 34px/row (170px total) rendered
+// visibly shorter than a vertical chart's fixed 194px total, throwing off
+// everything below it (the table toggle, the table itself) whenever the two
+// sit side by side with the same category count, as Reports' Collections
+// tab does. More categories than fit within the budget at MIN_ROW_HEIGHT
+// still grow taller, same as before -- there's no way to keep many rows
+// readable in a fixed height.
+const MIN_ROW_HEIGHT = 28;
+const MAX_ROW_HEIGHT = 48;
 
 /** Produces round, human-friendly tick values (e.g. [0,1,2,3], not [0, 2.5, 5]) so gridline labels always match where the line is actually drawn. */
 function niceTicks(maxValue: number, targetCount = 4): number[] {
@@ -70,15 +83,21 @@ function niceTicks(maxValue: number, targetCount = 4): number[] {
 @Component({
   selector: 'coms-bar-chart',
   standalone: true,
+  imports: [TranslatePipe],
   templateUrl: './bar-chart.html',
   styleUrl: './bar-chart.scss',
 })
-export class BarChartComponent implements OnChanges {
+export class BarChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input({ required: true }) data: BarChartPoint[] = [];
   @Input() ariaLabel = 'Bar chart';
   @Input() valueFormatter: (value: number) => string = (v) => v.toLocaleString('en-IN');
   @Input() color = 'var(--coms-color-primary)';
   @Input() orientation: 'vertical' | 'horizontal' = 'vertical';
+  /** Reports keeps the "View as table" affordance (its job is detailed
+   * analysis); the Dashboard turns it off to stay a quick visual summary. */
+  @Input() showTableToggle = true;
+
+  @ViewChild('hostEl', { static: true }) private hostEl!: ElementRef<HTMLDivElement>;
 
   viewBoxWidth = 600;
   totalHeight = PLOT_HEIGHT + AXIS_HEIGHT + TOP_PADDING;
@@ -86,12 +105,41 @@ export class BarChartComponent implements OnChanges {
 
   verticalBars = signal<VerticalBarViewModel[]>([]);
   horizontalBars = signal<HorizontalBarViewModel[]>([]);
-  gridlinesV = signal<{ y: number; label: string }[]>([]); // horizontal gridlines, for vertical bars
+  gridlinesV = signal<{ y: number; label: string; x1: number; x2: number; labelX: number }[]>([]); // horizontal gridlines, for vertical bars
   gridlinesH = signal<{ x: number; label: string }[]>([]); // vertical gridlines, for horizontal bars
   tooltip = signal<TooltipState | null>(null);
-  showTable = signal(false);
+  // Table is visible by default so the underlying numbers are always at
+  // hand next to the chart, not hidden behind a click.
+  showTable = signal(true);
+
+  // Measured in real CSS pixels so the viewBox can be sized 1:1 with the
+  // rendered element -- with preserveAspectRatio="none" any mismatch
+  // between viewBoxWidth and the actual rendered width stretches every bar
+  // non-uniformly, which is what made bars look too thick/wide on cards
+  // with few categories (see recompute* below).
+  private measuredWidth = signal(0);
+  private resizeObserver?: ResizeObserver;
 
   ngOnChanges(): void {
+    this.recompute();
+  }
+
+  ngAfterViewInit(): void {
+    this.resizeObserver = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width ?? 0;
+      if (width > 0 && Math.abs(width - this.measuredWidth()) > 1) {
+        this.measuredWidth.set(width);
+        this.recompute();
+      }
+    });
+    this.resizeObserver.observe(this.hostEl.nativeElement);
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+  }
+
+  private recompute(): void {
     if (this.orientation === 'horizontal') this.recomputeHorizontal();
     else this.recomputeVertical();
   }
@@ -107,21 +155,47 @@ export class BarChartComponent implements OnChanges {
     const ticks = niceTicks(max);
     const niceMax = ticks[ticks.length - 1];
 
-    this.viewBoxWidth = Math.max(320, n * 70);
+    this.viewBoxWidth = Math.max(this.measuredWidth() || 600, 320);
     this.totalHeight = PLOT_HEIGHT + AXIS_HEIGHT + TOP_PADDING;
-    const bandWidth = this.viewBoxWidth / n;
-    const barWidth = Math.min(MAX_BAR_THICKNESS, bandWidth * 0.5);
+
+    const maxTickLabelLen = Math.max(...ticks.map((t) => this.valueFormatter(t).length), 1);
+    const gutterLeft = Math.max(48, Math.min(85, maxTickLabelLen * 6.5 + 14));
+    const plotRight = 10;
+    const plotWidth = Math.max(100, this.viewBoxWidth - gutterLeft - plotRight);
+    const bandWidth = plotWidth / n;
+    const barWidth = Math.max(4, Math.min(MAX_BAR_THICKNESS, bandWidth * 0.55));
+
+    // Determine label formatting and density:
+    // Full date like "01 Sept" needs ~45px.
+    // Day number like "01" needs ~16px.
+    const isShortDate = bandWidth < 50;
+    const step = bandWidth < 22 ? Math.ceil(24 / bandWidth) : 1;
 
     this.verticalBars.set(
       this.data.map((point, i) => {
         const barHeight = niceMax === 0 ? 0 : (point.value / niceMax) * PLOT_HEIGHT;
-        const centerX = i * bandWidth + bandWidth / 2;
+        const centerX = gutterLeft + i * bandWidth + bandWidth / 2;
+
+        let displayLabel = point.label;
+        if (isShortDate) {
+          const match = point.label.match(/^(\d{1,2})\s+[A-Za-z]+$/);
+          if (match) {
+            displayLabel = match[1];
+          } else if (point.label.length > 4) {
+            displayLabel = point.label.slice(0, 3);
+          }
+        }
+
+        const showLabel = step === 1 || i % step === 0 || i === n - 1;
+
         return {
           ...point,
           x: centerX - barWidth / 2,
           barWidth,
           barHeight,
           y: TOP_PADDING + (PLOT_HEIGHT - barHeight),
+          displayLabel,
+          showLabel,
         };
       })
     );
@@ -130,6 +204,9 @@ export class BarChartComponent implements OnChanges {
       ticks.map((tick) => ({
         y: TOP_PADDING + PLOT_HEIGHT * (1 - tick / niceMax),
         label: this.valueFormatter(tick),
+        x1: gutterLeft,
+        x2: this.viewBoxWidth - plotRight,
+        labelX: gutterLeft - 6,
       }))
     );
   }
@@ -148,9 +225,12 @@ export class BarChartComponent implements OnChanges {
     const longestLabelPx = Math.max(...this.data.map((d) => d.label.length)) * AVG_CHAR_WIDTH_PX;
     this.labelAreaWidth = Math.min(LABEL_AREA_MAX, Math.max(LABEL_AREA_MIN, longestLabelPx + 12));
 
-    this.viewBoxWidth = 600;
+    // Same 1:1 sizing rationale as recomputeVertical(): match the actual
+    // rendered width so the fixed-thickness bars aren't stretched.
+    this.viewBoxWidth = Math.max(this.measuredWidth() || 600, 320);
     const plotWidth = this.viewBoxWidth - this.labelAreaWidth - 16;
-    this.totalHeight = n * ROW_HEIGHT + AXIS_HEIGHT + TOP_PADDING;
+    const rowHeight = Math.min(MAX_ROW_HEIGHT, Math.max(MIN_ROW_HEIGHT, PLOT_HEIGHT / n));
+    this.totalHeight = n * rowHeight + AXIS_HEIGHT + TOP_PADDING;
 
     this.horizontalBars.set(
       this.data.map((point, i) => {
@@ -159,8 +239,8 @@ export class BarChartComponent implements OnChanges {
         const fitsInside = barPixelWidth > 40;
         return {
           ...point,
-          y: TOP_PADDING + i * ROW_HEIGHT + (ROW_HEIGHT - MAX_BAR_THICKNESS) / 2,
-          rowHeight: ROW_HEIGHT,
+          y: TOP_PADDING + i * rowHeight + (rowHeight - MAX_BAR_THICKNESS) / 2,
+          rowHeight,
           barWidth: barPixelWidth,
           valueLabelX: fitsInside ? this.labelAreaWidth + barPixelWidth - 8 : this.labelAreaWidth + barPixelWidth + 8,
           valueLabelAnchor: fitsInside ? 'end' : 'start',
@@ -206,7 +286,7 @@ export class BarChartComponent implements OnChanges {
             Z`;
   }
 
-  showTooltip(point: BarChartPoint, event: Event, top?: number): void {
+  showTooltip(point: BarChartPoint, event: Event): void {
     const target = event.currentTarget as SVGElement;
     const svg = target.ownerSVGElement;
     const rect = svg?.getBoundingClientRect();

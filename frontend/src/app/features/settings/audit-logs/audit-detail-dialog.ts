@@ -1,41 +1,42 @@
 import { Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuditLog } from './audit-log.model';
 
 @Component({
   selector: 'coms-audit-detail-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [MatDialogModule, MatButtonModule, TranslatePipe],
   template: `
-    <h2 mat-dialog-title>Audit Log Detail</h2>
+    <h2 mat-dialog-title>{{ 'settings.auditLogDetail' | translate }}</h2>
     <mat-dialog-content class="audit-detail">
       <dl>
-        <dt>When</dt>
+        <dt>{{ 'settings.when' | translate }}</dt>
         <dd>{{ data.created_at }}</dd>
-        <dt>User</dt>
-        <dd>{{ data.username_snapshot || 'System' }}</dd>
-        <dt>Action</dt>
+        <dt>{{ 'settings.user' | translate }}</dt>
+        <dd>{{ data.username_snapshot || ('settings.system' | translate) }}</dd>
+        <dt>{{ 'settings.action' | translate }}</dt>
         <dd>{{ data.action }}</dd>
-        <dt>Module</dt>
+        <dt>{{ 'settings.module' | translate }}</dt>
         <dd>{{ data.module }}</dd>
-        <dt>Entity</dt>
+        <dt>{{ 'settings.entity' | translate }}</dt>
         <dd>{{ data.entity_type }} @if (data.entity_id) { (#{{ data.entity_id }}) }</dd>
-        <dt>IP Address</dt>
+        <dt>{{ 'settings.ipAddress' | translate }}</dt>
         <dd>{{ data.ip_address || '-' }}</dd>
       </dl>
 
       @if (data.old_values) {
-        <h3>Before</h3>
+        <h3>{{ 'settings.before' | translate }}</h3>
         <pre>{{ formatJson(data.old_values) }}</pre>
       }
       @if (data.new_values) {
-        <h3>After</h3>
+        <h3>{{ 'settings.after' | translate }}</h3>
         <pre>{{ formatJson(data.new_values) }}</pre>
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Close</button>
+      <button mat-button mat-dialog-close>{{ 'common.close' | translate }}</button>
     </mat-dialog-actions>
   `,
   styles: [

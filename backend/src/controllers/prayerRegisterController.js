@@ -1,4 +1,4 @@
-const service = require('../services/prayerIntentionService');
+const service = require('../services/massIntentionService');
 const asyncHandler = require('../utils/asyncHandler');
 
 const preview = asyncHandler(async (req, res) => {
@@ -7,9 +7,11 @@ const preview = asyncHandler(async (req, res) => {
 });
 
 const print = asyncHandler(async (req, res) => {
-  const buffer = await service.buildDailyRegisterPdf(req.query.date, req);
+  const namesOnly = req.query.namesOnly === true || req.query.namesOnly === 'true';
+  const buffer = await service.buildDailyRegisterPdf(req.query.date, req, { namesOnly });
   res.set('Content-Type', 'application/pdf');
-  res.set('Content-Disposition', `inline; filename="Daily-Prayer-Register-${req.query.date}.pdf"`);
+  const suffix = namesOnly ? '-Names' : '';
+  res.set('Content-Disposition', `inline; filename="Daily-Prayer-Register${suffix}-${req.query.date}.pdf"`);
   res.send(buffer);
 });
 

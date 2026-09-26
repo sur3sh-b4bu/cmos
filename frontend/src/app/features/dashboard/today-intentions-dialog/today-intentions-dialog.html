@@ -1,0 +1,78 @@
+<div class="tid-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon>volunteer_activism</mat-icon>
+    {{ 'dashboard.todayIntentionsFor' | translate: { date: formattedDate } }}
+  </h2>
+
+  <mat-dialog-content>
+    @if (loading()) {
+      <div class="tid-dialog__loading">
+        <mat-progress-spinner mode="indeterminate" diameter="32" />
+      </div>
+    } @else if (entries().length === 0) {
+      <div class="tid-dialog__empty">{{ 'dailyRegister.noneRecorded' | translate: { date: formattedDate } }}</div>
+    } @else {
+      <div class="tid-dialog__summary text-muted">
+        {{ 'dailyRegister.summary' | translate: { count: entries().length, total: (totalOffering() | currencyInr) } }}
+      </div>
+
+      @for (group of groups(); track group.massId) {
+        <div class="tid-dialog__group">
+          <div class="tid-dialog__group-header">
+            <mat-icon>church</mat-icon>
+            <h3>{{ massLabel(group) }}</h3>
+            <span class="text-muted">{{ group.massTime }}</span>
+          </div>
+          <table class="tid-dialog__table">
+            <thead>
+              <tr>
+                <th class="col-index">#</th>
+                <th class="col-name">{{ 'common.name' | translate }}</th>
+                <th class="col-intention">{{ 'massIntentions.colIntention' | translate }}</th>
+                <th class="col-offering">{{ 'massIntentions.colOffering' | translate }}</th>
+                <th class="col-receipt">{{ 'massIntentions.colReceiptNo' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of group.entries; track entry.id; let i = $index) {
+                <tr>
+                  <td class="col-index">{{ i + 1 }}</td>
+                  <td class="col-name tid-dialog__name">{{ entry.name }}</td>
+                  <td class="col-intention">{{ intentionText(entry) }}</td>
+                  <td class="col-offering">{{ entry.offering_amount | currencyInr }}</td>
+                  <td class="col-receipt text-muted">{{ entry.receipt_no }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>{{ 'common.close' | translate }}</button>
+    <button
+      mat-stroked-button
+      color="primary"
+      type="button"
+      [disabled]="loading() || printingNamesOnly() || entries().length === 0"
+      (click)="printNamesOnly()"
+    >
+      @if (printingNamesOnly()) {
+        <mat-progress-spinner diameter="16" mode="indeterminate" />
+      } @else {
+        <mat-icon>print</mat-icon>
+      }
+      <span>{{ 'dailyRegister.printNamesOnly' | translate }}</span>
+    </button>
+    <button mat-flat-button color="primary" type="button" [disabled]="loading() || printing() || entries().length === 0" (click)="print()">
+      @if (printing()) {
+        <mat-progress-spinner diameter="16" mode="indeterminate" />
+      } @else {
+        <mat-icon>print</mat-icon>
+      }
+      <span>{{ 'common.print' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</div>

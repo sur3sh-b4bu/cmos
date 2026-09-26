@@ -1,24 +1,38 @@
 <div class="roles-perms">
   <div class="roles-perms__header">
     <div>
-      <h1>Roles &amp; Permissions</h1>
-      <p class="text-muted">Choose a role, then tick which actions that role is allowed to perform.</p>
+      <h1>{{ 'breadcrumb.rolesPermissions' | translate }}</h1>
+      <p class="text-muted">{{ 'settings.rolesPermissionsSubtitle' | translate }}</p>
     </div>
-    <mat-form-field appearance="outline" class="roles-perms__role-select">
-      <mat-label>Role</mat-label>
-      <mat-select [ngModel]="selectedRoleId()" (ngModelChange)="selectRole($event)">
-        @for (role of roles(); track role.id) {
-          <mat-option [value]="role.id">{{ role.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+    <div class="roles-perms__header-actions">
+      <mat-form-field appearance="outline" class="roles-perms__role-select" subscriptSizing="dynamic">
+        <mat-label>{{ 'settings.role' | translate }}</mat-label>
+        <mat-select [ngModel]="selectedRoleId()" (ngModelChange)="selectRole($event)">
+          @for (role of roles(); track role.id) {
+            <mat-option [value]="role.id">
+              {{ role.name }}{{ role.church_name ? ' — ' + role.church_name : '' }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (authService.hasPermission('roles.create')) {
+        <button mat-stroked-button type="button" (click)="addRole()">
+          <mat-icon>add</mat-icon>
+          {{ 'settings.addRole' | translate }}
+        </button>
+      }
+    </div>
   </div>
 
   @if (selectedRole()?.is_system_role) {
     <div class="roles-perms__notice glass-card">
       <mat-icon>shield</mat-icon>
-      <span>{{ selectedRole()?.name }} is a protected system role with full access — its permissions can't be changed, to prevent accidental lockout.</span>
+      <span>{{ 'settings.systemRoleNotice' | translate: { name: selectedRole()?.name } }}</span>
     </div>
+  } @else if (selectedRole()) {
+    <mat-chip-set class="roles-perms__custom-chip">
+      <mat-chip>{{ 'settings.customRoleBadge' | translate }}@if (selectedRole()?.church_name) { &middot; {{ selectedRole()?.church_name }} }</mat-chip>
+    </mat-chip-set>
   }
 
   @if (loading()) {
@@ -60,7 +74,7 @@
           @if (saving()) {
             <mat-progress-spinner diameter="18" mode="indeterminate" />
           } @else {
-            <span>Save Permissions</span>
+            <span>{{ 'settings.savePermissions' | translate }}</span>
           }
         </button>
       </div>

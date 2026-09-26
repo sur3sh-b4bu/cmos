@@ -1,13 +1,13 @@
 <div class="audit-logs">
   <div class="audit-logs__header">
     <div>
-      <h1>Audit Logs</h1>
-      <p class="text-muted">A record of who did what, and when — logins, creates, updates, deletes, and prints across the system.</p>
+      <h1>{{ 'breadcrumb.auditLogs' | translate }}</h1>
+      <p class="text-muted">{{ 'settings.auditLogsSubtitle' | translate }}</p>
     </div>
-    <mat-form-field appearance="outline" class="audit-logs__module-filter">
-      <mat-label>Module</mat-label>
+    <mat-form-field appearance="outline" class="audit-logs__module-filter" subscriptSizing="dynamic">
+      <mat-label>{{ 'settings.module' | translate }}</mat-label>
       <mat-select [ngModel]="moduleFilter()" (ngModelChange)="onModuleFilterChange($event)">
-        <mat-option value="">All modules</mat-option>
+        <mat-option value="">{{ 'settings.allModules' | translate }}</mat-option>
         @for (m of modules; track m) {
           <mat-option [value]="m">{{ m }}</mat-option>
         }
@@ -18,7 +18,7 @@
   <coms-data-table
     tableId="audit-logs"
     exportFileName="audit-logs"
-    emptyMessage="No activity recorded yet."
+    emptyMessageKey="settings.noActivityYet"
     [columns]="columns"
     [rows]="rows()"
     [total]="total()"
@@ -26,6 +26,7 @@
     [pageSize]="pageSize()"
     [loading]="loading()"
     [cellTemplates]="cellTemplates"
+    [exportAllFn]="exportAllRows"
     (pageChange)="onPageChange($event)"
     (searchChange)="onSearchChange($event)"
   />
@@ -38,7 +39,7 @@
 </ng-template>
 
 <ng-template #detailTpl let-row>
-  <button mat-icon-button matTooltip="View detail" (click)="viewDetail(row)">
+  <button mat-icon-button [matTooltip]="'settings.viewDetail' | translate" (click)="viewDetail(row)">
     <mat-icon>visibility</mat-icon>
   </button>
 </ng-template>

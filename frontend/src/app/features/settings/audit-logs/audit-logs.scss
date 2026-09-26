@@ -1,9 +1,22 @@
+:host {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
 .audit-logs {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 1300px;
-  margin: 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 12px;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .audit-logs__header {
@@ -14,19 +27,55 @@
   gap: 16px;
 
   h1 {
-    margin: 0 0 4px;
-    font-size: 20px;
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--coms-text);
+    letter-spacing: -0.01em;
   }
+
   p {
     margin: 0;
-    max-width: 520px;
+    color: var(--coms-text-muted);
+    font-size: 13.5px;
+    max-width: 600px;
   }
 }
 
 .audit-logs__module-filter {
-  width: 220px;
+  width: 240px;
+  margin-bottom: 0 !important;
 
-  ::ng-deep .mat-mdc-text-field-wrapper {
-    height: 44px;
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      height: 38px !important;
+      border-radius: 9px !important;
+      background: #ffffff !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none !important;
+    }
+
+    .mat-mdc-form-field-flex {
+      align-items: center !important;
+      height: 100% !important;
+    }
+
+    .mat-mdc-form-field-infix {
+      display: flex !important;
+      align-items: center !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      min-height: unset !important;
+      height: 100% !important;
+    }
+
+    .mat-mdc-select-trigger {
+      display: flex !important;
+      align-items: center !important;
+    }
   }
 }

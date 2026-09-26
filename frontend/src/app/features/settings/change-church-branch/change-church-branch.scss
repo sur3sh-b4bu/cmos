@@ -1,0 +1,113 @@
+.change-church-branch {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.change-church-branch__header {
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--coms-text);
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 0;
+    color: var(--coms-text-muted);
+    font-size: 13.5px;
+  }
+}
+
+.change-church-branch__current {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  border-radius: var(--coms-radius-lg);
+  border: 1px solid var(--coms-border);
+  background: var(--coms-surface);
+  box-shadow: var(--coms-shadow-sm);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--coms-color-primary) 0%, var(--coms-color-gold) 100%);
+  }
+
+  mat-icon {
+    color: var(--coms-color-primary);
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    background: color-mix(in srgb, var(--coms-color-primary) 8%, transparent);
+    padding: 8px;
+    box-sizing: content-box;
+    border-radius: 10px;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  span {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--coms-text-muted);
+  }
+
+  strong {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--coms-text);
+  }
+}
+
+.change-church-branch__form {
+  padding: 28px;
+  border-radius: var(--coms-radius-lg);
+  border: 1px solid var(--coms-border);
+  background: var(--coms-surface);
+  box-shadow: var(--coms-shadow-md);
+  position: relative;
+}
+
+.change-church-branch__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 20px;
+}
+
+@media (max-width: 640px) {
+  .change-church-branch__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.change-church-branch__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--coms-border);
+
+  button {
+    height: 42px;
+    padding: 0 24px;
+    font-weight: 600;
+    border-radius: var(--coms-radius-md);
+  }
+}

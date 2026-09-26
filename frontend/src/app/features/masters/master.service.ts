@@ -36,4 +36,20 @@ export class MasterService {
   reorder(masterKey: string, orderedIds: number[]): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/${masterKey}/reorder`, { orderedIds });
   }
+
+  /** Multipart upload (not JSON), so it's a dedicated endpoint outside the
+   * generic create/update ones -- see mastersController.uploadChurchLogo. */
+  uploadChurchLogo(id: number, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('logo', file);
+    return this.http
+      .post<ApiResponse<any>>(`${this.baseUrl}/churches/${id}/logo`, formData)
+      .pipe(map((res) => res.data));
+  }
+
+  setDefault(masterKey: string, id: number): Observable<any> {
+    return this.http
+      .post<ApiResponse<any>>(`${this.baseUrl}/${masterKey}/${id}/set-default`, {})
+      .pipe(map((res) => res.data));
+  }
 }

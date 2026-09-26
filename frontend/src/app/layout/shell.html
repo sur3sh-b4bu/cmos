@@ -3,7 +3,16 @@
 
   <div class="shell__main">
     <coms-header />
-    <main class="shell__content">
+    @if (showSetupBanner()) {
+      <div class="shell__setup" role="status" data-testid="setup-banner">
+        <mat-icon>info</mat-icon>
+        <span>{{ 'churchSetup.bannerText' | translate }}</span>
+        <button mat-flat-button color="primary" type="button" (click)="openSetup()" data-testid="setup-banner-action">
+          {{ 'churchSetup.bannerAction' | translate }}
+        </button>
+      </div>
+    }
+    <main class="shell__content" [class.shell__content--fit]="fit()">
       <router-outlet />
     </main>
   </div>

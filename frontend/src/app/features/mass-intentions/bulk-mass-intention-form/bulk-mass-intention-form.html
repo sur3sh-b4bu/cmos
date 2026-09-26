@@ -1,0 +1,578 @@
+<div class="bulk-form">
+  <div class="bulk-form__header">
+    <a routerLink="/mass-intentions" class="bulk-form__back">
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+    <h1>{{ 'massIntentions.bulkNewTitle' | translate }}</h1>
+  </div>
+  <p class="text-muted bulk-form__subtitle">{{ 'massIntentions.bulkSubtitle' | translate }}</p>
+
+  <form class="bulk-form__common surface-card" [formGroup]="headerForm">
+    <h2>{{ 'massIntentions.bulkCommonFields' | translate }}</h2>
+    <div class="bulk-form__common-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'massIntentions.bookedBy' | translate }}</mat-label>
+        <input
+          matInput
+          formControlName="bookedBy"
+          maxlength="150"
+          [class.bamini-font]="baminiSignal(headerForm, 'bookedBy')()"
+          (blur)="convertBaminiOnBlur(headerForm, 'bookedBy')"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          [color]="baminiSignal(headerForm, 'bookedBy')() ? 'primary' : undefined"
+          [matTooltip]="'massIntentions.typeInBamini' | translate"
+          (click)="toggleBamini(baminiSignal(headerForm, 'bookedBy'))"
+        >
+          <mat-icon>keyboard</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'massIntentions.phoneNumber' | translate }}</mat-label>
+        <span matTextPrefix class="phone-country-code">+91&nbsp;</span>
+        <input matInput type="tel" inputmode="numeric" formControlName="phone" maxlength="10" placeholder="9876543210" />
+        @if (headerForm.controls.phone.hasError('phone')) {
+          <mat-error>{{ 'common.phoneInvalid' | translate }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'massIntentions.paymentMethod' | translate }}</mat-label>
+        <mat-select formControlName="paymentMethodId" required>
+          @for (pm of paymentMethods(); track pm.id) {
+            <mat-option [value]="pm.id">{{ pm.name }}</mat-option>
+          }
+        </mat-select>
+        @if (headerForm.controls.paymentMethodId.hasError('required') && headerForm.controls.paymentMethodId.touched) {
+          <mat-error>{{ 'massIntentions.paymentMethodRequired' | translate }}</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="bulk-form__count-group">
+        <mat-form-field appearance="outline" class="bulk-form__count-field">
+          <mat-label>{{ 'massIntentions.bulkMassCount' | translate }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="2"
+            max="100"
+            step="1"
+            formControlName="massCount"
+            required
+          />
+          <mat-icon matSuffix class="bulk-form__count-icon">format_list_numbered</mat-icon>
+          @if (headerForm.controls.massCount.hasError('required') && headerForm.controls.massCount.touched) {
+            <mat-error>{{ 'massIntentions.bulkMassCountInvalid' | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="bulk-form__presets-bar">
+          <span class="bulk-form__presets-label">{{ 'massIntentions.bulkQuickSelect' | translate }}:</span>
+          <div class="bulk-form__presets-list">
+            @for (cnt of quickCountPresets; track cnt) {
+              <button
+                type="button"
+                class="bulk-form__preset-pill"
+                [class.bulk-form__preset-pill--active]="targetCount === cnt"
+                (click)="setMassCount(cnt)"
+              >
+                {{ cnt }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="bulk-form__grid surface-card">
+    <div class="bulk-form__grid-header">
+      <div class="bulk-form__grid-title-box">
+        <h2>{{ 'massIntentions.bulkRows' | translate }}</h2>
+        <span class="bulk-form__count-chip">
+          <mat-icon>receipt_long</mat-icon>
+          {{ targetCount }} {{ 'dashboard.colMass' | translate }}
+        </span>
+      </div>
+
+      <div class="bulk-form__grid-status">
+        @if (isCountSatisfied) {
+          <span class="bulk-form__status-chip bulk-form__status-chip--ready">
+            <mat-icon>check_circle</mat-icon>
+            {{ 'massIntentions.progressComplete' | translate: { total: targetCount } }}
+          </span>
+        } @else {
+          <span class="bulk-form__status-chip bulk-form__status-chip--pending">
+            <mat-icon>hourglass_top</mat-icon>
+            {{ 'massIntentions.progressPending' | translate: { ready: validRowCount, total: targetCount, remaining: remainingNeeded } }}
+          </span>
+        }
+      </div>
+    </div>
+
+    <div class="bulk-form__progress-track">
+      <div
+        class="bulk-form__progress-fill"
+        [style.width.%]="progressPercent"
+        [class.bulk-form__progress-fill--complete]="isCountSatisfied"
+      ></div>
+    </div>
+    <div class="bulk-form__table-wrap">
+      <table class="bulk-form__table">
+        <thead>
+          <tr>
+            <th class="bulk-form__col-index">#</th>
+            <th>{{ 'massIntentions.prayerDate' | translate }}</th>
+            <th>{{ 'common.name' | translate }}</th>
+            <th>{{ 'dashboard.colMass' | translate }}</th>
+            <th>{{ 'massIntentions.colIntention' | translate }}</th>
+            <th class="bulk-form__col-amount">{{ 'massIntentions.offeringAmount' | translate }}</th>
+            <th class="bulk-form__col-remove"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows; track row; let i = $index) {
+            <tr [formGroup]="row">
+              <td class="bulk-form__col-index">{{ i + 1 }}</td>
+              <td>
+                <mat-form-field appearance="outline" class="bulk-form__cell-field">
+                  <input matInput [matDatepicker]="picker" formControlName="prayerDate" required />
+                  <mat-datepicker-toggle matIconSuffix [for]="picker" />
+                  <mat-datepicker #picker [dateClass]="dateClass" [calendarHeaderComponent]="todayHeader" />
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" class="bulk-form__cell-field">
+                  <input
+                    matInput
+                    formControlName="name"
+                    maxlength="150"
+                    required
+                    [class.bamini-font]="baminiSignal(row, 'name')()"
+                    (blur)="convertBaminiOnBlur(row, 'name')"
+                  />
+                  <button
+                    mat-icon-button
+                    matSuffix
+                    type="button"
+                    [color]="baminiSignal(row, 'name')() ? 'primary' : undefined"
+                    [matTooltip]="'massIntentions.typeInBamini' | translate"
+                    (click)="toggleBamini(baminiSignal(row, 'name'))"
+                  >
+                    <mat-icon>keyboard</mat-icon>
+                  </button>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field appearance="outline" class="bulk-form__cell-field">
+                  <mat-select formControlName="massId" required>
+                    @for (mass of masses(); track mass.id) {
+                      <mat-option [value]="mass.id">{{ massLabel(mass) }} ({{ mass.mass_time }})</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </td>
+              <td class="bulk-form__intention-cell">
+                <mat-form-field appearance="outline" class="bulk-form__cell-field">
+                  <mat-select formControlName="prayerIntentionMasterId">
+                    @for (opt of intentionOptions(); track opt.id) {
+                      <mat-option [value]="opt.id">{{ intentionLabel(opt) }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                @if (rowIsCustomIntention(row)) {
+                  <mat-form-field appearance="outline" class="bulk-form__cell-field">
+                    <input
+                      matInput
+                      formControlName="customIntention"
+                      [placeholder]="'massIntentions.describeIntention' | translate"
+                      required
+                      [class.bamini-font]="baminiSignal(row, 'customIntention')()"
+                      (blur)="convertBaminiOnBlur(row, 'customIntention')"
+                    />
+                    <button
+                      mat-icon-button
+                      matSuffix
+                      type="button"
+                      [color]="baminiSignal(row, 'customIntention')() ? 'primary' : undefined"
+                      [matTooltip]="'massIntentions.typeInBamini' | translate"
+                      (click)="toggleBamini(baminiSignal(row, 'customIntention'))"
+                    >
+                      <mat-icon>keyboard</mat-icon>
+                    </button>
+                  </mat-form-field>
+                }
+              </td>
+              <td class="bulk-form__col-amount">
+                <mat-form-field appearance="outline" class="bulk-form__cell-field">
+                  <input matInput type="number" min="0" step="1" formControlName="offeringAmount" required />
+                </mat-form-field>
+              </td>
+              <td class="bulk-form__col-remove">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [matTooltip]="'common.delete' | translate"
+                  [disabled]="rowsArray.length <= 2"
+                  (click)="removeRow(i)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </tr>
+            @if (rowRestrictedDate(row); as restricted) {
+              <tr class="bulk-form__restricted-row-wrap">
+                <td [attr.colspan]="7">
+                  <div class="bulk-form__restricted-banner">
+                    <mat-icon>event_busy</mat-icon>
+                    <div class="bulk-form__restricted-body">
+                      <strong>{{ 'massIntentions.restrictedDateSelected' | translate }}</strong>
+                      <div class="bulk-form__restricted-field"><span>{{ 'common.name' | translate }}:</span> {{ restricted.name }}</div>
+                      <div class="bulk-form__restricted-field"><span>{{ 'massIntentions.reason' | translate }}:</span> {{ restricted.reason || defaultRestrictedDateReason }}</div>
+                      <p>{{ 'massIntentions.restrictedDateBody' | translate }}</p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+
+    <button mat-stroked-button type="button" class="bulk-form__add" (click)="addRow()">
+      <mat-icon>add</mat-icon>
+      {{ 'massIntentions.bulkAddRow' | translate }}
+    </button>
+  </div>
+
+  @if (results(); as r) {
+    <div class="bulk-form__results surface-card">
+      @if (r.succeeded.length) {
+        <div class="bulk-form__results-summary">
+          <mat-icon>check_circle</mat-icon>
+          <span>{{ 'massIntentions.bulkSummarySuccess' | translate: { count: r.succeeded.length } }}</span>
+          <button mat-flat-button color="primary" type="button" class="bulk-form__print-all" (click)="printBulkReceipt()">
+            <mat-icon>print</mat-icon>
+            {{ 'massIntentions.bulkPrintCombined' | translate }}
+          </button>
+        </div>
+        <div class="bulk-form__table-wrap">
+          <table class="bulk-form__receipts-table">
+            <thead>
+              <tr>
+                <th>{{ 'massIntentions.colReceiptNo' | translate }}</th>
+                <th>{{ 'massIntentions.prayerDate' | translate }}</th>
+                <th>{{ 'common.name' | translate }}</th>
+                <th>{{ 'dashboard.colMass' | translate }}</th>
+                <th>{{ 'massIntentions.colIntention' | translate }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (rec of r.succeeded; track rec.id) {
+                @if (editingId() === rec.id) {
+                  <tr [formGroup]="editRowForm" class="bulk-form__edit-row">
+                    <td>
+                      <span class="bulk-form__receipt-no">{{ rec.receipt_no }}</span>
+                    </td>
+                    <td>
+                      <mat-form-field appearance="outline" class="bulk-form__cell-field">
+                        <input matInput [matDatepicker]="editPicker" formControlName="prayerDate" required />
+                        <mat-datepicker-toggle matIconSuffix [for]="editPicker" />
+                        <mat-datepicker #editPicker [dateClass]="dateClass" [calendarHeaderComponent]="todayHeader" />
+                      </mat-form-field>
+                    </td>
+                    <td>
+                      <mat-form-field appearance="outline" class="bulk-form__cell-field">
+                        <input
+                          matInput
+                          formControlName="name"
+                          maxlength="150"
+                          required
+                          [class.bamini-font]="baminiSignal(editRowForm, 'name')()"
+                          (blur)="convertBaminiOnBlur(editRowForm, 'name')"
+                        />
+                        <button
+                          mat-icon-button
+                          matSuffix
+                          type="button"
+                          [color]="baminiSignal(editRowForm, 'name')() ? 'primary' : undefined"
+                          [matTooltip]="'massIntentions.typeInBamini' | translate"
+                          (click)="toggleBamini(baminiSignal(editRowForm, 'name'))"
+                        >
+                          <mat-icon>keyboard</mat-icon>
+                        </button>
+                      </mat-form-field>
+                    </td>
+                    <td>
+                      <mat-form-field appearance="outline" class="bulk-form__cell-field">
+                        <mat-select formControlName="massId" required>
+                          @for (mass of masses(); track mass.id) {
+                            <mat-option [value]="mass.id">{{ massLabel(mass) }} ({{ mass.mass_time }})</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                    </td>
+                    <td class="bulk-form__intention-cell">
+                      <mat-form-field appearance="outline" class="bulk-form__cell-field">
+                        <mat-select formControlName="prayerIntentionMasterId">
+                          @for (opt of intentionOptions(); track opt.id) {
+                            <mat-option [value]="opt.id">{{ intentionLabel(opt) }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                      @if (rowIsCustomIntention(editRowForm)) {
+                        <mat-form-field appearance="outline" class="bulk-form__cell-field">
+                          <input
+                            matInput
+                            formControlName="customIntention"
+                            [placeholder]="'massIntentions.describeIntention' | translate"
+                            required
+                            [class.bamini-font]="baminiSignal(editRowForm, 'customIntention')()"
+                            (blur)="convertBaminiOnBlur(editRowForm, 'customIntention')"
+                          />
+                          <button
+                            mat-icon-button
+                            matSuffix
+                            type="button"
+                            [color]="baminiSignal(editRowForm, 'customIntention')() ? 'primary' : undefined"
+                            [matTooltip]="'massIntentions.typeInBamini' | translate"
+                            (click)="toggleBamini(baminiSignal(editRowForm, 'customIntention'))"
+                          >
+                            <mat-icon>keyboard</mat-icon>
+                          </button>
+                        </mat-form-field>
+                      }
+                    </td>
+                    <td class="bulk-form__row-actions">
+                      <button mat-icon-button type="button" [matTooltip]="'common.save' | translate" (click)="saveEdit()">
+                        <mat-icon>check</mat-icon>
+                      </button>
+                      <button mat-icon-button type="button" [matTooltip]="'common.cancel' | translate" (click)="cancelEdit()">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                  @if (rowRestrictedDate(editRowForm); as restricted) {
+                    <tr class="bulk-form__restricted-row-wrap">
+                      <td [attr.colspan]="6">
+                        <div class="bulk-form__restricted-banner">
+                          <mat-icon>event_busy</mat-icon>
+                          <div class="bulk-form__restricted-body">
+                            <strong>{{ 'massIntentions.restrictedDateSelected' | translate }}</strong>
+                            <div class="bulk-form__restricted-field"><span>{{ 'common.name' | translate }}:</span> {{ restricted.name }}</div>
+                            <div class="bulk-form__restricted-field"><span>{{ 'massIntentions.reason' | translate }}:</span> {{ restricted.reason || defaultRestrictedDateReason }}</div>
+                            <p>{{ 'massIntentions.restrictedDateBody' | translate }}</p>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                } @else {
+                  <tr>
+                    <td>
+                      <span class="bulk-form__receipt-no">{{ rec.receipt_no }}</span>
+                    </td>
+                    <td>{{ formatDateDMY(rec.prayer_date) }}</td>
+                    <td>{{ rec.name }}</td>
+                    <td>{{ massText(rec) }}</td>
+                    <td>{{ intentionText(rec) }}</td>
+                    <td class="bulk-form__row-actions">
+                      <button mat-icon-button type="button" [matTooltip]="'massIntentions.printReceipt' | translate" (click)="printReceipt(rec.id)">
+                        <mat-icon>print</mat-icon>
+                      </button>
+                      <button mat-icon-button type="button" [matTooltip]="'common.edit' | translate" (click)="startEdit(rec)">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button type="button" [matTooltip]="'common.delete' | translate" (click)="deleteResultRow(rec)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (addingRow()) {
+          <div class="bulk-form__add-row surface-card" [formGroup]="addRowForm">
+            <div class="bulk-form__add-row-fields">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'massIntentions.prayerDate' | translate }}</mat-label>
+                <input matInput [matDatepicker]="addPicker" formControlName="prayerDate" required />
+                <mat-datepicker-toggle matIconSuffix [for]="addPicker" />
+                <mat-datepicker #addPicker [dateClass]="dateClass" [calendarHeaderComponent]="todayHeader" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'common.name' | translate }}</mat-label>
+                <input
+                  matInput
+                  formControlName="name"
+                  maxlength="150"
+                  required
+                  [class.bamini-font]="baminiSignal(addRowForm, 'name')()"
+                  (blur)="convertBaminiOnBlur(addRowForm, 'name')"
+                />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  [color]="baminiSignal(addRowForm, 'name')() ? 'primary' : undefined"
+                  [matTooltip]="'massIntentions.typeInBamini' | translate"
+                  (click)="toggleBamini(baminiSignal(addRowForm, 'name'))"
+                >
+                  <mat-icon>keyboard</mat-icon>
+                </button>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'dashboard.colMass' | translate }}</mat-label>
+                <mat-select formControlName="massId" required>
+                  @for (mass of masses(); track mass.id) {
+                    <mat-option [value]="mass.id">{{ massLabel(mass) }} ({{ mass.mass_time }})</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'massIntentions.colIntention' | translate }}</mat-label>
+                <mat-select formControlName="prayerIntentionMasterId">
+                  @for (opt of intentionOptions(); track opt.id) {
+                    <mat-option [value]="opt.id">{{ intentionLabel(opt) }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              @if (rowIsCustomIntention(addRowForm)) {
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ 'massIntentions.describeIntention' | translate }}</mat-label>
+                  <input
+                    matInput
+                    formControlName="customIntention"
+                    required
+                    [class.bamini-font]="baminiSignal(addRowForm, 'customIntention')()"
+                    (blur)="convertBaminiOnBlur(addRowForm, 'customIntention')"
+                  />
+                  <button
+                    mat-icon-button
+                    matSuffix
+                    type="button"
+                    [color]="baminiSignal(addRowForm, 'customIntention')() ? 'primary' : undefined"
+                    [matTooltip]="'massIntentions.typeInBamini' | translate"
+                    (click)="toggleBamini(baminiSignal(addRowForm, 'customIntention'))"
+                  >
+                    <mat-icon>keyboard</mat-icon>
+                  </button>
+                </mat-form-field>
+              }
+            </div>
+            @if (rowRestrictedDate(addRowForm); as restricted) {
+              <div class="bulk-form__restricted-banner">
+                <mat-icon>event_busy</mat-icon>
+                <div class="bulk-form__restricted-body">
+                  <strong>{{ 'massIntentions.restrictedDateSelected' | translate }}</strong>
+                  <div class="bulk-form__restricted-field"><span>{{ 'common.name' | translate }}:</span> {{ restricted.name }}</div>
+                  <div class="bulk-form__restricted-field"><span>{{ 'massIntentions.reason' | translate }}:</span> {{ restricted.reason || defaultRestrictedDateReason }}</div>
+                  <p>{{ 'massIntentions.restrictedDateBody' | translate }}</p>
+                </div>
+              </div>
+            }
+            <div class="bulk-form__add-row-payment">
+              <div class="bulk-form__total">
+                <span>{{ 'massIntentions.offeringAmount' | translate }}</span>
+                <strong>{{ currencyService.current().symbol }}{{ addRowAmount.toFixed(2) }}</strong>
+              </div>
+              <coms-payment-confirm-panel
+                #addPaymentPanel
+                [method]="selectedPaymentMethod"
+                [amount]="addRowAmount"
+                [purposeText]="paymentPurposeText"
+                [disabled]="!addRowReady"
+                [entityId]="null"
+                [receivePayment]="receivePaymentFn"
+                (confirmed)="onAddRowPaymentConfirmed($event)"
+              />
+              <button mat-button type="button" (click)="cancelAddRow()">{{ 'common.cancel' | translate }}</button>
+            </div>
+          </div>
+        } @else {
+          <button mat-stroked-button type="button" class="bulk-form__add" (click)="showAddRow()">
+            <mat-icon>add</mat-icon>
+            {{ 'massIntentions.bulkAddOne' | translate }}
+          </button>
+        }
+      }
+      @if (r.failed.length) {
+        <div class="bulk-form__results-summary bulk-form__results-summary--failed">
+          <mat-icon>error</mat-icon>
+          <span>{{ 'massIntentions.bulkSummaryFailed' | translate: { count: r.failed.length } }}</span>
+        </div>
+        <ul class="bulk-form__results-list">
+          @for (f of r.failed; track f.row) {
+            <li>{{ 'masters.importRow' | translate: { row: f.row } }}: {{ f.message }}</li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  <div class="bulk-form__payment-row">
+    <div class="bulk-form__total">
+      <div class="bulk-form__total-stat">
+        <span class="bulk-form__stat-label">{{ 'massIntentions.bulkMassCount' | translate }}</span>
+        <div class="bulk-form__stat-value">
+          <mat-icon class="bulk-form__stat-icon">receipt_long</mat-icon>
+          <strong>{{ targetCount }}</strong>
+          <span class="bulk-form__stat-sub" [class.bulk-form__stat-sub--ready]="isCountSatisfied">
+            ({{ validRowCount }}/{{ targetCount }} {{ isCountSatisfied ? ('massIntentions.ready' | translate) : ('massIntentions.bulkRemainingNeeded' | translate: { count: remainingNeeded }) }})
+          </span>
+        </div>
+      </div>
+      <div class="bulk-form__total-divider"></div>
+      <div class="bulk-form__total-stat">
+        <span class="bulk-form__stat-label">{{ 'massIntentions.bulkTotalOffering' | translate }}</span>
+        <strong class="bulk-form__stat-amount">{{ currencyService.current().symbol }}{{ totalAmount.toFixed(2) }}</strong>
+      </div>
+    </div>
+    @if (!readyToConfirmPayment) {
+      <div class="bulk-form__payment-hint bulk-form__payment-hint--pending">
+        <mat-icon>info</mat-icon>
+        <span>
+          @if (headerForm.invalid && !headerForm.controls.paymentMethodId.value) {
+            {{ 'massIntentions.bulkFillHeaderHint' | translate }}
+          } @else if (!isCountSatisfied) {
+            {{ 'massIntentions.bulkNotSatisfiedHint' | translate: { total: targetCount, remaining: remainingNeeded } }}
+          } @else {
+            {{ 'massIntentions.bulkFillRequiredFieldsHint' | translate }}
+          }
+        </span>
+      </div>
+    } @else {
+      <div class="bulk-form__payment-hint bulk-form__payment-hint--ready">
+        <mat-icon>verified</mat-icon>
+        <span>{{ 'massIntentions.bulkAllSatisfied' | translate: { total: targetCount } }}</span>
+      </div>
+    }
+    <!-- Confirming payment here is what actually creates (and pays) every
+         row -- there's no separate Save button, same design as the
+         single-entry form's own payment panel. -->
+    <coms-payment-confirm-panel
+      #mainPaymentPanel
+      [method]="selectedPaymentMethod"
+      [amount]="totalAmount"
+      [purposeText]="paymentPurposeText"
+      [disabled]="!readyToConfirmPayment || saving()"
+      [entityId]="null"
+      [receivePayment]="receivePaymentFn"
+      (confirmed)="onPaymentConfirmed($event)"
+    />
+  </div>
+
+  <div class="bulk-form__actions">
+    <a mat-button routerLink="/mass-intentions">{{ 'common.cancel' | translate }}</a>
+  </div>
+</div>

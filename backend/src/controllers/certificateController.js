@@ -1,5 +1,7 @@
 const service = require('../services/certificateService');
+const transfer = require('../services/certificateTransferService');
 const asyncHandler = require('../utils/asyncHandler');
+const { sendXlsx, langOf, mappingOf } = require('../excel/http');
 
 const list = asyncHandler(async (req, res) => {
   const result = await service.list(req.params.type, req.query, req);
@@ -33,4 +35,31 @@ const printCertificate = asyncHandler(async (req, res) => {
   res.send(buffer);
 });
 
-module.exports = { list, getById, create, update, remove, printCertificate };
+const exportExcel = asyncHandler(async (req, res) => {
+  sendXlsx(res, await transfer.exportCertificates(req.params.type, req.query, req));
+});
+
+const importTemplate = asyncHandler(async (req, res) => {
+  sendXlsx(res, await transfer.buildCertificateTemplate(req.params.type, req.query, req));
+});
+
+const importExcel = asyncHandler(async (req, res) => {
+  const report = await transfer.importCertificates(
+    req.params.type,
+    { buffer: req.file.buffer, fileName: req.file.originalname, lang: langOf(req), mapping: mappingOf(req) },
+    req
+  );
+  res.json({ success: true, data: report });
+});
+
+const importPreview = asyncHandler(async (req, res) => {
+  const preview = await transfer.previewCertificateImport(req.params.type, {
+    buffer: req.file.buffer,
+    fileName: req.file.originalname,
+    lang: langOf(req),
+    churchId: req.user.churchId,
+  });
+  res.json({ success: true, data: preview });
+});
+
+module.exports = { list, getById, create, update, remove, printCertificate, exportExcel, importTemplate, importExcel, importPreview };

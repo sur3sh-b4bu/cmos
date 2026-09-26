@@ -22,20 +22,50 @@ module.exports = {
     connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
   },
 
-  jwt: {
-    accessSecret: required('JWT_ACCESS_SECRET'),
-    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
-    refreshSecret: required('JWT_REFRESH_SECRET'),
-    refreshExpiresInDays: parseExpiryToDays(process.env.JWT_REFRESH_EXPIRES_IN || '7d'),
+  session: {
+    // Name of the httpOnly cookie holding the opaque session id -- read by
+    // authenticate.js, set/cleared by authController.js. Sharing it here
+    // (rather than each file hardcoding its own copy) keeps the two in sync.
+    cookieName: 'sid',
+    expiresInDays: parseExpiryToDays(process.env.SESSION_EXPIRES_IN || '7d'),
   },
 
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
+    // Comma-separated so the office machine can serve both localhost (staff at
+    // the desk) and its LAN address (phones scanning a receipt QR).
+    origin: (process.env.CORS_ORIGIN || 'http://localhost:4200')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean),
+  },
+
+  // Base URL the receipt QR code points at. Must be an address a parishioner's
+  // PHONE can reach -- `localhost` works for desk testing but has to become the
+  // machine's LAN address or public hostname for real scanning to work.
+  publicAppUrl: (process.env.PUBLIC_APP_URL || 'http://localhost:4200').replace(/\/+$/, ''),
+
+  webauthn: {
+    // rpId must be the site's registrable domain (no scheme, no port). Browsers
+    // reject a mismatch outright, and a credential is permanently bound to the
+    // rpId it was created under -- changing this invalidates existing passkeys.
+    rpId: process.env.WEBAUTHN_RP_ID || 'localhost',
+    rpName: process.env.WEBAUTHN_RP_NAME || 'Church Office Management System',
+    // Every origin allowed to present an assertion, comma-separated.
+    expectedOrigins: (process.env.WEBAUTHN_ORIGIN || 'http://localhost:4200')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean),
   },
 
   rateLimit: {
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
     max: Number(process.env.RATE_LIMIT_MAX || 300),
+  },
+
+  payment: {
+    // 'mock' | 'upi_direct' | unset (auto -- see payments/index.js).
+    // TODO(real gateway): once integrated, this becomes 'razorpay' / 'cashfree' / etc.
+    provider: process.env.PAYMENT_PROVIDER || null,
   },
 };
 

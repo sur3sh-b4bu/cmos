@@ -1,0 +1,141 @@
+<div class="pub">
+  <div class="pub__lang-switch">
+    <button mat-stroked-button type="button" [matMenuTriggerFor]="languageMenu">
+      <mat-icon>translate</mat-icon>
+      {{ (languageService.current() === 'ta' ? 'language.tamil' : 'language.english') | translate }}
+    </button>
+    <mat-menu #languageMenu="matMenu">
+      <button mat-menu-item (click)="setLanguage('en')">
+        @if (languageService.current() === 'en') {
+          <mat-icon>check</mat-icon>
+        }
+        <span>{{ 'language.english' | translate }}</span>
+      </button>
+      <button mat-menu-item (click)="setLanguage('ta')">
+        @if (languageService.current() === 'ta') {
+          <mat-icon>check</mat-icon>
+        }
+        <span>{{ 'language.tamil' | translate }}</span>
+      </button>
+    </mat-menu>
+  </div>
+
+  <div class="pub__card">
+    @switch (stage()) {
+      @case ('loading') {
+        <div class="pub__state">
+          <mat-progress-spinner diameter="40" mode="indeterminate" />
+          <p class="pub__muted">{{ 'publicIntention.lookingUp' | translate }}</p>
+        </div>
+      }
+
+      @case ('error') {
+        <div class="pub__state">
+          <div class="pub__icon pub__icon--warn"><mat-icon>error_outline</mat-icon></div>
+          <h1 class="pub__title">{{ 'publicIntention.linkNotFound' | translate }}</h1>
+          <p class="pub__muted">{{ errorMessage() }}</p>
+        </div>
+      }
+
+      @case ('added') {
+        <div class="pub__state">
+          <div class="pub__icon pub__icon--good"><mat-icon>event_available</mat-icon></div>
+          <h1 class="pub__title">{{ 'publicIntention.reminderReady' | translate }}</h1>
+          <p class="pub__muted">
+            {{ 'publicIntention.reminderReadyBody' | translate }}
+          </p>
+          <button mat-stroked-button class="pub__link-btn" (click)="backToChoice()">
+            {{ 'publicIntention.chooseDifferentOption' | translate }}
+          </button>
+        </div>
+      }
+
+      @case ('declined') {
+        <div class="pub__state">
+          <div class="pub__icon pub__icon--muted"><mat-icon>check</mat-icon></div>
+          <h1 class="pub__title">{{ 'publicIntention.noProblem' | translate }}</h1>
+          <p class="pub__muted">{{ 'publicIntention.declinedBody' | translate }}</p>
+          <button mat-stroked-button class="pub__link-btn" (click)="backToChoice()">
+            {{ 'publicIntention.addReminderAfterAll' | translate }}
+          </button>
+        </div>
+      }
+
+      @case ('ask') {
+        @if (intention(); as pi) {
+          <header class="pub__header">
+            <div class="pub__crest">⛪</div>
+            <h1 class="pub__church">{{ pi.church.name }}</h1>
+            @if (pi.church.address) {
+              <p class="pub__address">{{ pi.church.address }}</p>
+            }
+          </header>
+
+          <div class="pub__receipt">
+            <div class="pub__receipt-row">
+              <span class="pub__label">{{ 'massIntentions.colIntention' | translate }}</span>
+              <strong class="pub__value">{{ pi.intention }}</strong>
+            </div>
+            <div class="pub__receipt-row">
+              <span class="pub__label">{{ 'publicIntention.offeredBy' | translate }}</span>
+              <span class="pub__value">{{ pi.name }}</span>
+            </div>
+            <div class="pub__receipt-row">
+              <span class="pub__label">{{ 'dashboard.colMass' | translate }}</span>
+              <span class="pub__value">{{ pi.massName }}</span>
+            </div>
+            <div class="pub__receipt-row">
+              <span class="pub__label">{{ 'publicIntention.when' | translate }}</span>
+              <span class="pub__value">
+                {{ pi.startsAt | date: 'EEEE, d MMMM y' }} {{ 'publicIntention.at' | translate }} {{ pi.startsAt | date: 'h:mm a' }}
+              </span>
+            </div>
+            <div class="pub__receipt-row pub__receipt-row--faint">
+              <span class="pub__label">{{ 'massIntentions.colReceiptNo' | translate }}</span>
+              <span class="pub__value">{{ pi.receiptNo }}</span>
+            </div>
+          </div>
+
+          @if (pi.isPast) {
+            <p class="pub__past">
+              <mat-icon>history</mat-icon>
+              {{ 'publicIntention.pastMassNote' | translate }}
+            </p>
+          }
+
+          <section class="pub__ask">
+            <h2 class="pub__ask-title">{{ 'publicIntention.askTitle' | translate }}</h2>
+            <p class="pub__muted pub__ask-sub">
+              {{ 'publicIntention.askSubtitle' | translate }}
+            </p>
+
+            <div class="pub__reminders" role="radiogroup" aria-label="When to remind me">
+              @for (opt of reminderOptions; track opt.minutes) {
+                <button
+                  type="button"
+                  role="radio"
+                  class="pub__chip"
+                  [class.pub__chip--on]="reminderMinutes() === opt.minutes"
+                  [attr.aria-checked]="reminderMinutes() === opt.minutes"
+                  (click)="selectReminder(opt.minutes)"
+                >
+                  {{ opt.labelKey | translate }}
+                </button>
+              }
+            </div>
+
+            <div class="pub__actions">
+              <button mat-flat-button color="primary" class="pub__primary" (click)="addToCalendar()">
+                <mat-icon>event</mat-icon>
+                {{ 'publicIntention.yesAddToCalendar' | translate }}
+              </button>
+              <button mat-button class="pub__decline" (click)="decline()">{{ 'publicIntention.noThanks' | translate }}</button>
+            </div>
+          </section>
+        }
+      }
+    }
+  </div>
+
+  <p class="pub__foot">{{ 'auth.appTitle' | translate }}</p>
+</div>

@@ -2,17 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Frontend</title>
+    <title>Church Office Management System</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- favicon.ico/favicon.svg are a simplified, bold reduction of logo.svg
+         (used in the sidebar and login page) purpose-built for real tab
+         size, where the full badge's wordmark/gears/book wash out. -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
-      rel="stylesheet"
-    />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <!-- Roboto and Material Icons used to load live from
+         fonts.googleapis.com/fonts.gstatic.com here. Both are now
+         self-hosted (see styles.scss's @font-face rules, public/fonts/) --
+         an unconsented call to Google's CDN sends every visitor's IP there
+         before they've agreed to anything (several EU courts have fined
+         sites over exactly this), and self-hosting also means the UI still
+         renders correctly on a network that blocks Google's domains
+         outright instead of silently falling back to a system font. -->
   </head>
   <body>
     <coms-root></coms-root>

@@ -3,14 +3,14 @@
     <div>
       <a routerLink="/masters" class="master-list__back">
         <mat-icon>arrow_back</mat-icon>
-        <span>All Masters</span>
+        <span>{{ 'masters.allMasters' | translate }}</span>
       </a>
-      <h1>{{ config.label }}</h1>
+      <h1>{{ config.label | translate }}</h1>
     </div>
-    @if (authService.hasPermission('masters.create')) {
+    @if (canCreate()) {
       <a mat-flat-button color="primary" [routerLink]="['/masters', masterKey, 'new']">
         <mat-icon>add</mat-icon>
-        New {{ config.singularLabel }}
+        {{ 'masters.newRecord' | translate: { name: (config.singularLabel | translate) } }}
       </a>
     }
   </div>
@@ -18,41 +18,75 @@
   <coms-data-table
     [tableId]="'master-' + masterKey"
     [exportFileName]="masterKey"
-    emptyMessage="No records yet."
+    emptyMessageKey="masters.emptyList"
     [columns]="columns"
     [rows]="rows()"
     [total]="total()"
     [pageIndex]="pageIndex()"
     [pageSize]="pageSize()"
-    [loading]="loading() || reordering()"
+    [loading]="loading() || reordering() || importing()"
     [cellTemplates]="cellTemplates"
+    [showImport]="canCreate()"
+    [importColumns]="importColumns"
+    [exportAllFn]="exportAllRows"
     (pageChange)="onPageChange($event)"
     (searchChange)="onSearchChange($event)"
+    (importRows)="onImportRows($event)"
   />
 </div>
 
 <ng-template #activeTpl let-row>
   <mat-chip [class.master-list__chip--inactive]="!row.is_active" class="master-list__chip">
-    {{ row.is_active ? 'Active' : 'Inactive' }}
+    {{ (row.is_active ? 'masters.active' : 'masters.inactive') | translate }}
   </mat-chip>
 </ng-template>
 
+<ng-template #defaultTpl let-row>
+  @if (row.is_default) {
+    <mat-chip class="master-list__chip master-list__chip--default">
+      <mat-icon matChipAvatar>star</mat-icon>
+      {{ 'masters.default' | translate }}
+    </mat-chip>
+  }
+</ng-template>
+
 <ng-template #actionsTpl let-row>
+  @if (config.hasDefaultFlag && !row.is_default && authService.hasPermission('masters.update')) {
+    <button mat-icon-button [matTooltip]="'masters.setAsDefault' | translate" (click)="setDefaultRow(row)">
+      <mat-icon>star_outline</mat-icon>
+    </button>
+  }
   @if (config.hasSortOrder) {
-    <button mat-icon-button matTooltip="Move up" (click)="moveRow(row, -1)">
+    <button mat-icon-button [matTooltip]="'masters.moveUp' | translate" (click)="moveRow(row, -1)">
       <mat-icon>arrow_upward</mat-icon>
     </button>
-    <button mat-icon-button matTooltip="Move down" (click)="moveRow(row, 1)">
+    <button mat-icon-button [matTooltip]="'masters.moveDown' | translate" (click)="moveRow(row, 1)">
       <mat-icon>arrow_downward</mat-icon>
     </button>
   }
   @if (authService.hasPermission('masters.update')) {
-    <a mat-icon-button matTooltip="Edit" [routerLink]="['/masters', masterKey, row.id, 'edit']">
+    <a mat-icon-button [matTooltip]="'common.edit' | translate" [routerLink]="['/masters', masterKey, row.id, 'edit']">
       <mat-icon>edit</mat-icon>
     </a>
   }
+  @if (
+    ((masterKey === 'announcements' && row.status === 'permanent') ||
+      (masterKey === 'holidays' && row.is_recurring_yearly)) &&
+    authService.hasPermission('masters.delete')
+  ) {
+    <button
+      mat-icon-button
+      [matTooltip]="(row.is_active ? 'masters.announcements.removeFromDashboard' : 'masters.announcements.restoreToDashboard') | translate"
+      (click)="toggleDashboardVisibility(row)"
+    >
+      <!-- Icon reflects current state (same convention as login.html's
+           password-visibility toggle), not the action a click will take:
+           is_active (currently showing on the Dashboard) -> open eye. -->
+      <mat-icon>{{ row.is_active ? 'visibility' : 'visibility_off' }}</mat-icon>
+    </button>
+  }
   @if (authService.hasPermission('masters.delete')) {
-    <button mat-icon-button matTooltip="Delete" class="master-list__delete" (click)="deleteRow(row)">
+    <button mat-icon-button [matTooltip]="'common.delete' | translate" class="master-list__delete" (click)="deleteRow(row)">
       <mat-icon>delete</mat-icon>
     </button>
   }

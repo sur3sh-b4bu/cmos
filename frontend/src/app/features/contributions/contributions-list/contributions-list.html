@@ -1,0 +1,71 @@
+<div class="pi-list">
+  <div class="pi-list__header">
+    <div>
+      <h1>{{ 'nav.contributions' | translate }}</h1>
+      <p class="text-muted">{{ 'contributions.subtitle' | translate }}</p>
+    </div>
+    <div class="pi-list__actions">
+      @if (authService.hasPermission('contributions.create')) {
+        <a mat-flat-button color="primary" routerLink="/contributions/new">
+          <mat-icon>add</mat-icon>
+          {{ 'contributions.newTitle' | translate }}
+        </a>
+      }
+    </div>
+  </div>
+
+  <coms-data-table
+    tableId="contributions"
+    exportFileName="contributions"
+    emptyMessageKey="contributions.emptyList"
+    [columns]="columns"
+    [rows]="rows()"
+    [total]="total()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [loading]="loading()"
+    [cellTemplates]="cellTemplates"
+    [showImport]="authService.hasPermission('contributions.create')"
+    [serverTransfer]="serverTransfer"
+    (pageChange)="onPageChange($event)"
+    (searchChange)="onSearchChange($event)"
+    (imported)="fetch()"
+  />
+</div>
+
+<ng-template #typeTpl let-row>
+  {{ contributionTypeText(row) }}
+</ng-template>
+
+<ng-template #actionsTpl let-row>
+  @if (!row.is_paid && authService.hasPermission('contributions.update')) {
+    <button mat-icon-button [matTooltip]="'massIntentions.receivePayment' | translate" (click)="receivePayment(row); $event.stopPropagation()">
+      <mat-icon>payments</mat-icon>
+    </button>
+  }
+  <button
+    mat-icon-button
+    [matTooltip]="(row.is_paid ? 'contributions.printReceipt' : 'massIntentions.receiptUnavailable') | translate"
+    [disabled]="!row.is_paid"
+    (click)="printReceipt(row); $event.stopPropagation()"
+  >
+    <mat-icon>print</mat-icon>
+  </button>
+  <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()">
+    <mat-icon>more_vert</mat-icon>
+  </button>
+  <mat-menu #rowMenu="matMenu">
+    @if (authService.hasPermission('contributions.update')) {
+      <a mat-menu-item [routerLink]="['/contributions', row.id, 'edit']">
+        <mat-icon>edit</mat-icon>
+        <span>{{ 'common.edit' | translate }}</span>
+      </a>
+    }
+    @if (authService.hasPermission('contributions.delete')) {
+      <button mat-menu-item class="pi-list__delete" (click)="deleteRow(row)">
+        <mat-icon>delete</mat-icon>
+        <span>{{ 'common.delete' | translate }}</span>
+      </button>
+    }
+  </mat-menu>
+</ng-template>

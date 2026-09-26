@@ -1,7 +1,17 @@
+:host {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 .bar-chart {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .bar-chart__plot {
@@ -9,8 +19,8 @@
 }
 
 .bar-chart__svg {
+  display: block;
   width: 100%;
-  height: 200px;
   overflow: visible;
 }
 
@@ -20,19 +30,19 @@
 }
 
 .bar-chart__tick {
-  font-size: 9px;
+  font-size: 10px;
   fill: var(--coms-text-muted);
 }
 
 .bar-chart__label,
 .bar-chart__row-label {
-  font-size: 11px;
+  font-size: 11.5px;
   fill: var(--coms-text-muted);
 }
 
 .bar-chart__value-label {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 700;
   fill: var(--coms-text-muted);
 
   &--inside {
@@ -41,7 +51,7 @@
 }
 
 .bar-chart__bar {
-  transition: opacity 150ms ease, filter 150ms ease;
+  transition: opacity 200ms ease, filter 200ms ease, transform 200ms ease;
   outline: none;
   cursor: pointer;
 }
@@ -49,7 +59,7 @@
 .bar-chart__bar:hover,
 .bar-chart__bar:focus-visible,
 .bar-chart__bar--active {
-  filter: brightness(1.12);
+  filter: brightness(1.15) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
 }
 
 .bar-chart__hit {
@@ -59,29 +69,32 @@
 
 .bar-chart__tooltip {
   position: absolute;
-  top: -4px;
+  top: -6px;
   transform: translate(-50%, -100%);
   background: var(--coms-surface);
   border: 1px solid var(--coms-border);
-  border-radius: var(--coms-radius-sm);
-  box-shadow: var(--coms-shadow-md);
-  padding: 6px 10px;
-  font-size: 12px;
+  border-radius: var(--coms-radius-md);
+  box-shadow: var(--coms-shadow-lg);
+  padding: 8px 12px;
+  font-size: 12.5px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   pointer-events: none;
   white-space: nowrap;
-  z-index: 5;
+  z-index: 10;
 
   strong {
-    font-size: 13px;
-    color: var(--coms-text);
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--coms-color-primary);
   }
+
   span {
     color: var(--coms-text-muted);
-    font-size: 11px;
+    font-size: 11.5px;
+    font-weight: 500;
   }
 }
 
@@ -90,11 +103,14 @@
   border: none;
   background: none;
   color: var(--coms-color-primary);
-  font-size: 12px;
+  font-size: 12.5px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 2px 0;
+  padding: 4px 0;
+  transition: color var(--coms-transition-fast);
 
   &:hover {
+    color: var(--coms-color-gold);
     text-decoration: underline;
   }
 }
@@ -103,16 +119,29 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  border: 1px solid var(--coms-border);
+  border-radius: var(--coms-radius-md);
+  overflow: hidden;
 
   th,
   td {
     text-align: left;
-    padding: 6px 8px;
+    padding: 8px 12px;
     border-bottom: 1px solid var(--coms-border);
+  }
+
+  th {
+    background: #f8fafc;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--coms-text-muted);
   }
 }
 
 .bar-chart__empty {
-  padding: 40px 0;
+  padding: 48px 0;
   text-align: center;
+  color: var(--coms-text-muted);
 }

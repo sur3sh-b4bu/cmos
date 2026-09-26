@@ -1,20 +1,45 @@
 <div class="dashboard">
-  <div class="dashboard__welcome">
-    <div>
-      <h1>Welcome back, {{ authService.currentUser()?.fullName }} 👋</h1>
-      <p class="text-muted">{{ today | date: 'EEEE, MMMM d, y' }}</p>
+  <!-- Welcome Banner Hero Card -->
+  <div class="dashboard__welcome-banner glass-card">
+    <div class="dashboard__welcome-left">
+      <div class="dashboard__welcome-icon">
+        <mat-icon>church</mat-icon>
+      </div>
+      <div class="dashboard__welcome-info">
+        <h1 class="dashboard__welcome-title">
+          <span>{{ 'dashboard.welcomeBack' | translate: { name: authService.currentUser()?.fullName || 'System Administrators' } }}</span>
+          <span class="dashboard__welcome-user-icon" aria-hidden="true">
+            <mat-icon>person</mat-icon>
+          </span>
+        </h1>
+        <div class="dashboard__welcome-meta">
+          <span class="dashboard__welcome-date">
+            <mat-icon>calendar_today</mat-icon>
+            {{ today | date: 'EEEE, d MMMM yyyy' }}
+          </span>
+          <span class="dashboard__welcome-badge">
+            <span class="status-dot"></span>
+            {{ 'dashboard.activeSession' | translate }}
+          </span>
+        </div>
+      </div>
     </div>
+
     <div class="dashboard__quick-actions">
-      @if (authService.hasPermission('prayer_intentions.create')) {
-        <a mat-flat-button color="primary" routerLink="/prayer-intentions/new">
-          <mat-icon>add</mat-icon>
-          New Prayer Intention
+      @if (authService.hasPermission('mass_intentions.create')) {
+        <a mat-flat-button class="quick-btn quick-btn--primary" routerLink="/mass-intentions/new">
+          <mat-icon>add_circle</mat-icon>
+          {{ 'dashboard.newMassIntention' | translate }}
+        </a>
+        <a mat-stroked-button class="quick-btn quick-btn--outline" routerLink="/mass-intentions/bulk-new">
+          <mat-icon>playlist_add</mat-icon>
+          {{ 'massIntentions.bulkNewTitle' | translate }}
         </a>
       }
       @if (authService.hasPermission('prayer_register.view')) {
-        <a mat-stroked-button routerLink="/prayer-intentions/register">
+        <a mat-stroked-button class="quick-btn quick-btn--outline" routerLink="/mass-intentions/register">
           <mat-icon>print</mat-icon>
-          Today's Register
+          {{ 'dashboard.todaysRegister' | translate }}
         </a>
       }
     </div>
@@ -25,105 +50,333 @@
       <mat-progress-spinner mode="indeterminate" diameter="36" />
     </div>
   } @else if (stats(); as s) {
-    <div class="dashboard__stats">
-      <div class="stat-card glass-card glass-card--interactive">
-        <div class="stat-card__icon stat-card__icon--primary">
-          <mat-icon>volunteer_activism</mat-icon>
+    <!-- 5 Luxury Stat Cards Row -->
+    <div class="dashboard__stats-grid">
+      <!-- Card 1: Today Mass Intentions -->
+      <div
+        class="stat-card stat-card--clickable stat-card--blue"
+        role="button"
+        tabindex="0"
+        (click)="openTodayIntentions()"
+        (keydown.enter)="openTodayIntentions()"
+      >
+        <div class="stat-card__watermark"></div>
+        <div class="stat-card__top">
+          <span class="stat-badge stat-badge--blue">
+            <span class="stat-badge__dot"></span>
+            {{ 'dashboard.today' | translate }}
+          </span>
+          <div class="stat-icon stat-icon--blue">
+            <mat-icon>volunteer_activism</mat-icon>
+          </div>
         </div>
-        <div class="stat-card__body">
+        <div class="stat-card__main">
           <div class="stat-card__value">{{ s.todayCount }}</div>
-          <div class="stat-card__label">Today's Prayer Intentions</div>
+          <div class="stat-card__label">{{ 'nav.massIntentions' | translate }}</div>
+        </div>
+        <div class="stat-card__footer stat-card__footer--blue">
+          <span>{{ 'dashboard.clickToViewDetails' | translate }}</span>
+          <mat-icon>arrow_forward</mat-icon>
         </div>
       </div>
-      <div class="stat-card glass-card glass-card--interactive">
-        <div class="stat-card__icon stat-card__icon--gold">
-          <mat-icon>payments</mat-icon>
+
+      <!-- Card 2: Today Mass Collections -->
+      <div
+        class="stat-card stat-card--clickable stat-card--gold"
+        role="button"
+        tabindex="0"
+        (click)="openTodayCollections()"
+        (keydown.enter)="openTodayCollections()"
+      >
+        <div class="stat-card__watermark"></div>
+        <div class="stat-card__top">
+          <span class="stat-badge stat-badge--gold">
+            <span class="stat-badge__dot"></span>
+            {{ 'dashboard.today' | translate }}
+          </span>
+          <div class="stat-icon stat-icon--gold">
+            <mat-icon>payments</mat-icon>
+          </div>
         </div>
-        <div class="stat-card__body">
-          <div class="stat-card__value">{{ s.todayCollections | currencyInr }}</div>
-          <div class="stat-card__label">Today's Collections</div>
+        <div class="stat-card__main">
+          <div class="stat-card__value">{{ s.todayCollections | currencyInr: 0 }}</div>
+          <div class="stat-card__label">{{ 'dashboard.massCollections' | translate }}</div>
+        </div>
+        <div class="stat-card__footer stat-card__footer--gold">
+          <span>{{ 'dashboard.clickToViewDetails' | translate }}</span>
+          <mat-icon>arrow_forward</mat-icon>
         </div>
       </div>
-      <div class="stat-card glass-card glass-card--interactive">
-        <div class="stat-card__icon stat-card__icon--primary">
-          <mat-icon>pending_actions</mat-icon>
+
+      <!-- Card 3: Today Contributions -->
+      <div
+        class="stat-card stat-card--clickable stat-card--green"
+        role="button"
+        tabindex="0"
+        (click)="openTodayContributions()"
+        (keydown.enter)="openTodayContributions()"
+      >
+        <div class="stat-card__watermark"></div>
+        <div class="stat-card__top">
+          <span class="stat-badge stat-badge--green">
+            <span class="stat-badge__dot"></span>
+            {{ 'dashboard.today' | translate }}
+          </span>
+          <div class="stat-icon stat-icon--green">
+            <mat-icon>redeem</mat-icon>
+          </div>
         </div>
-        <div class="stat-card__body">
-          <div class="stat-card__value">{{ s.pendingCount }}</div>
-          <div class="stat-card__label">Pending Prayer Intentions</div>
+        <div class="stat-card__main">
+          <div class="stat-card__value">{{ s.todayContributions | currencyInr: 0 }}</div>
+          <div class="stat-card__label">{{ 'dashboard.contributions' | translate }}</div>
+        </div>
+        <div class="stat-card__footer stat-card__footer--green">
+          <span>{{ 'dashboard.clickToViewDetails' | translate }}</span>
+          <mat-icon>arrow_forward</mat-icon>
         </div>
       </div>
-      <div class="stat-card glass-card glass-card--interactive">
-        <div class="stat-card__icon stat-card__icon--gold">
-          <mat-icon>savings</mat-icon>
+
+      <!-- Card 4: Period Mass Collections -->
+      <div
+        class="stat-card stat-card--clickable stat-card--gold"
+        role="button"
+        tabindex="0"
+        (click)="openPeriodCollections()"
+        (keydown.enter)="openPeriodCollections()"
+      >
+        <div class="stat-card__watermark"></div>
+        <div class="stat-card__top">
+          <span class="stat-badge stat-badge--gold">
+            <span class="stat-badge__dot"></span>
+            {{ dashboardFilter.label() }}
+          </span>
+          <div class="stat-icon stat-icon--gold">
+            <mat-icon>savings</mat-icon>
+          </div>
         </div>
-        <div class="stat-card__body">
-          <div class="stat-card__value">{{ s.monthlyCollections | currencyInr }}</div>
-          <div class="stat-card__label">Monthly Collections</div>
+        <div class="stat-card__main">
+          <div class="stat-card__value">{{ periodCollections() | currencyInr: 0 }}</div>
+          <div class="stat-card__label">{{ 'dashboard.massCollections' | translate }}</div>
+        </div>
+        <div class="stat-card__footer stat-card__footer--gold">
+          <span>{{ 'dashboard.periodTotal' | translate }}</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+      </div>
+
+      <!-- Card 5: Period Contributions -->
+      <div
+        class="stat-card stat-card--clickable stat-card--green"
+        role="button"
+        tabindex="0"
+        (click)="openPeriodContributions()"
+        (keydown.enter)="openPeriodContributions()"
+      >
+        <div class="stat-card__watermark"></div>
+        <div class="stat-card__top">
+          <span class="stat-badge stat-badge--green">
+            <span class="stat-badge__dot"></span>
+            {{ dashboardFilter.label() }}
+          </span>
+          <div class="stat-icon stat-icon--green">
+            <mat-icon>volunteer_activism</mat-icon>
+          </div>
+        </div>
+        <div class="stat-card__main">
+          <div class="stat-card__value">{{ periodContributions() | currencyInr: 0 }}</div>
+          <div class="stat-card__label">{{ 'dashboard.contributions' | translate }}</div>
+        </div>
+        <div class="stat-card__footer stat-card__footer--green">
+          <span>{{ 'dashboard.periodTotal' | translate }}</span>
+          <mat-icon>arrow_forward</mat-icon>
         </div>
       </div>
     </div>
 
+    <!-- Middle Row: Charts -->
     <div class="dashboard__charts">
+      <!-- Collections Trend Bar Chart -->
       <div class="dashboard__panel surface-card">
         <div class="dashboard__panel-header">
-          <h2>Collections — Last 7 Days</h2>
+          <div class="dashboard__panel-title-wrap">
+            <div class="dashboard__panel-icon dashboard__panel-icon--blue">
+              <mat-icon>bar_chart</mat-icon>
+            </div>
+            <div>
+              <h2>{{ 'dashboard.collectionsForPeriod' | translate: { period: dashboardFilter.label() } }}</h2>
+              <p class="dashboard__panel-subtitle">Daily collection breakdown</p>
+            </div>
+          </div>
         </div>
         <coms-bar-chart
           [data]="collectionsTrendData()"
           [valueFormatter]="currencyFormatter"
-          ariaLabel="Daily collections over the last 7 days"
+          [showTableToggle]="false"
+          color="var(--coms-color-primary)"
+          ariaLabel="Daily collections for the selected period"
         />
       </div>
 
+      <!-- Mass Intentions by Mass Time Horizontal Bar Chart -->
       <div class="dashboard__panel surface-card">
         <div class="dashboard__panel-header">
-          <h2>Prayer Intentions by Mass</h2>
+          <div class="dashboard__panel-title-wrap">
+            <div class="dashboard__panel-icon dashboard__panel-icon--gold">
+              <mat-icon>pie_chart</mat-icon>
+            </div>
+            <div>
+              <h2>{{ 'dashboard.massIntentionsByMassTime' | translate }}</h2>
+              <p class="dashboard__panel-subtitle">{{ dashboardFilter.label() }}</p>
+            </div>
+          </div>
         </div>
         <coms-bar-chart
           [data]="intentionsByMassData()"
-          color="var(--coms-color-gold)"
+          color="#b08d2b"
           orientation="horizontal"
-          ariaLabel="Total prayer intentions recorded per Mass"
+          [showTableToggle]="false"
+          ariaLabel="Total mass intentions recorded per Mass"
         />
       </div>
     </div>
 
-    <div class="dashboard__panel surface-card">
+    <!-- Bottom Row: Announcements & Restricted Dates -->
+    <div class="dashboard__charts">
+      <!-- Announcements Panel -->
+      <div class="dashboard__panel surface-card">
+        <div class="dashboard__panel-header">
+          <div class="dashboard__panel-title-wrap">
+            <div class="dashboard__panel-icon dashboard__panel-icon--blue">
+              <mat-icon>campaign</mat-icon>
+            </div>
+            <h2>{{ 'dashboard.announcements' | translate }}</h2>
+          </div>
+          @if (authService.hasPermission('masters.view')) {
+            <a class="dashboard__panel-link" routerLink="/masters/announcements">
+              {{ 'dashboard.manage' | translate }}
+              <mat-icon>open_in_new</mat-icon>
+            </a>
+          }
+        </div>
+        @if (s.announcements.length) {
+          <ul class="dashboard__notice-list dashboard__notice-list--no-scroll">
+            @for (a of s.announcements; track a.id) {
+              <li class="dashboard__notice">
+                <div class="dashboard__notice-icon dashboard__notice-icon--primary">
+                  <mat-icon>campaign</mat-icon>
+                </div>
+                <div class="dashboard__notice-body">
+                  <div class="dashboard__notice-title">{{ a.title }}</div>
+                  @if (a.body) {
+                    <p class="dashboard__notice-text">{{ a.body }}</p>
+                  }
+                  @if (announcementDateRange(a); as range) {
+                    <span class="dashboard__notice-meta">
+                      <mat-icon class="meta-icon">date_range</mat-icon>
+                      {{ range }}
+                    </span>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="text-muted dashboard__empty">{{ 'dashboard.noAnnouncements' | translate }}</p>
+        }
+      </div>
+
+      <!-- Restricted Dates Panel -->
+      <div class="dashboard__panel surface-card">
+        <div class="dashboard__panel-header">
+          <div class="dashboard__panel-title-wrap">
+            <div class="dashboard__panel-icon dashboard__panel-icon--gold">
+              <mat-icon>event_busy</mat-icon>
+            </div>
+            <h2>{{ 'dashboard.restrictedDates' | translate }}</h2>
+          </div>
+          @if (authService.hasPermission('masters.view')) {
+            <a class="dashboard__panel-link" routerLink="/masters/holidays">
+              {{ 'dashboard.manage' | translate }}
+              <mat-icon>open_in_new</mat-icon>
+            </a>
+          }
+        </div>
+        @if (s.upcomingRestrictedDates.length) {
+          <ul class="dashboard__notice-list">
+            @for (c of s.upcomingRestrictedDates; track c.id) {
+              <li class="dashboard__notice">
+                <div class="dashboard__notice-icon dashboard__notice-icon--gold">
+                  <mat-icon>event_busy</mat-icon>
+                </div>
+                <div class="dashboard__notice-body">
+                  <div class="dashboard__notice-title">{{ c.name }}</div>
+                  <span class="dashboard__notice-meta">
+                    <mat-icon class="meta-icon">calendar_today</mat-icon>
+                    {{ formatDate(c.date) }}
+                    @if (c.isRecurringYearly) {
+                      <span>· {{ 'dashboard.recurring' | translate }}</span>
+                    }
+                  </span>
+                </div>
+                <span class="dashboard__notice-chip dashboard__notice-chip--gold">{{ daysUntilLabel(c.date) }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="text-muted dashboard__empty">{{ 'dashboard.noRestrictedDates' | translate }}</p>
+        }
+      </div>
+    </div>
+
+    <!-- Upcoming Mass Intentions Table Panel -->
+    <div class="dashboard__panel dashboard__panel--table surface-card">
       <div class="dashboard__panel-header">
-        <h2>Upcoming Prayer Intentions</h2>
-        <a routerLink="/prayer-intentions">View all</a>
+        <div class="dashboard__panel-title-wrap">
+          <div class="dashboard__panel-icon dashboard__panel-icon--blue">
+            <mat-icon>format_list_bulleted</mat-icon>
+          </div>
+          <div>
+            <h2>{{ 'dashboard.upcomingMassIntentions' | translate }}</h2>
+            <p class="dashboard__panel-subtitle">Next scheduled mass intentions</p>
+          </div>
+        </div>
+        <a class="dashboard__panel-link" routerLink="/mass-intentions">
+          {{ 'dashboard.viewAll' | translate }}
+          <mat-icon>arrow_forward</mat-icon>
+        </a>
       </div>
 
       @if (s.upcoming.length) {
-        <table class="dashboard__table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Mass</th>
-              <th>Name</th>
-              <th>Intention</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of s.upcoming; track item.id) {
+        <div class="dashboard__table-container">
+          <table class="dashboard__table">
+            <thead>
               <tr>
-                <td>{{ item.prayer_date | date: 'dd MMM y' }}</td>
-                <td>{{ item.mass_name }}</td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.intention_is_custom ? item.custom_intention : item.intention_master_name }}</td>
-                <td>
-                  <span class="status-chip" [style.background]="item.status_color + '22'" [style.color]="item.status_color">
-                    {{ item.status_label }}
-                  </span>
-                </td>
+                <th class="col-date">{{ 'dashboard.colMassDate' | translate }}</th>
+                <th class="col-mass">{{ 'dashboard.colMass' | translate }}</th>
+                <th class="col-name">{{ 'common.name' | translate }}</th>
+                <th class="col-intention">{{ 'dashboard.colIntention' | translate }}</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (item of s.upcoming; track item.id) {
+                <tr class="dashboard__table-row">
+                  <td class="col-date">{{ item.prayer_date | date: 'dd-MM-yyyy' }}</td>
+                  <td class="col-mass">{{ item.mass_name }}</td>
+                  <td class="col-name dashboard__row-name">{{ item.name }}</td>
+                  <td class="col-intention">{{ (item.intention_is_custom ? item.custom_intention : item.intention_master_name) || '-' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <div class="dashboard__table-footer">
+            <span class="dashboard__table-status-pill">
+              <mat-icon>layers</mat-icon>
+              <span>{{ 'common.totalRecords' | translate: { count: s.upcoming.length } }}</span>
+            </span>
+          </div>
+        </div>
       } @else {
-        <p class="text-muted dashboard__empty">No upcoming prayer intentions recorded yet.</p>
+        <p class="text-muted dashboard__empty">{{ 'dashboard.noUpcoming' | translate }}</p>
       }
     </div>
   }

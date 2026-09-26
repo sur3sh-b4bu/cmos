@@ -1,0 +1,61 @@
+<div class="trash-list-page">
+  <div class="trash-list-page__header">
+    <div class="header-left">
+      <a routerLink="/settings" class="back-link">
+        <mat-icon>arrow_back</mat-icon>
+        <span>{{ 'nav.settings' | translate }}</span>
+      </a>
+      <div class="title-row">
+        <h1>{{ 'settings.recycleBin' | translate }}</h1>
+        <span class="badge">{{ total() }}</span>
+      </div>
+      <p class="subtitle">{{ 'trash.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Category Filter Bar -->
+  <div class="trash-categories">
+    @for (cat of categories; track cat.key) {
+      <button
+        type="button"
+        class="category-chip"
+        [class.category-chip--active]="selectedCategory() === cat.key"
+        (click)="selectCategory(cat.key)"
+      >
+        <mat-icon>{{ cat.icon }}</mat-icon>
+        <span>{{ cat.labelKey | translate }}</span>
+      </button>
+    }
+  </div>
+
+  <!-- Data Table with deleted records -->
+  <coms-data-table
+    [tableId]="'trash-list'"
+    [columns]="columns"
+    [rows]="rows()"
+    [total]="total()"
+    [loading]="loading()"
+    [pageSize]="pageSize()"
+    [pageIndex]="pageIndex()"
+    [cellTemplates]="cellTemplates"
+    (searchChange)="onSearch($event)"
+    (pageChange)="onPageChange($event)"
+  ></coms-data-table>
+
+  <!-- Cell Templates -->
+  <ng-template #dateTpl let-row>
+    <span class="text-secondary">{{ formatDate(row.deleted_at) }}</span>
+  </ng-template>
+
+  <ng-template #actionsTpl let-row>
+    <button
+      mat-flat-button
+      class="restore-btn"
+      (click)="restoreItem(row)"
+      [matTooltip]="'trash.restoreAction' | translate"
+    >
+      <mat-icon>restore_from_trash</mat-icon>
+      <span>{{ 'trash.restoreAction' | translate }}</span>
+    </button>
+  </ng-template>
+</div>

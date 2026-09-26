@@ -1,50 +1,243 @@
-// Reusable glassmorphism + elevation utility classes shared across modules.
+// =============================================================================
+// Reusable modern card, glassmorphism, elevation & utility classes
+// =============================================================================
 
 .glass-card {
-  background: var(--coms-glass-bg);
-  border: 1px solid var(--coms-glass-border);
-  border-radius: var(--coms-radius-lg);
-  backdrop-filter: blur(var(--coms-glass-blur));
-  -webkit-backdrop-filter: blur(var(--coms-glass-blur));
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: var(--coms-radius-lg, 18px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--coms-shadow-md);
-  transition: transform var(--coms-transition-base), box-shadow var(--coms-transition-base);
+  transition: transform var(--coms-transition-base), box-shadow var(--coms-transition-base), border-color var(--coms-transition-base);
+  position: relative;
 }
 
 .glass-card--interactive {
   cursor: pointer;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--coms-shadow-lg);
+    transform: translateY(-3px);
+    box-shadow: var(--coms-shadow-hover);
+    border-color: rgba(212, 175, 55, 0.35);
   }
 }
 
 .surface-card {
-  background: var(--coms-surface);
-  border: 1px solid var(--coms-border);
-  border-radius: var(--coms-radius-md);
-  box-shadow: var(--coms-shadow-sm);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--coms-radius-lg, 18px);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+  transition: box-shadow var(--coms-transition-base), border-color var(--coms-transition-base), transform var(--coms-transition-base);
+}
+
+.surface-card--interactive {
+  cursor: pointer;
+  transition: transform var(--coms-transition-base), box-shadow var(--coms-transition-base), border-color var(--coms-transition-base);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px -4px rgba(15, 23, 42, 0.09), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+    border-color: #cbd5e1;
+  }
 }
 
 .accent-bar-gold {
-  border-top: 3px solid var(--coms-color-gold);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #d4af37 0%, #f6e7a8 50%, #d4af37 100%);
+    z-index: 1;
+  }
 }
 
 .accent-bar-primary {
-  border-top: 3px solid var(--coms-color-primary);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--coms-color-primary) 0%, var(--coms-color-primary-light) 100%);
+    z-index: 1;
+  }
 }
 
 .text-muted {
-  color: var(--coms-text-muted);
+  color: var(--coms-text-muted, #64748b);
 }
 
+// Modern Status Badges & Chips
 .status-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: var(--coms-radius-full, 9999px);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  &--success {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    .status-dot {
+      background: #16a34a;
+    }
+  }
+
+  &--warning {
+    background: #fefce8;
+    color: #854d0e;
+    border: 1px solid #fef08a;
+    .status-dot {
+      background: #ca8a04;
+    }
+  }
+
+  &--danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    .status-dot {
+      background: #dc2626;
+    }
+  }
+
+  &--info {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    .status-dot {
+      background: #2563eb;
+    }
+  }
+
+  &--gold {
+    background: #fffdf5;
+    color: #8a6f22;
+    border: 1px solid #ebdcb2;
+    .status-dot {
+      background: #b08d2b;
+    }
+  }
+}
+
+// Page Header Standard Style
+.coms-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--coms-radius-md, 14px);
+    background: var(--coms-color-primary, #072a63);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(7, 42, 99, 0.22);
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      color: #f6e7a8;
+    }
+  }
+
+  &__title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  &__subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin: 2px 0 0 0;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+// Modern Table Card Layout
+.coms-table-container {
+  background: #ffffff;
+  border-radius: var(--coms-radius-lg, 18px);
+  border: 1px solid #e8edf5;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+// Modern Dialog Wrapper
+.coms-dialog {
+  border-radius: var(--coms-radius-lg, 18px);
+  overflow: hidden;
+
+  &__header {
+    padding: 18px 24px;
+    border-bottom: 1px solid #e8edf5;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+  }
+
+  &__content {
+    padding: 24px;
+  }
+
+  &__actions {
+    padding: 16px 24px;
+    border-top: 1px solid #e8edf5;
+    background: #f8fafc;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
 }

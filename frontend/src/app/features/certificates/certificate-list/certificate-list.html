@@ -1,21 +1,23 @@
 <div class="cert-list">
   <div class="cert-list__header">
     <div>
-      <h1>{{ config.title }}</h1>
-      <p class="text-muted">Search, print, reprint, or manage {{ config.title.toLowerCase() }}.</p>
+      <h1>{{ config.title | translate }}</h1>
+      <p class="text-muted">{{ 'certificates.common.searchManage' | translate: { title: (config.title | translate).toLowerCase() } }}</p>
     </div>
     @if (authService.hasPermission(config.permissionPrefix + '.create')) {
       <a mat-flat-button color="primary" [routerLink]="['/certificates', certType, 'new']">
         <mat-icon>add</mat-icon>
-        New Certificate
+        {{ 'certificates.common.newCertificate' | translate }}
       </a>
     }
   </div>
 
+  <coms-filter-bar [fields]="filterFields()" (filtersChange)="onFiltersChange($event)" />
+
   <coms-data-table
     [tableId]="'certificates-' + certType"
     [exportFileName]="certType + '-certificates'"
-    emptyMessage="No certificates recorded yet."
+    emptyMessageKey="certificates.common.emptyList"
     [columns]="columns"
     [rows]="rows()"
     [total]="total()"
@@ -23,13 +25,16 @@
     [pageSize]="pageSize()"
     [loading]="loading()"
     [cellTemplates]="cellTemplates"
+    [showImport]="authService.hasPermission(config.permissionPrefix + '.create')"
+    [serverTransfer]="serverTransfer"
     (pageChange)="onPageChange($event)"
     (searchChange)="onSearchChange($event)"
+    (imported)="fetch()"
   />
 </div>
 
 <ng-template #actionsTpl let-row>
-  <button mat-icon-button matTooltip="Print / Export PDF" (click)="printCertificate(row); $event.stopPropagation()">
+  <button mat-icon-button [matTooltip]="'certificates.common.printExportPdf' | translate" (click)="printCertificate(row); $event.stopPropagation()">
     <mat-icon>print</mat-icon>
   </button>
   <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()">
@@ -39,13 +44,13 @@
     @if (authService.hasPermission(config.permissionPrefix + '.update')) {
       <a mat-menu-item [routerLink]="['/certificates', certType, row.id, 'edit']">
         <mat-icon>edit</mat-icon>
-        <span>Edit</span>
+        <span>{{ 'common.edit' | translate }}</span>
       </a>
     }
     @if (authService.hasPermission(config.permissionPrefix + '.delete')) {
       <button mat-menu-item class="cert-list__delete" (click)="deleteRow(row)">
         <mat-icon>delete</mat-icon>
-        <span>Delete</span>
+        <span>{{ 'common.delete' | translate }}</span>
       </button>
     }
   </mat-menu>

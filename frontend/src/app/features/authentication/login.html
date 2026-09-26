@@ -1,17 +1,39 @@
 <div class="login-page">
   <div class="login-page__backdrop" aria-hidden="true"></div>
 
-  <div class="login-card glass-card">
+  <div class="login-page__lang-switch">
+    <button mat-stroked-button type="button" [matMenuTriggerFor]="languageMenu">
+      <mat-icon>translate</mat-icon>
+      {{ (languageService.current() === 'ta' ? 'language.tamil' : 'language.english') | translate }}
+    </button>
+    <mat-menu #languageMenu="matMenu">
+      <button mat-menu-item (click)="setLanguage('en')">
+        @if (languageService.current() === 'en') {
+          <mat-icon>check</mat-icon>
+        }
+        <span>{{ 'language.english' | translate }}</span>
+      </button>
+      <button mat-menu-item (click)="setLanguage('ta')">
+        @if (languageService.current() === 'ta') {
+          <mat-icon>check</mat-icon>
+        }
+        <span>{{ 'language.tamil' | translate }}</span>
+      </button>
+    </mat-menu>
+  </div>
+
+  <div class="login-card">
     <div class="login-card__brand">
-      <div class="login-card__crest">⛪</div>
-      <h1>Church Office Management System</h1>
-      <p class="text-muted">Sign in to manage prayer intentions, certificates &amp; records</p>
+      <img class="login-card__crest login-card__crest--logo" src="logo.svg" alt="Church Office Management System" /><br>
+      <h1>{{ 'auth.appTitle' | translate }}</h1>
+      <p class="text-muted">{{ 'auth.tagline' | translate }}</p>
     </div>
 
-    <form class="login-card__form" (ngSubmit)="submit()" #loginForm="ngForm">
+    <form class="login-card__form" (ngSubmit)="submit(usernameInput.value, passwordInput.value)">
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Username</mat-label>
+        <mat-label>{{ 'auth.username' | translate }}</mat-label>
         <input
+          #usernameInput
           matInput
           name="username"
           [(ngModel)]="username"
@@ -23,8 +45,9 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Password</mat-label>
+        <mat-label>{{ 'auth.password' | translate }}</mat-label>
         <input
+          #passwordInput
           matInput
           name="password"
           [type]="hidePassword() ? 'password' : 'text'"
@@ -37,7 +60,7 @@
           matSuffix
           type="button"
           (click)="togglePasswordVisibility()"
-          [attr.aria-label]="'Toggle password visibility'"
+          [attr.aria-label]="'auth.togglePasswordVisibility' | translate"
         >
           <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
         </button>
@@ -55,18 +78,43 @@
         color="primary"
         class="login-card__submit"
         type="submit"
-        [disabled]="loginForm.invalid || loading()"
+        [disabled]="loading() || biometricLoading()"
       >
         @if (loading()) {
           <mat-progress-spinner diameter="20" mode="indeterminate" />
         } @else {
-          <span>Sign In</span>
+          <span>{{ 'auth.signIn' | translate }}</span>
         }
       </button>
     </form>
 
+    @if (biometricAvailable()) {
+      <div class="login-card__divider"><span>{{ 'auth.or' | translate }}</span></div>
+
+      <button
+        mat-stroked-button
+        type="button"
+        class="login-card__biometric"
+        [disabled]="!canUseBiometrics || loading() || biometricLoading()"
+        (click)="signInWithBiometrics()"
+      >
+        @if (biometricLoading()) {
+          <mat-progress-spinner diameter="20" mode="indeterminate" />
+        } @else {
+          <mat-icon>fingerprint</mat-icon>
+        }
+        <span>{{
+          (biometricLoading() ? 'auth.waitingForDevice' : 'auth.signInWithBiometrics') | translate
+        }}</span>
+      </button>
+
+      @if (!username) {
+        <p class="login-card__biometric-hint">{{ 'auth.biometricHint' | translate }}</p>
+      }
+    }
+
     <p class="login-card__footer text-muted">
-      Forgot your password? Contact your office administrator.
+      {{ 'auth.forgotPassword' | translate }}
     </p>
   </div>
 </div>

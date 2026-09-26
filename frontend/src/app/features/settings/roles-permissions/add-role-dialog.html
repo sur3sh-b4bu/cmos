@@ -1,0 +1,42 @@
+<form class="add-role-dialog" [formGroup]="form" (ngSubmit)="submit()">
+  <h2 mat-dialog-title>{{ 'settings.addRole' | translate }}</h2>
+  <mat-dialog-content>
+    <p class="text-muted">{{ 'settings.addRoleHint' | translate }}</p>
+    <mat-form-field appearance="outline" class="add-role-dialog__field">
+      <mat-label>{{ 'settings.roleName' | translate }}</mat-label>
+      <input matInput formControlName="name" required />
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="add-role-dialog__field">
+      <mat-label>{{ 'common.description' | translate }}</mat-label>
+      <input matInput formControlName="description" />
+    </mat-form-field>
+    @if (authService.isMasterAdmin()) {
+      <div class="add-role-dialog__multi-church">
+        <div class="add-role-dialog__multi-church-label">{{ 'settings.selectChurch' | translate }}</div>
+        <div class="add-role-dialog__multi-church-list">
+          <mat-checkbox
+            [checked]="isAllChurchesSelected()"
+            [indeterminate]="isSomeChurchesSelected()"
+            (change)="toggleAllChurches($event.checked)"
+          >
+            <strong>{{ 'masters.selectAllChurches' | translate }}</strong>
+          </mat-checkbox>
+          <div class="add-role-dialog__multi-church-divider"></div>
+          @for (church of churches(); track church.id) {
+            <mat-checkbox [checked]="isChurchSelected(church.id)" (change)="toggleChurchSelection(church.id)">
+              {{ church.name }}
+            </mat-checkbox>
+          }
+        </div>
+        @if (submitted() && selectedChurchIds().size === 0) {
+          <div class="add-role-dialog__multi-church-error">{{ 'masters.selectAtLeastOneChurch' | translate }}</div>
+        }
+        <div class="add-role-dialog__multi-church-hint text-muted">{{ 'masters.selectAllChurchesHint' | translate }}</div>
+      </div>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+    <button mat-flat-button color="primary" type="submit">{{ 'settings.createRole' | translate }}</button>
+  </mat-dialog-actions>
+</form>

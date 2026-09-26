@@ -1,28 +1,52 @@
-<aside class="sidebar" [class.sidebar--collapsed]="collapsed">
+<aside class="sidebar" [class.sidebar--collapsed]="collapsed" [class.sidebar--central]="central()">
   <div class="sidebar__brand">
-    <span class="sidebar__crest">⛪</span>
+    @if (churchLogoUrl; as logoUrl) {
+      <img class="sidebar__crest sidebar__crest--logo" [src]="logoUrl" alt="Church logo" />
+    } @else {
+      <img class="sidebar__crest sidebar__crest--logo" src="logo.svg" alt="COMS" />
+    }
     @if (!collapsed) {
       <span class="sidebar__title">COMS</span>
     }
   </div>
 
+  @if (central() && !collapsed) {
+    <div class="sidebar__mode" data-testid="sidebar-mode">{{ 'central.title' | translate }}</div>
+  }
+
   <nav class="sidebar__nav">
-    @for (item of navItems; track item.route) {
+    @for (item of navItems(); track item.labelKey) {
       <a
         class="sidebar__link"
         [routerLink]="item.route"
         routerLinkActive="sidebar__link--active"
         [routerLinkActiveOptions]="{ exact: true }"
-        [matTooltip]="collapsed ? item.label : ''"
+        [matTooltip]="item.labelKey | translate"
         matTooltipPosition="right"
       >
         <mat-icon>{{ item.icon }}</mat-icon>
         @if (!collapsed) {
-          <span>{{ item.label }}</span>
+          <span class="sidebar__link-label">{{ item.labelKey | translate }}</span>
         }
       </a>
     }
   </nav>
+
+  <!-- Server health -- see health.service.ts's GET /health poll. Icon-only
+       (with a tooltip) when collapsed, same convention as the nav links
+       above; icon + short status text when expanded. -->
+  <div
+    class="sidebar__health"
+    [class.sidebar__health--ok]="healthService.status() === 'ok'"
+    [class.sidebar__health--down]="healthService.status() === 'down'"
+    [matTooltip]="healthTooltipKey | translate"
+    matTooltipPosition="right"
+  >
+    <mat-icon>{{ healthIcon }}</mat-icon>
+    @if (!collapsed) {
+      <span>{{ healthTooltipKey | translate }}</span>
+    }
+  </div>
 
   <button class="sidebar__collapse-btn" type="button" (click)="toggleCollapsed()">
     <mat-icon>{{ collapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>

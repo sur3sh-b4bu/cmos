@@ -4,11 +4,45 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, var(--coms-sidebar-gradient-start), var(--coms-sidebar-gradient-end));
+  background:
+    // Warm gold bloom near the crest, so the shine has an apparent source.
+    radial-gradient(120% 55% at 18% 0%, rgba(212, 175, 55, 0.16) 0%, transparent 60%),
+    linear-gradient(168deg, var(--coms-sidebar-gradient-start), var(--coms-sidebar-gradient-end));
   color: #ffffff;
   transition: width var(--coms-transition-base);
   flex-shrink: 0;
   overflow: hidden;
+
+  // The gilding: a soft diagonal highlight band raked across the navy. Kept
+  // under 16% opacity -- above that it stops reading as a finish on the
+  // surface and starts reading as a yellow stripe drawn on top of it.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -20% -50%;
+    background: var(--coms-gold-sheen);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  // Hairline gilt edge where the rail meets the content area.
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: var(--coms-gold-edge);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  // Keep real content above both decorative layers.
+  > * {
+    position: relative;
+    z-index: 2;
+  }
 
   &--collapsed {
     width: var(--coms-sidebar-width-collapsed);
@@ -29,14 +63,68 @@
 
 .sidebar__crest {
   font-size: 24px;
+  flex-shrink: 0;
+}
+
+.sidebar__crest--logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 .sidebar__title {
-  background: linear-gradient(90deg, #ffffff, var(--coms-color-gold-light));
+  // Polished-gold wordmark with a highlight that travels across it, the way
+  // light moves over an engraved metal plate.
+  background: linear-gradient(
+    100deg,
+    #f6e7a8 0%,
+    #ffffff 18%,
+    #e8cf82 34%,
+    #b08d2b 50%,
+    #f6e7a8 66%,
+    #ffffff 82%,
+    #e8cf82 100%
+  );
+  background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: 0.04em;
+  animation: sidebar-gild 7s linear infinite;
+}
+
+@keyframes sidebar-gild {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+
+// A moving highlight is decoration, not information -- hold it still for
+// anyone who has asked the OS to reduce motion.
+@media (prefers-reduced-motion: reduce) {
+  .sidebar__title {
+    animation: none;
+    background-position: 50% 0;
+  }
+}
+
+// Shown only in Central Management: a small gold label so it is always clear this is the organization-wide view.
+.sidebar__mode {
+  padding: 12px 22px 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--coms-color-gold-light);
+  white-space: nowrap;
+}
+
+.sidebar--central .sidebar__nav {
+  padding-top: 8px;
 }
 
 .sidebar__nav {
@@ -58,11 +146,36 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  white-space: nowrap;
   transition: background-color var(--coms-transition-fast), color var(--coms-transition-fast);
+  // Without an explicit width, a label too long for the sidebar (a Tamil
+  // translation routinely runs longer than its English source -- see
+  // sidebar screenshot: "Baptism Certificates" -> "ஞானஸ்நான சான்றிதழ்கள்")
+  // pushes this link's own box (and with it, the hover/active background
+  // below) wider than intended in some browsers' flex sizing, while the
+  // text keeps rendering past that box's edge -- the background then
+  // visibly falls short of covering the text it's supposed to sit behind.
+  // Pinning this to the full row width up front removes that mismatch
+  // outright, in either language.
+  width: 100%;
 
   mat-icon {
     flex-shrink: 0;
+  }
+
+  &-label {
+    flex: 1;
+    min-width: 0;
+    // Wraps onto a second line rather than either overflowing past the
+    // sidebar's edge or truncating with an ellipsis -- a translated label
+    // too long for one line (routine in Tamil) needs to stay fully
+    // readable without hovering for a tooltip just to read a nav item.
+    white-space: normal;
+    // Enough room between two wrapped lines to read as separate lines
+    // rather than touching -- 1.25 (this label's previous line-height) sat
+    // Tamil's own vowel signs/conjuncts (see this file's Noto Sans Tamil
+    // comment in styles.scss) close enough to the line above to look
+    // cramped, the same complaint as the single-line congestion earlier.
+    line-height: 1.5;
   }
 
   &:hover {
@@ -71,9 +184,69 @@
   }
 
   &--active {
-    background: rgba(255, 255, 255, 0.14);
+    position: relative;
+    background: linear-gradient(
+      90deg,
+      rgba(212, 175, 55, 0.20) 0%,
+      rgba(255, 255, 255, 0.12) 45%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
     color: #ffffff;
-    box-shadow: inset 3px 0 0 var(--coms-color-gold);
+
+    // Gilt marker on the leading edge, graded like the sidebar's own gold
+    // rather than a flat swatch.
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      bottom: 6px;
+      width: 3px;
+      border-radius: 0 2px 2px 0;
+      background: var(--coms-gold-edge);
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.55);
+    }
+
+    mat-icon {
+      color: var(--coms-color-gold-light);
+    }
+  }
+}
+
+.sidebar__health {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  // Same horizontal padding as .sidebar__link above, not this row's own
+  // value -- keeps the icon aligned under the nav icons in both collapsed
+  // (icon-only) and expanded states instead of drifting off-center.
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // 'checking' (right after the app loads) uses the same muted color as the
+  // rest of this row's default state above -- only a confirmed ok/down
+  // result gets its own color.
+  &--ok mat-icon {
+    color: #4CAF50;
+  }
+  &--down mat-icon {
+    color: #F44336;
   }
 }
 
@@ -90,5 +263,25 @@
 
   &:hover {
     background: rgba(255, 255, 255, 0.16);
+  }
+}
+
+// Auto-collapse to icon rail on a narrow viewport, on top of (not instead
+// of) the manual toggle above -- the sidebar's expanded width otherwise
+// leaves too little room for the content area at tablet/small-window
+// widths, squeezing everything to its right. Forces the same visuals the
+// --collapsed class gives at :first-child, but purely by width: the
+// labels/title/health text are still in the DOM (collapsed is a manual
+// @Input, not driven by viewport), so they're hidden here directly rather
+// than relying on that class.
+@media (max-width: 640px) {
+  .sidebar {
+    width: var(--coms-sidebar-width-collapsed);
+  }
+
+  .sidebar__title,
+  .sidebar__link-label,
+  .sidebar__health span {
+    display: none;
   }
 }

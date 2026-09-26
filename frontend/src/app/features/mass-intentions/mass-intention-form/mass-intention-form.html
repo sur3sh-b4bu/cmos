@@ -1,0 +1,259 @@
+<div class="pi-form">
+  <div class="pi-form__header">
+    <a routerLink="/mass-intentions" class="pi-form__back">
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+    <h1>{{ (editId() ? 'massIntentions.editTitle' : 'dashboard.newMassIntention') | translate }}</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="pi-form__loading">
+      <mat-progress-spinner mode="indeterminate" diameter="36" />
+    </div>
+  } @else {
+    @if (selectedRestrictedDate; as restricted) {
+      <div class="pi-form__restricted-banner">
+        <mat-icon>event_busy</mat-icon>
+        <div class="pi-form__restricted-body">
+          <strong>{{ 'massIntentions.restrictedDateSelected' | translate }}</strong>
+          <div class="pi-form__restricted-row"><span>{{ 'common.name' | translate }}:</span> {{ restricted.name }}</div>
+          <div class="pi-form__restricted-row"><span>{{ 'massIntentions.reason' | translate }}:</span> {{ restricted.reason || defaultRestrictedDateReason }}</div>
+          <p>{{ 'massIntentions.restrictedDateBody' | translate }}</p>
+        </div>
+      </div>
+    }
+
+    @if (savedIntention() && !editId()) {
+      <div class="pi-form__success glass-card">
+        <mat-icon>check_circle</mat-icon>
+        <div>
+          <strong>{{ 'massIntentions.savedSuccessfully' | translate: { receipt: savedIntention()?.receipt_no } }}</strong>
+          <p class="text-muted">
+            @if (savedIntention()?.is_paid) {
+              {{ 'massIntentions.paymentReceivedNote' | translate }}
+            } @else {
+              {{ 'massIntentions.paymentNotRecordedNote' | translate }}
+            }
+          </p>
+        </div>
+        <div class="pi-form__success-actions">
+          @if (savedIntention()?.is_paid) {
+            <button mat-flat-button color="primary" type="button" (click)="printReceipt()">
+              <mat-icon>print</mat-icon>
+              {{ 'massIntentions.printReceipt' | translate }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <form class="pi-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="pi-form__grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'massIntentions.bookedBy' | translate }}</mat-label>
+          <input
+            matInput
+            formControlName="bookedBy"
+            maxlength="150"
+            [class.bamini-font]="bookedByBamini()"
+            (blur)="convertBaminiOnBlur('bookedBy', bookedByBamini)"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            [color]="bookedByBamini() ? 'primary' : undefined"
+            [matTooltip]="'massIntentions.typeInBamini' | translate"
+            (click)="toggleBamini(bookedByBamini)"
+          >
+            <mat-icon>keyboard</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'massIntentions.phoneNumber' | translate }}</mat-label>
+          <span matTextPrefix class="phone-country-code">+91&nbsp;</span>
+          <input matInput type="tel" inputmode="numeric" formControlName="phone" maxlength="10" placeholder="9876543210" />
+          @if (form.controls.phone.hasError('phone')) {
+            <mat-error>{{ 'common.phoneInvalid' | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'common.name' | translate }}</mat-label>
+          <input
+            matInput
+            formControlName="name"
+            maxlength="150"
+            required
+            [class.bamini-font]="nameBamini()"
+            (blur)="convertBaminiOnBlur('name', nameBamini)"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            [color]="nameBamini() ? 'primary' : undefined"
+            [matTooltip]="'massIntentions.typeInBamini' | translate"
+            (click)="toggleBamini(nameBamini)"
+          >
+            <mat-icon>keyboard</mat-icon>
+          </button>
+          @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+            <mat-error>{{ 'massIntentions.nameRequired' | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'massIntentions.prayerDate' | translate }}</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="prayerDate" required />
+          <mat-datepicker-toggle matIconSuffix [for]="picker" />
+          <mat-datepicker #picker [dateClass]="dateClass" [calendarHeaderComponent]="todayHeader" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'dashboard.colMass' | translate }}</mat-label>
+          <mat-select formControlName="massId" required>
+            @for (mass of masses(); track mass.id) {
+              <mat-option [value]="mass.id">{{ massLabel(mass) }} ({{ mass.mass_time }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'massIntentions.colIntention' | translate }}</mat-label>
+          <mat-select formControlName="prayerIntentionMasterId">
+            @for (opt of intentionOptions(); track opt.id) {
+              <mat-option [value]="opt.id">{{ intentionLabel(opt) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Read-only note carried from the selected Mass (Masters > Masses
+             > Offering Description) -- its own full-width row rather than a
+             mat-hint under the Mass field, since a mat-hint's reserved
+             subscript space doesn't grow for multi-line text and would
+             overlap the field below it once the description wraps. -->
+        @if (selectedMassOfferingDescription) {
+          <div class="pi-form__offering-description pi-form__span-2">
+            <mat-icon>info</mat-icon>
+            <div>
+              <strong>{{ 'massIntentions.offeringDescription' | translate }}</strong>
+              <p>{{ selectedMassOfferingDescription }}</p>
+            </div>
+          </div>
+        }
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'massIntentions.offeringAmount' | translate }} ({{ currencyService.current().symbol }})</mat-label>
+          <input matInput type="number" min="0.01" step="0.01" formControlName="offeringAmount" required />
+          @if (form.controls.offeringAmount.hasError('min') && form.controls.offeringAmount.touched) {
+            <mat-error>{{ 'massIntentions.offeringMustBePositive' | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'massIntentions.paymentMethod' | translate }}</mat-label>
+          <mat-select formControlName="paymentMethodId" required>
+            @for (pm of paymentMethods(); track pm.id) {
+              <mat-option [value]="pm.id">{{ pm.name }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.paymentMethodId.hasError('required') && form.controls.paymentMethodId.touched) {
+            <mat-error>{{ 'massIntentions.paymentMethodRequired' | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        @if (selectedIntentionIsCustom) {
+          <mat-form-field appearance="outline" class="pi-form__span-2">
+            <mat-label>{{ 'massIntentions.describeIntention' | translate }}</mat-label>
+            <textarea
+              matInput
+              rows="3"
+              formControlName="customIntention"
+              required
+              [class.bamini-font]="customIntentionBamini()"
+              (blur)="convertBaminiOnBlur('customIntention', customIntentionBamini)"
+            ></textarea>
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              [color]="customIntentionBamini() ? 'primary' : undefined"
+              [matTooltip]="'massIntentions.typeInBamini' | translate"
+              (click)="toggleBamini(customIntentionBamini)"
+            >
+              <mat-icon>keyboard</mat-icon>
+            </button>
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline" class="pi-form__span-2">
+          <mat-label>{{ 'massIntentions.remarks' | translate }}</mat-label>
+          <textarea matInput rows="2" formControlName="remarks"></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="pi-form__payment-row">
+        @if (!editId() || !savedIntention()?.is_paid) {
+          @if (!readyToConfirmPayment && !selectedRestrictedDate) {
+            <div class="pi-form__payment-hint">
+              <mat-icon>info</mat-icon>
+              <span>{{ 'massIntentions.fillRequiredFieldsHint' | translate }}</span>
+            </div>
+          }
+          <!-- Confirming payment here also saves the mass intention (see
+               onPaymentConfirmed) -- there's no separate Save button in
+               this flow. readyToConfirmPayment keeps the panel disabled
+               until the rest of the form is actually valid, so that always
+               succeeds short of a genuine network/API failure below. -->
+          <coms-payment-confirm-panel
+            [method]="selectedPaymentMethod"
+            [amount]="form.controls.offeringAmount.value"
+            [purposeText]="paymentPurposeText"
+            [disabled]="!readyToConfirmPayment"
+            [entityId]="paymentIntentionId()"
+            [receivePayment]="receivePaymentFn"
+            (confirmed)="onPaymentConfirmed($event)"
+          />
+          @if (saveFailed()) {
+            <div class="pi-form__save-failed">
+              <mat-icon>error</mat-icon>
+              <span>{{ 'massIntentions.saveFailedHint' | translate }}</span>
+              <button mat-stroked-button type="button" [disabled]="saving()" (click)="submit()">
+                @if (saving()) {
+                  <mat-progress-spinner diameter="16" mode="indeterminate" />
+                } @else {
+                  <mat-icon>refresh</mat-icon>
+                }
+                <span>{{ 'common.retry' | translate }}</span>
+              </button>
+            </div>
+          }
+        } @else {
+          <button mat-stroked-button type="button" (click)="printReceipt()">
+            <mat-icon>print</mat-icon>
+            {{ 'massIntentions.printReceipt' | translate }}
+          </button>
+        }
+      </div>
+
+      @if (editId() && savedIntention()?.is_paid) {
+        <div class="pi-form__actions">
+          <a mat-button routerLink="/mass-intentions">{{ 'common.cancel' | translate }}</a>
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+            @if (saving()) {
+              <mat-progress-spinner diameter="18" mode="indeterminate" />
+            } @else {
+              <span>{{ 'common.saveChanges' | translate }}</span>
+            }
+          </button>
+        </div>
+      } @else {
+        <div class="pi-form__actions">
+          <a mat-button routerLink="/mass-intentions">{{ 'common.cancel' | translate }}</a>
+        </div>
+      }
+    </form>
+  }
+</div>

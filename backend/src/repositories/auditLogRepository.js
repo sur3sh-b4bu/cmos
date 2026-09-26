@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const { clampPageSize, clampPage } = require('../utils/pagination');
 
 async function record({ userId, username, action, module, entityType, entityId, oldValues, newValues, ipAddress, userAgent }) {
   await pool.query(
@@ -21,6 +22,8 @@ async function record({ userId, username, action, module, entityType, entityId, 
 }
 
 async function list({ page = 1, pageSize = 25, userId, module, fromDate, toDate, search }) {
+  page = clampPage(page);
+  pageSize = clampPageSize(pageSize);
   const conditions = [];
   const params = [];
   if (userId) {

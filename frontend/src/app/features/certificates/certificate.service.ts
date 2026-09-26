@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiListResponse, ApiResponse } from '../../core/models/api-response.model';
+import { ServerTransfer } from '../../core/services/excel-transfer.service';
 
 export type CertificateType = 'baptism' | 'marriage' | 'death';
 
@@ -11,7 +12,14 @@ export class CertificateService {
   private http = inject(HttpClient);
   private baseUrl = `${environment.apiBaseUrl}/certificates`;
 
-  list(type: CertificateType, query: { page?: number; pageSize?: number; search?: string }): Observable<ApiListResponse<any>> {
+  // Extra keys beyond page/pageSize/search are the structured filter-bar
+  // params (e.g. priest_id, date_of_baptismFrom/To) -- see certificate-
+  // list.ts's fetch() and certificateRepository.js's buildStructuredFilters,
+  // which is what actually reads them server-side.
+  list(
+    type: CertificateType,
+    query: { page?: number; pageSize?: number; search?: string } & Record<string, string | number | undefined>
+  ): Observable<ApiListResponse<any>> {
     let params = new HttpParams();
     Object.entries(query).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') params = params.set(key, String(value));
@@ -33,6 +41,17 @@ export class CertificateService {
 
   delete(type: CertificateType, id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${type}/${id}`);
+  }
+
+  /** Endpoints behind the list's Import / Export / template buttons; `exportParams` is read at click time. */
+  transferConfig(type: CertificateType, exportParams: ServerTransfer['exportParams']): ServerTransfer {
+    return {
+      exportUrl: `${this.baseUrl}/${type}/export`,
+      templateUrl: `${this.baseUrl}/${type}/import-template`,
+      importUrl: `${this.baseUrl}/${type}/import`,
+      fallbackFileName: `${type}-certificates.xlsx`,
+      exportParams,
+    };
   }
 
   getPrintUrl(type: CertificateType, id: number): string {

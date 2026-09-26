@@ -1,0 +1,110 @@
+<div class="register">
+  <div class="register__header no-print">
+    <div>
+      <h1>{{ 'nav.dailyRegister' | translate }}</h1>
+      <p class="text-muted">{{ 'dailyRegister.subtitle' | translate }}</p>
+    </div>
+
+    <div class="register__controls">
+      <mat-form-field appearance="outline" class="register__date" subscriptSizing="dynamic">
+        <mat-label>{{ 'common.date' | translate }}</mat-label>
+        <input matInput [matDatepicker]="picker" [ngModel]="selectedDate()" (ngModelChange)="onDateChange($event)" />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker [calendarHeaderComponent]="todayHeader" />
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" (click)="printRegister()" [disabled]="printing() || entries().length === 0">
+        <mat-icon>print</mat-icon>
+        {{ 'dailyRegister.printRegister' | translate }}
+      </button>
+      <button
+        mat-stroked-button
+        color="primary"
+        (click)="printRegisterNamesOnly()"
+        [disabled]="printingNamesOnly() || entries().length === 0"
+      >
+        <mat-icon>print</mat-icon>
+        {{ 'dailyRegister.printNamesOnly' | translate }}
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="register__loading">
+      <mat-progress-spinner mode="indeterminate" diameter="36" />
+    </div>
+  } @else if (entries().length === 0) {
+    <div class="register__empty surface-card">
+      <mat-icon>event_busy</mat-icon>
+      <p>{{ 'dailyRegister.noneRecorded' | translate: { date: dateParam } }}</p>
+    </div>
+  } @else {
+    <div class="register__summary-bar">
+      <span class="register__summary-pill">
+        <mat-icon>volunteer_activism</mat-icon>
+        <span>{{ 'dailyRegister.summary' | translate: { count: entries().length, total: (totalOffering() | currencyInr) } }}</span>
+      </span>
+    </div>
+
+    @for (group of groups(); track group.massId) {
+      <div class="register__group surface-card">
+        <div class="register__group-header">
+          <div class="register__group-title-wrap">
+            <div class="register__group-icon-wrap">
+              <mat-icon>church</mat-icon>
+            </div>
+            <h2>{{ massLabel(group) }}</h2>
+            <span class="register__time-badge">{{ group.massTime }}</span>
+          </div>
+          <div class="register__group-meta">
+            <span class="register__group-count">
+              {{ group.entries.length }} {{ (group.entries.length === 1 ? 'nav.massIntentions' : 'nav.massIntentions') | translate }}
+            </span>
+          </div>
+        </div>
+
+        <div class="register__table-scroll">
+          <table class="register__table">
+            <thead>
+              <tr>
+                <th class="col-index">#</th>
+                <th class="col-name">{{ 'common.name' | translate }}</th>
+                <th class="col-intention">{{ 'massIntentions.colIntention' | translate }}</th>
+                <th class="col-offering">{{ 'massIntentions.colOffering' | translate }}</th>
+                <th class="col-receipt">{{ 'massIntentions.colReceiptNo' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of group.entries; track entry.id; let i = $index) {
+                <tr class="register__row">
+                  <td class="col-index">{{ i + 1 }}</td>
+                  <td class="col-name register__name">{{ entry.name }}</td>
+                  <td class="col-intention">{{ intentionText(entry) }}</td>
+                  <td class="col-offering">{{ entry.offering_amount | currencyInr }}</td>
+                  <td class="col-receipt">
+                    <span class="register__receipt-pill">{{ entry.receipt_no }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="register__group-footer">
+          <div class="register__footer-status">
+            <span class="register__status-pill">
+              <mat-icon class="register__status-icon">layers</mat-icon>
+              <span class="register__status-count">
+                {{ 'common.totalRecords' | translate: { count: group.entries.length } }}
+              </span>
+            </span>
+          </div>
+          <div class="register__footer-total">
+            <span class="register__total-label">{{ 'reports.totalOffering' | translate }}:</span>
+            <span class="register__total-value">{{ groupOffering(group) | currencyInr }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

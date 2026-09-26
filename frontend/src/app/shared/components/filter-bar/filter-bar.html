@@ -1,0 +1,106 @@
+@if (fields.length) {
+  <div class="filter-bar">
+    @for (f of fields; track f.key) {
+      <div class="filter-bar__item">
+        <div class="filter-bar__chip" [class.filter-bar__chip--active]="isActive(f.key)">
+          <button
+            type="button"
+            class="filter-bar__trigger-btn"
+            [matMenuTriggerFor]="menu"
+            #trigger="matMenuTrigger"
+          >
+            <mat-icon class="filter-bar__leading-icon">
+              {{ f.type === 'dateRange' ? 'date_range' : 'filter_alt' }}
+            </mat-icon>
+            <span class="filter-bar__btn-label">{{ f.label | translate }}</span>
+            @if (activeValueText(f); as v) {
+              <span class="filter-bar__btn-value">{{ v }}</span>
+            }
+            <mat-icon class="filter-bar__arrow-icon">arrow_drop_down</mat-icon>
+          </button>
+          @if (isActive(f.key)) {
+            <button
+              type="button"
+              class="filter-bar__clear-btn"
+              [matTooltip]="'common.clear' | translate"
+              (click)="clearOne(f.key); $event.stopPropagation()"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+
+        <mat-menu #menu="matMenu" class="filter-bar__menu" (closed)="clearMenuSearch(f.key)">
+          @if (f.type === 'select') {
+            <!-- Search field inside select filter menu -->
+            <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+            <div class="filter-bar__menu-search" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+              <mat-icon>search</mat-icon>
+              <input
+                type="text"
+                [placeholder]="'common.search' | translate"
+                [ngModel]="menuSearch()[f.key]"
+                (ngModelChange)="setMenuSearch(f.key, $event)"
+              />
+            </div>
+
+            <div class="filter-bar__menu-list">
+              <button mat-menu-item class="filter-bar__menu-item" (click)="selectOption(f.key, '')">
+                <mat-icon class="filter-bar__check" [class.filter-bar__check--visible]="!selected()[f.key]">check</mat-icon>
+                <span class="filter-bar__menu-item-label">{{ 'common.all' | translate }}</span>
+              </button>
+              @for (opt of filteredOptions(f); track opt.value) {
+                <button mat-menu-item class="filter-bar__menu-item" (click)="selectOption(f.key, opt.value.toString())">
+                  <mat-icon class="filter-bar__check" [class.filter-bar__check--visible]="selected()[f.key] === opt.value.toString()">check</mat-icon>
+                  <span class="filter-bar__menu-item-label">{{ opt.label }}</span>
+                </button>
+              }
+              @if (!filteredOptions(f).length) {
+                <div class="filter-bar__empty">{{ 'common.noOptions' | translate }}</div>
+              }
+            </div>
+          } @else {
+            <!-- Date range picker inside filter menu -->
+            <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+            <div class="filter-bar__range" (click)="$event.stopPropagation()">
+              <mat-form-field appearance="outline" class="filter-bar__range-field" subscriptSizing="dynamic">
+                <input
+                  matInput
+                  [placeholder]="'common.from' | translate"
+                  [matDatepicker]="fromPicker"
+                  [max]="rangeTo(f.key)"
+                  [ngModel]="rangeFrom(f.key)"
+                  (ngModelChange)="setRangeFrom(f.key, $event)"
+                />
+                <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+                <mat-datepicker #fromPicker [calendarHeaderComponent]="todayHeader" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="filter-bar__range-field" subscriptSizing="dynamic">
+                <input
+                  matInput
+                  [placeholder]="'common.to' | translate"
+                  [matDatepicker]="toPicker"
+                  [min]="rangeFrom(f.key)"
+                  [ngModel]="rangeTo(f.key)"
+                  (ngModelChange)="setRangeTo(f.key, $event)"
+                />
+                <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+                <mat-datepicker #toPicker [calendarHeaderComponent]="todayHeader" />
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="applyRange(); trigger.closeMenu()">
+                {{ 'common.apply' | translate }}
+              </button>
+            </div>
+          }
+        </mat-menu>
+      </div>
+    }
+
+    @if (hasActive()) {
+      <button mat-button class="filter-bar__clear-all" (click)="clearAll()">
+        <mat-icon>filter_alt_off</mat-icon>
+        {{ 'common.clearFilters' | translate }}
+      </button>
+    }
+  </div>
+}

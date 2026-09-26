@@ -1,9 +1,22 @@
+:host {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
 .cert-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 1300px;
-  margin: 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 12px;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .cert-list__header {
@@ -11,14 +24,30 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
 
   h1 {
-    margin: 0 0 4px;
+    margin: 0 0 2px;
     font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
   }
   p {
     margin: 0;
+    font-size: 12.5px;
+    color: #64748b;
+  }
+
+  a[mat-flat-button] {
+    font-weight: 600;
+    font-size: 13px;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 14px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
 }
 

@@ -3,7 +3,7 @@
     <mat-icon>search</mat-icon>
     <input
       type="text"
-      placeholder="Search modules, actions... (Esc to close)"
+      [placeholder]="'commandPalette.searchPlaceholder' | translate"
       [ngModel]="query()"
       (ngModelChange)="query.set($event)"
       (keydown.escape)="close()"
@@ -18,7 +18,7 @@
         <span>{{ item.label }}</span>
       </button>
     } @empty {
-      <p class="command-palette__empty text-muted">No matches found.</p>
+      <p class="command-palette__empty text-muted">{{ 'commandPalette.noMatches' | translate }}</p>
     }
   </div>
 </div>

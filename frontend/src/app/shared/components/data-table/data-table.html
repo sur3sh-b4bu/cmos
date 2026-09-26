@@ -1,30 +1,73 @@
 <div class="data-table surface-card">
   <div class="data-table__toolbar">
-    <mat-form-field appearance="outline" class="data-table__search">
+    <mat-form-field appearance="outline" class="data-table__search" subscriptSizing="dynamic">
       <mat-icon matPrefix>search</mat-icon>
       <input
         matInput
-        placeholder="Quick search..."
+        [placeholder]="'common.quickSearch' | translate"
         [ngModel]="searchTerm"
         (ngModelChange)="onSearchInput($event)"
+        [class.bamini-font]="baminiSearch()"
+        (blur)="convertSearchBaminiOnBlur()"
       />
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        [color]="baminiSearch() ? 'primary' : undefined"
+        [matTooltip]="'massIntentions.typeInBamini' | translate"
+        (click)="toggleBaminiSearch()"
+      >
+        <mat-icon>keyboard</mat-icon>
+      </button>
     </mat-form-field>
 
     <div class="data-table__toolbar-actions">
+      <ng-content select="[dataTableToolbarExtra]" />
+      @if (showImport) {
+        <input
+          #importInput
+          type="file"
+          accept=".xlsx"
+          hidden
+          (change)="onImportFileSelected($event)"
+        />
+        <button mat-stroked-button (click)="importInput.click()" [disabled]="importing()">
+          @if (importing()) {
+            <mat-progress-spinner diameter="16" mode="indeterminate" />
+          } @else {
+            <mat-icon>upload_file</mat-icon>
+          }
+          {{ 'common.importExcel' | translate }}
+        </button>
+        @if (serverTransfer) {
+          <button mat-stroked-button (click)="downloadTemplate()" [disabled]="exporting()" data-testid="download-template">
+            <mat-icon>description</mat-icon>
+            {{ 'common.downloadImportTemplate' | translate }}
+          </button>
+        }
+      }
       @if (showExport) {
         <button mat-stroked-button (click)="exportExcel()" [disabled]="exporting()">
           <mat-icon>grid_on</mat-icon>
-          Export Excel
+          {{ 'common.exportExcel' | translate }}
         </button>
       }
-      <button mat-icon-button [matMenuTriggerFor]="columnMenu" matTooltip="Choose columns">
+      <button mat-icon-button [matMenuTriggerFor]="columnMenu" [matTooltip]="'common.chooseColumns' | translate">
         <mat-icon>view_column</mat-icon>
       </button>
       <mat-menu #columnMenu="matMenu">
+        <!-- Not an interactive control -- (click) here only stops the click
+             bubbling up to MatMenu (which would otherwise treat it as a
+             backdrop click and close the menu) so ticking a checkbox inside
+             doesn't dismiss the menu after every single toggle. Nothing a
+             keyboard/screen-reader user would need to reach this div itself
+             for -- the real interactive elements are the checkboxes inside. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
         <div class="data-table__column-menu" (click)="$event.stopPropagation()">
-          @for (col of columns; track col.key) {
+          @for (col of toggleableColumns(); track col.key) {
             <mat-checkbox [checked]="isColumnVisible(col.key)" (change)="toggleColumn(col.key)">
-              {{ col.label }}
+              {{ col.label | translate }}
             </mat-checkbox>
           }
         </div>
@@ -40,20 +83,42 @@
     <table mat-table [dataSource]="rows" matSort (matSortChange)="onSortEvent($event)">
       @for (col of visibleColumns(); track col.key) {
         <ng-container [matColumnDef]="col.key">
-          <th mat-header-cell *matHeaderCellDef [mat-sort-header]="col.sortable ? col.key : ''" [disabled]="!col.sortable" [style.text-align]="col.align || 'left'">
-            {{ col.label }}
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            [mat-sort-header]="col.sortable ? col.key : ''"
+            [disabled]="!col.sortable"
+            [style.text-align]="col.align || 'left'"
+            [class.data-table__col-right]="col.align === 'right'"
+            [class.data-table__col-center]="col.align === 'center'"
+          >
+            {{ col.label | translate }}
           </th>
-          <td mat-cell *matCellDef="let row" [style.text-align]="col.align || 'left'">
+          <td
+            mat-cell
+            *matCellDef="let row"
+            [style.text-align]="col.align || 'left'"
+            [class.data-table__col-right]="col.align === 'right'"
+            [class.data-table__col-center]="col.align === 'center'"
+          >
             @if (cellTemplates[col.key]) {
               <ng-container *ngTemplateOutlet="cellTemplates[col.key]; context: { $implicit: row }" />
             } @else {
-              {{ getCellValue(row, col) }}
+              <!-- translate is a safe no-op for a plain data value (a
+                   name, a formatted date, a receipt number, ...) -- ngx-
+                   translate just returns unmatched text unchanged. It's
+                   here for the accessors that DO return a translation key
+                   (e.g. a Yes/No or Recurring/One-time badge computed from
+                   the row -- see master-config.ts), which can't be
+                   translated any other way since they're plain runtime
+                   text, not a static column label. -->
+              {{ getCellText(row, col) | translate }}
             }
           </td>
         </ng-container>
       }
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
       <tr
         mat-row
         *matRowDef="let row; columns: displayedColumns()"
@@ -63,16 +128,36 @@
     </table>
 
     @if (!loading && rows.length === 0) {
-      <div class="data-table__empty">{{ emptyMessage }}</div>
+      <div class="data-table__empty">{{ resolvedEmptyMessage }}</div>
     }
   </div>
 
-  <mat-paginator
-    [length]="total"
-    [pageIndex]="pageIndex"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="pageSizeOptions"
-    (page)="onPageEvent($event)"
-    showFirstLastButtons
-  />
+  <!-- Status Bar Footer -->
+  <div class="data-table__footer">
+    <div class="data-table__status-info">
+      <span class="data-table__status-pill">
+        <mat-icon class="data-table__status-icon">layers</mat-icon>
+        <span class="data-table__status-count">
+          {{ 'common.totalRecords' | translate: { count: total || rows.length } }}
+        </span>
+      </span>
+      @if (searchTerm) {
+        <span class="data-table__filter-tag">
+          <mat-icon>search</mat-icon>
+          <span>"{{ searchTerm }}"</span>
+        </span>
+      }
+    </div>
+
+    <div class="data-table__pagination-wrap">
+      <mat-paginator
+        [length]="total"
+        [pageIndex]="pageIndex"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onPageEvent($event)"
+        showFirstLastButtons
+      />
+    </div>
+  </div>
 </div>

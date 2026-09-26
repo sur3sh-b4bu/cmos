@@ -1,0 +1,79 @@
+<div class="cdd-dialog" [class.cdd-dialog--range]="!isSingleDay">
+  <h2 mat-dialog-title>
+    <mat-icon>volunteer_activism</mat-icon>
+    @if (isSingleDay) {
+      {{ 'reports.contributionsForDate' | translate: { date: formattedDate } }}
+    } @else {
+      {{ 'reports.contributionsForRange' | translate: { from: formattedRange.from, to: formattedRange.to } }}
+    }
+  </h2>
+
+  <mat-dialog-content>
+    @if (loading()) {
+      <div class="cdd-dialog__loading">
+        <mat-progress-spinner mode="indeterminate" diameter="32" />
+      </div>
+    } @else if (detail(); as d) {
+      @if (d.rows.length) {
+        <div class="cdd-dialog__table-wrap">
+          <table mat-table [dataSource]="d.rows" class="cdd-dialog__table">
+            <ng-container matColumnDef="payment_date">
+              <th mat-header-cell *matHeaderCellDef>{{ 'common.date' | translate }}</th>
+              <td mat-cell *matCellDef="let row">{{ formatDate(row.payment_date) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="receipt_no">
+              <th mat-header-cell *matHeaderCellDef>{{ 'massIntentions.colReceiptNo' | translate }}</th>
+              <td mat-cell *matCellDef="let row" class="cdd-dialog__receipt-no">{{ row.receipt_no }}</td>
+            </ng-container>
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>{{ 'common.name' | translate }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+            </ng-container>
+            <ng-container matColumnDef="contribution_type">
+              <th mat-header-cell *matHeaderCellDef>{{ 'contributions.contributionType' | translate }}</th>
+              <td mat-cell *matCellDef="let row">{{ contributionTypeText(row) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="method">
+              <th mat-header-cell *matHeaderCellDef>{{ 'massIntentions.paymentMethod' | translate }}</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="cdd-dialog__method-badge">{{ formatMethod(row.method) }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef class="cdd-dialog__col-right">{{ 'payment.amount' | translate }}</th>
+              <td mat-cell *matCellDef="let row" class="cdd-dialog__col-right cdd-dialog__amount">{{ currency(row.amount) }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+
+        <div class="cdd-dialog__total">
+          <span>{{ 'common.total' | translate }}</span>
+          <strong>{{ currency(d.total) }}</strong>
+        </div>
+      } @else {
+        <div class="cdd-dialog__empty">{{ 'reports.emptyContributions' | translate }}</div>
+      }
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>{{ 'common.close' | translate }}</button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      [disabled]="loading() || printing() || !detail()?.rows?.length"
+      (click)="print()"
+    >
+      @if (printing()) {
+        <mat-progress-spinner diameter="16" mode="indeterminate" />
+      } @else {
+        <mat-icon>print</mat-icon>
+      }
+      <span>{{ 'common.print' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</div>

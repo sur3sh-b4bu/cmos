@@ -7,6 +7,7 @@ const router = express.Router();
 router.use(authenticate, authorize('roles.view'));
 
 router.get('/', controller.listRoles);
+router.post('/', authorize('roles.create'), controller.create);
 router.get('/permissions/all', controller.listPermissions);
 router.get('/:roleId/permissions', controller.getRolePermissions);
 router.put('/:roleId/permissions', authorize('roles.update'), controller.setRolePermissions);

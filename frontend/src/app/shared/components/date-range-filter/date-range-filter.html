@@ -1,36 +1,58 @@
 <div class="date-range-filter">
-  <button mat-stroked-button [matMenuTriggerFor]="menu">
-    <mat-icon>date_range</mat-icon>
-    {{ label() }}
-    <mat-icon>arrow_drop_down</mat-icon>
+  <button mat-stroked-button class="date-range-filter__btn" [matMenuTriggerFor]="menu">
+    <mat-icon class="date-range-filter__cal-icon">calendar_today</mat-icon>
+    <span class="date-range-filter__label">{{ label() }}</span>
+    <mat-icon class="date-range-filter__arrow-icon">arrow_drop_down</mat-icon>
   </button>
 
   <mat-menu #menu="matMenu" class="date-range-filter__menu">
-    <div class="date-range-filter__presets" (click)="$event.stopPropagation()">
+    <!-- No stopPropagation() here: a preset button's click must bubble up
+         to MatMenu's own item-click handling so the menu (and its overlay
+         backdrop) actually closes -- see .date-range-filter__custom below
+         for where stopping propagation IS needed (the datepicker popups),
+         scoped tightly so it doesn't also swallow the preset buttons'
+         clicks. -->
+    <div class="date-range-filter__presets">
       @for (p of presets; track p.key) {
         <button mat-menu-item (click)="applyPreset(p.key)">
           @if (activePreset() === p.key) {
             <mat-icon>check</mat-icon>
           }
-          <span>{{ p.label }}</span>
+          <span>{{ p.labelKey | translate }}</span>
         </button>
       }
 
+      <!-- Not an interactive control -- (click) here only stops the click
+           bubbling up to MatMenu's own item-click handling (see the comment
+           above), so picking a date inside doesn't dismiss the menu before
+           both ends of the range are set. The datepicker inputs/toggles
+           inside are the real interactive elements. -->
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <div class="date-range-filter__custom" (click)="$event.stopPropagation()">
-        <mat-form-field appearance="outline" class="date-range-filter__custom-field">
-          <mat-label>From</mat-label>
-          <input matInput [matDatepicker]="fromPicker" [(ngModel)]="customFrom" />
+        <mat-form-field appearance="outline" class="date-range-filter__custom-field" subscriptSizing="dynamic">
+          <input
+            matInput
+            [placeholder]="'common.from' | translate"
+            [matDatepicker]="fromPicker"
+            [max]="customTo"
+            [(ngModel)]="customFrom"
+          />
           <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
-          <mat-datepicker #fromPicker />
+          <mat-datepicker #fromPicker [calendarHeaderComponent]="todayHeader" />
         </mat-form-field>
-        <mat-form-field appearance="outline" class="date-range-filter__custom-field">
-          <mat-label>To</mat-label>
-          <input matInput [matDatepicker]="toPicker" [(ngModel)]="customTo" />
+        <mat-form-field appearance="outline" class="date-range-filter__custom-field" subscriptSizing="dynamic">
+          <input
+            matInput
+            [placeholder]="'common.to' | translate"
+            [matDatepicker]="toPicker"
+            [min]="customFrom"
+            [(ngModel)]="customTo"
+          />
           <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
-          <mat-datepicker #toPicker />
+          <mat-datepicker #toPicker [calendarHeaderComponent]="todayHeader" />
         </mat-form-field>
         <button mat-flat-button color="primary" [disabled]="!customFrom || !customTo" (click)="applyCustom()">
-          Apply custom range
+          {{ 'dateRange.applyCustomRange' | translate }}
         </button>
       </div>
     </div>

@@ -1,0 +1,62 @@
+name: CI
+
+# Runs on every push/PR so a regression is caught before merge rather than
+# relying on someone remembering to run lint/tests locally. Backend and
+# frontend are independent jobs (separate package.json/node_modules) so a
+# failure in one doesn't hide whether the other passed.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (lint + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      # postinstall (scripts/extractFonts.js) only prepares PDF fonts for
+      # actually generating a PDF -- irrelevant to lint/unit tests, and
+      # skipping it keeps CI from depending on that script's own environment
+      # assumptions.
+      - run: npm ci --ignore-scripts
+
+      - run: npm run lint
+
+      # All current backend tests mock the DB layer directly (see e.g.
+      # authService.test.js) rather than hitting a real MySQL instance, so
+      # no database service container is needed here.
+      - run: npm test
+
+  frontend:
+    name: Frontend (lint + test + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm test -- --watch=false
+
+      - run: npm run build

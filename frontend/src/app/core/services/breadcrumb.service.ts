@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface Breadcrumb {
   label: string;
@@ -11,11 +12,18 @@ export interface Breadcrumb {
 export class BreadcrumbService {
   private router = inject(Router);
   private rootRoute = inject(ActivatedRoute);
+  private translate = inject(TranslateService);
 
   readonly breadcrumbs = signal<Breadcrumb[]>([]);
 
   constructor() {
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => {
+      this.breadcrumbs.set(this.build(this.rootRoute.snapshot));
+    });
+    // route.data['breadcrumb'] holds a translation key, not display text --
+    // rebuild on every language switch so crumbs don't stay in the old
+    // language until the next navigation.
+    this.translate.onLangChange.subscribe(() => {
       this.breadcrumbs.set(this.build(this.rootRoute.snapshot));
     });
   }
@@ -28,10 +36,13 @@ export class BreadcrumbService {
     while (current) {
       const segment = current.url.map((s) => s.path).join('/');
       if (segment) url += `/${segment}`;
+      const breadcrumbKey = current.data?.['breadcrumb'] as string | undefined;
       const breadcrumbParam = current.data?.['breadcrumbParam'] as string | undefined;
-      const label = breadcrumbParam
-        ? this.titleCase(current.paramMap.get(breadcrumbParam) ?? '') + ' ' + current.data?.['breadcrumb']
-        : current.data?.['breadcrumb'];
+      const label = breadcrumbKey
+        ? breadcrumbParam
+          ? this.titleCase(current.paramMap.get(breadcrumbParam) ?? '') + ' ' + this.translate.instant(breadcrumbKey)
+          : (this.translate.instant(breadcrumbKey) as string)
+        : undefined;
       if (label) raw.push({ label, url });
       current = current.firstChild;
     }

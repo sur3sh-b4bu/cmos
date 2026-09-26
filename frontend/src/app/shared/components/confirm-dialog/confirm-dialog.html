@@ -5,9 +5,9 @@
   <h2 mat-dialog-title>{{ data.title }}</h2>
   <mat-dialog-content>{{ data.message }}</mat-dialog-content>
   <mat-dialog-actions align="end">
-    <button mat-button (click)="cancel()">{{ data.cancelLabel || 'Cancel' }}</button>
+    <button mat-button (click)="cancel()">{{ data.cancelLabel || ('common.cancel' | translate) }}</button>
     <button mat-flat-button [color]="data.danger ? 'warn' : 'primary'" (click)="confirm()">
-      {{ data.confirmLabel || 'Confirm' }}
+      {{ data.confirmLabel || ('common.confirm' | translate) }}
     </button>
   </mat-dialog-actions>
 </div>

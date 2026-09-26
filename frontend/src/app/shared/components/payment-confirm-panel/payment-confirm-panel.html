@@ -1,0 +1,90 @@
+@if (confirmedState()) {
+  <div class="pcp__confirmed">
+    <mat-icon>check_circle</mat-icon>
+    <span>
+      {{ 'payment.confirmed' | translate }} @if (confirmedReference()) {
+        — {{ method?.name }} · <strong>{{ confirmedReference() }}</strong>
+      } @else {
+        — {{ method?.name }}
+      }
+    </span>
+  </div>
+} @else if (!upiPanelOpen()) {
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="disabled || loadingQr() || saving() || !method"
+    [matTooltip]="!method ? ('payment.selectMethodFirst' | translate) : ''"
+    (click)="onPrimaryClick()"
+  >
+    @if (loadingQr() || saving()) {
+      <mat-progress-spinner diameter="16" mode="indeterminate" />
+    } @else {
+      <mat-icon>{{ isUpi() ? 'qr_code_2' : 'payments' }}</mat-icon>
+    }
+    <span>{{ (isUpi() ? 'payment.receivePaymentUpi' : 'payment.paymentReceived') | translate }}</span>
+  </button>
+} @else if (qrIntent(); as intent) {
+  <div class="pcp__upi surface-card">
+    <span class="pcp__demo-badge" [matTooltip]="'payment.demoModeTooltip' | translate">
+      <mat-icon>science</mat-icon>
+      {{ 'payment.demoMode' | translate }}
+    </span>
+
+    <div class="pcp__upi-qr">
+      <img [src]="intent.qrDataUrl" alt="UPI payment QR code" width="150" height="150" />
+    </div>
+
+    <div class="pcp__upi-body">
+      <dl class="pcp__upi-details">
+        <div><dt>{{ 'payment.church' | translate }}</dt><dd>{{ intent.display.churchName }}</dd></div>
+        <div><dt>{{ 'payment.upiId' | translate }}</dt><dd>{{ intent.display.upiId }}</dd></div>
+        <div><dt>{{ 'payment.amount' | translate }}</dt><dd>{{ intent.display.symbol }}{{ intent.display.amount }} {{ intent.display.currency }}</dd></div>
+        <div><dt>{{ 'payment.purpose' | translate }}</dt><dd>{{ intent.display.purpose }}</dd></div>
+      </dl>
+
+      <div class="pcp__upi-apps">
+        @for (app of upiApps; track app.label) {
+          <a mat-stroked-button [href]="intent.payUri" class="pcp__upi-app">{{ app.label }}</a>
+        }
+      </div>
+
+      @if (outcome() === 'failure') {
+        <div class="pcp__outcome pcp__outcome--failed">
+          <mat-icon>error</mat-icon>
+          <span>{{ 'payment.failed' | translate }}</span>
+        </div>
+        <button mat-stroked-button type="button" (click)="retryUpi()">
+          <mat-icon>refresh</mat-icon>
+          {{ 'common.retry' | translate }}
+        </button>
+      } @else {
+        <div class="pcp__simulate-actions">
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            [disabled]="simulating()"
+            (click)="simulateOutcome('success')"
+          >
+            @if (simulating()) {
+              <mat-progress-spinner diameter="16" mode="indeterminate" />
+            } @else {
+              <mat-icon>check</mat-icon>
+            }
+            <span>{{ 'payment.simulateSuccess' | translate }}</span>
+          </button>
+          <button mat-stroked-button type="button" [disabled]="simulating()" (click)="simulateOutcome('failure')">
+            <mat-icon>close</mat-icon>
+            {{ 'payment.simulateFailure' | translate }}
+          </button>
+          <button mat-stroked-button type="button" [disabled]="simulating()" (click)="cancelUpi()">
+            <mat-icon>cancel</mat-icon>
+            {{ 'common.cancel' | translate }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}

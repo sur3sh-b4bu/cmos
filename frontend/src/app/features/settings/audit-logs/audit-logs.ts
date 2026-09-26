@@ -8,9 +8,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table';
 import { DataTableColumn } from '../../../shared/components/data-table/data-table.model';
+import { formatDateTimeDMY } from '../../../core/utils/date-format.util';
 import { AuditLogService } from './audit-log.service';
 import { AuditLog } from './audit-log.model';
 import { AuditDetailDialogComponent } from './audit-detail-dialog';
+import { fetchAllRows } from '../../../shared/utils/fetch-all-rows.util';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 const ACTION_COLORS: Record<string, string> = {
   CREATE: 'var(--coms-color-success)',
@@ -39,13 +42,14 @@ const MODULES = [
 @Component({
   selector: 'coms-audit-logs',
   standalone: true,
-  imports: [FormsModule, MatFormFieldModule, MatSelectModule, MatButtonModule, MatIconModule, MatTooltipModule, DataTableComponent],
+  imports: [FormsModule, MatFormFieldModule, MatSelectModule, MatButtonModule, MatIconModule, MatTooltipModule, DataTableComponent, TranslatePipe],
   templateUrl: './audit-logs.html',
   styleUrl: './audit-logs.scss',
 })
 export class AuditLogsComponent implements OnInit {
   private auditLogService = inject(AuditLogService);
   private dialog = inject(MatDialog);
+  private translate = inject(TranslateService);
 
   @ViewChild('actionTpl', { static: true }) actionTpl!: TemplateRef<unknown>;
   @ViewChild('detailTpl', { static: true }) detailTpl!: TemplateRef<unknown>;
@@ -67,16 +71,20 @@ export class AuditLogsComponent implements OnInit {
     this.columns = [
       {
         key: 'created_at',
-        label: 'When',
+        label: 'settings.when',
         sortable: true,
-        accessor: (r: AuditLog) => new Date(r.created_at).toLocaleString('en-GB'),
+        accessor: (r: AuditLog) => formatDateTimeDMY(r.created_at),
       },
-      { key: 'username_snapshot', label: 'User', accessor: (r: AuditLog) => r.username_snapshot || 'System' },
-      { key: 'action', label: 'Action' },
-      { key: 'module', label: 'Module' },
+      {
+        key: 'username_snapshot',
+        label: 'settings.user',
+        accessor: (r: AuditLog) => r.username_snapshot || this.translate.instant('settings.system'),
+      },
+      { key: 'action', label: 'settings.action' },
+      { key: 'module', label: 'settings.module' },
       {
         key: 'entity_type',
-        label: 'Entity',
+        label: 'settings.entity',
         accessor: (r: AuditLog) => (r.entity_id ? `${r.entity_type} #${r.entity_id}` : r.entity_type || '-'),
       },
       { key: 'detail', label: '', align: 'right' },
@@ -125,6 +133,19 @@ export class AuditLogsComponent implements OnInit {
     this.pageIndex.set(0);
     this.fetch();
   }
+
+  /** Export Excel must cover every log entry matching the current search/
+   * module filter, not just the page on screen -- see fetchAllRows. Bound
+   * as coms-data-table's [exportAllFn]. */
+  exportAllRows = (): Promise<AuditLog[]> =>
+    fetchAllRows((page, pageSize) =>
+      this.auditLogService.list({
+        page,
+        pageSize,
+        search: this.search() || undefined,
+        module: this.moduleFilter() || undefined,
+      })
+    );
 
   viewDetail(row: AuditLog): void {
     this.dialog.open(AuditDetailDialogComponent, { data: row, width: '560px' });

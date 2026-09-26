@@ -10,6 +10,10 @@ export interface Role {
   code: string;
   description: string | null;
   is_system_role: number;
+  /** null for a system role (visible to every church); otherwise the
+   * church this custom role was created for -- see roleController.create(). */
+  church_id: number | null;
+  church_name: string | null;
 }
 
 export interface Permission {
@@ -27,6 +31,10 @@ export class RoleService {
 
   listRoles(): Observable<Role[]> {
     return this.http.get<ApiResponse<Role[]>>(this.baseUrl).pipe(map((res) => res.data));
+  }
+
+  createRole(payload: { name: string; description?: string; church_id?: number }): Observable<Role> {
+    return this.http.post<ApiResponse<Role>>(this.baseUrl, payload).pipe(map((res) => res.data));
   }
 
   listPermissions(): Observable<Permission[]> {

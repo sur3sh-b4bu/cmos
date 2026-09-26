@@ -1,23 +1,222 @@
+:host {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 .app-header {
-  height: var(--coms-header-height);
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  height: var(--coms-header-height, 64px);
+  min-height: var(--coms-header-height, 64px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: var(--coms-glass-bg);
-  backdrop-filter: blur(var(--coms-glass-blur));
-  -webkit-backdrop-filter: blur(var(--coms-glass-blur));
-  border-bottom: 1px solid var(--coms-border);
+  background:
+    radial-gradient(100% 120% at 85% 0%, color-mix(in srgb, var(--coms-color-primary) 8%, transparent) 0%, transparent 60%),
+    radial-gradient(100% 120% at 15% 0%, color-mix(in srgb, var(--coms-color-gold) 6%, transparent) 0%, transparent 50%),
+    linear-gradient(90deg, color-mix(in srgb, var(--coms-color-primary) 5.5%, #ffffff) 0%, color-mix(in srgb, var(--coms-color-primary) 2.5%, #ffffff) 50%, color-mix(in srgb, var(--coms-color-gold) 4%, #ffffff) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid color-mix(in srgb, var(--coms-color-primary) 12%, var(--coms-border));
+  box-shadow: 0 2px 12px -2px color-mix(in srgb, var(--coms-color-primary) 8%, transparent);
   position: sticky;
   top: 0;
   z-index: 20;
+  overflow: hidden;
+  transition: background var(--coms-transition-base), border-color var(--coms-transition-base);
+
+  // Flowing gold shine light sweep animation
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -50% -20%;
+    background: linear-gradient(
+      115deg,
+      transparent 0%,
+      transparent 35%,
+      rgba(212, 175, 55, 0.08) 42%,
+      rgba(246, 231, 168, 0.28) 50%,
+      rgba(212, 175, 55, 0.08) 58%,
+      transparent 65%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: headerGoldShimmer 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  // Hairline gilded bottom border with subtle radiant pulse
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--coms-color-gold-light) 20%,
+      color-mix(in srgb, var(--coms-color-primary-light) 70%, #ffffff) 50%,
+      var(--coms-color-gold-light) 80%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    box-shadow: 0 0 6px color-mix(in srgb, var(--coms-color-gold) 35%, transparent);
+    animation: headerGoldBorderFlow 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  // Keep interactive header controls and breadcrumbs safely above the shine layer
+  > * {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+@keyframes headerGoldShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  45%, 100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes headerGoldBorderFlow {
+  0% {
+    background-position: 200% 0;
+    opacity: 0.75;
+  }
+  25% {
+    opacity: 1;
+  }
+  50%, 100% {
+    background-position: -200% 0;
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-header::before,
+  .app-header::after {
+    animation: none !important;
+  }
+}
+
+.app-header__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.app-header__church {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: var(--coms-radius-full);
+  background: color-mix(in srgb, var(--coms-color-gold) 14%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--coms-color-gold) 38%, transparent);
+  color: var(--coms-color-gold-dark);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(176, 141, 43, 0.12);
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  mat-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--coms-color-gold);
+  }
+}
+
+.app-header__branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--coms-radius-full);
+  background: color-mix(in srgb, var(--coms-color-primary) 8%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--coms-color-primary) 18%, var(--coms-border));
+  color: var(--coms-color-primary);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  mat-icon {
+    flex-shrink: 0;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--coms-color-primary);
+  }
+}
+
+.app-header__acting-as {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--coms-radius-full);
+  background: color-mix(in srgb, var(--coms-color-gold) 14%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--coms-color-gold) 38%, transparent);
+  color: var(--coms-color-gold-dark);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--coms-transition-fast);
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  mat-icon {
+    flex-shrink: 0;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--coms-color-gold);
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--coms-color-gold) 22%, #ffffff);
+    border-color: var(--coms-color-gold);
+    box-shadow: 0 2px 8px rgba(176, 141, 43, 0.2);
+  }
 }
 
 .app-header__breadcrumb {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 14px;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
   min-width: 0;
 }
 
@@ -25,6 +224,7 @@
   color: var(--coms-text-muted);
   text-decoration: none;
   white-space: nowrap;
+  transition: color var(--coms-transition-fast);
 
   &:hover {
     color: var(--coms-color-primary);
@@ -32,7 +232,7 @@
 
   &--active {
     color: var(--coms-text);
-    font-weight: 600;
+    font-weight: 700;
     pointer-events: none;
   }
 }
@@ -41,65 +241,159 @@
   font-size: 16px;
   width: 16px;
   height: 16px;
-  color: var(--coms-text-muted);
+  color: #94a3b8;
 }
 
+// Right actions container
 .app-header__actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
 }
 
 .app-header__search {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--coms-border);
-  background: var(--coms-surface);
+  gap: 10px;
+  height: 38px;
+  width: 260px;
+  padding: 0 14px;
+  border-radius: var(--coms-radius-full);
+  border: 1px solid color-mix(in srgb, var(--coms-color-primary) 14%, var(--coms-border));
+  background: #ffffff;
   color: var(--coms-text-muted);
   cursor: pointer;
   font-size: 13px;
-  margin-right: 8px;
-  transition: border-color var(--coms-transition-fast), box-shadow var(--coms-transition-fast);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all var(--coms-transition-fast);
 
   &:hover {
     border-color: var(--coms-color-primary);
+    background: var(--coms-surface-alt);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--coms-color-primary) 12%, transparent);
+  }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--coms-color-primary);
+    flex-shrink: 0;
+  }
+
+  .app-header__search-label {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--coms-text-muted);
   }
 
   kbd {
     font-size: 11px;
-    padding: 1px 6px;
-    border-radius: 4px;
+    padding: 2px 7px;
+    border-radius: 5px;
     background: var(--coms-surface-alt);
-    border: 1px solid var(--coms-border);
+    border: 1px solid color-mix(in srgb, var(--coms-color-primary) 12%, var(--coms-border));
+    color: var(--coms-text-muted);
+    font-weight: 600;
+    line-height: normal;
+    flex-shrink: 0;
   }
 }
 
+.app-header__icon-btn {
+  width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  color: var(--coms-text-muted) !important;
+  transition: all var(--coms-transition-fast) !important;
+
+  &:hover {
+    background: color-mix(in srgb, var(--coms-color-primary) 8%, var(--coms-surface)) !important;
+    color: var(--coms-color-primary) !important;
+  }
+
+  mat-icon {
+    font-size: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+.app-header__avatar-btn {
+  width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 .app-header__avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--coms-color-primary), var(--coms-color-gold));
+  background: linear-gradient(135deg, var(--coms-color-primary) 0%, var(--coms-color-primary-dark) 100%);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 800;
+  font-size: 15px;
   text-transform: uppercase;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--coms-color-primary) 35%, transparent);
+  transition: transform var(--coms-transition-fast), box-shadow var(--coms-transition-fast);
+
+  &:hover {
+    transform: scale(1.06);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--coms-color-primary) 45%, transparent);
+  }
 }
 
 .app-header__menu-heading {
   padding: 10px 16px;
   font-weight: 600;
   font-size: 13px;
-  border-bottom: 1px solid var(--coms-border);
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .app-header__menu-empty {
   padding: 12px 16px;
   font-size: 13px;
-  color: var(--coms-text-muted);
+  color: #64748b;
+}
+
+@media (max-width: 960px) {
+  .app-header__search {
+    width: auto;
+    padding: 0 10px;
+
+    .app-header__search-label,
+    kbd {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .app-header__branch {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .app-header {
+    padding: 0 16px;
+  }
+
+  .app-header__church span {
+    display: none;
+  }
 }

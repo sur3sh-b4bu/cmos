@@ -1,0 +1,197 @@
+// Sized generously (see bulk-batches-list.ts's dialog.open width too) -- an
+// edit row here packs a date, name, mass, intention, and offering field all
+// into one row, which felt congested at the previous dialog's narrower
+// width.
+.bbdd-dialog {
+  min-width: 920px;
+  max-width: 1300px;
+
+  h2[mat-dialog-title] {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--coms-text);
+    padding: 20px 24px 14px;
+    margin: 0;
+    border-bottom: 1px solid #edf2f7;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 24px;
+      width: 48px;
+      height: 2.5px;
+      background: linear-gradient(90deg, var(--coms-color-primary, #072a63) 0%, var(--coms-color-gold, #b08d2b) 100%);
+      border-radius: 2px;
+    }
+
+    mat-icon {
+      color: var(--coms-color-gold);
+      background: color-mix(in srgb, var(--coms-color-gold) 12%, transparent);
+      padding: 8px;
+      border-radius: 10px;
+      box-sizing: content-box;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.bbdd-dialog__title-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bbdd-dialog__title-meta {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--coms-text-muted);
+}
+
+mat-dialog-content {
+  max-height: 78vh;
+  padding: 8px 0;
+}
+
+.bbdd-dialog__loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.bbdd-dialog__table-wrap {
+  border: 1px solid var(--coms-border);
+  border-radius: var(--coms-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--coms-shadow-xs);
+}
+
+.bbdd-dialog__table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--coms-color-primary, #072a63);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--coms-color-primary, #072a63) 5%, #ffffff) 0%,
+      color-mix(in srgb, var(--coms-color-primary, #072a63) 3.5%, #f8fafc) 100%
+    ) !important;
+    padding: 10px 18px;
+    height: 48px;
+    border-bottom: 1px solid #e8edf5;
+    border-right: 1px solid #f1f5f9;
+    white-space: nowrap;
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  td {
+    padding: 10px 12px;
+    vertical-align: top;
+    border-bottom: 1px solid var(--coms-border);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background-color: #f8fafc;
+  }
+}
+
+.bbdd-dialog__col-right {
+  text-align: right;
+}
+
+.bbdd-dialog__cell-field {
+  width: 100%;
+  min-width: 130px;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.bbdd-dialog__intention-cell {
+  min-width: 220px;
+
+  .bbdd-dialog__cell-field + .bbdd-dialog__cell-field {
+    margin-top: 6px;
+  }
+}
+
+.bbdd-dialog__row-actions {
+  white-space: nowrap;
+  display: flex;
+  gap: 4px;
+}
+
+.bbdd-dialog__restricted-banner {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: var(--coms-radius-md);
+  background: color-mix(in srgb, var(--coms-color-danger) 8%, var(--coms-surface));
+  border: 1px solid color-mix(in srgb, var(--coms-color-danger) 25%, transparent);
+  font-size: 13px;
+
+  mat-icon {
+    flex-shrink: 0;
+    color: var(--coms-color-danger);
+  }
+
+  strong {
+    color: var(--coms-color-danger);
+    display: block;
+    margin-bottom: 2px;
+  }
+}
+
+.bbdd-dialog__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding: 16px 20px;
+  border-radius: var(--coms-radius-lg);
+  background: var(--coms-surface-alt);
+  border: 1px solid var(--coms-border);
+  font-size: 14px;
+  font-weight: 600;
+
+  strong {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--coms-color-primary);
+  }
+}
+
+mat-dialog-actions {
+  padding: 14px 24px !important;
+  border-top: 1px solid #edf2f7;
+  background: #fafbfc;
+  margin: 0 !important;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}

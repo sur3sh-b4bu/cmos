@@ -1,0 +1,89 @@
+<div class="pi-list">
+  <div class="pi-list__header">
+    <div>
+      <h1>{{ 'nav.massIntentions' | translate }}</h1>
+      <p class="text-muted">{{ 'massIntentions.subtitle' | translate }}</p>
+    </div>
+    <div class="pi-list__header-right">
+      <coms-date-range-filter (rangeChange)="onRangeChange($event)" />
+      <div class="pi-list__actions">
+        <a mat-stroked-button routerLink="/mass-intentions/register">
+          <mat-icon>menu_book</mat-icon>
+          {{ 'breadcrumb.dailyRegister' | translate }}
+        </a>
+        @if (authService.hasPermission('mass_intentions.create')) {
+          <a mat-stroked-button routerLink="/mass-intentions/bulk-new">
+            <mat-icon>playlist_add</mat-icon>
+            {{ 'massIntentions.bulkNewTitle' | translate }}
+          </a>
+          <a mat-flat-button color="primary" routerLink="/mass-intentions/new">
+            <mat-icon>add</mat-icon>
+            {{ 'dashboard.newMassIntention' | translate }}
+          </a>
+        }
+      </div>
+    </div>
+  </div>
+
+  <coms-filter-bar [fields]="filterFields()" (filtersChange)="onFiltersChange($event)" />
+
+  <coms-data-table
+    tableId="mass-intentions"
+    exportFileName="mass-intentions"
+    emptyMessageKey="massIntentions.emptyList"
+    [columns]="columns"
+    [rows]="rows()"
+    [total]="total()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [loading]="loading()"
+    [cellTemplates]="cellTemplates"
+    [showImport]="authService.hasPermission('mass_intentions.create')"
+    [serverTransfer]="serverTransfer"
+    (pageChange)="onPageChange($event)"
+    (searchChange)="onSearchChange($event)"
+    (imported)="fetch()"
+  >
+    <a mat-stroked-button dataTableToolbarExtra routerLink="/mass-intentions/bulk-batches">
+      <mat-icon>playlist_add_check</mat-icon>
+      {{ 'massIntentions.showBulkBatches' | translate }}
+    </a>
+  </coms-data-table>
+</div>
+
+<ng-template #intentionTpl let-row>
+  {{ intentionText(row) }}
+</ng-template>
+
+<ng-template #actionsTpl let-row>
+  @if (!row.is_paid && authService.hasPermission('mass_intentions.update')) {
+    <button mat-icon-button [matTooltip]="'massIntentions.receivePayment' | translate" (click)="receivePayment(row); $event.stopPropagation()">
+      <mat-icon>payments</mat-icon>
+    </button>
+  }
+  <button
+    mat-icon-button
+    [matTooltip]="(row.is_paid ? 'massIntentions.printReceipt' : 'massIntentions.receiptUnavailable') | translate"
+    [disabled]="!row.is_paid"
+    (click)="printReceipt(row); $event.stopPropagation()"
+  >
+    <mat-icon>print</mat-icon>
+  </button>
+  <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()">
+    <mat-icon>more_vert</mat-icon>
+  </button>
+  <mat-menu #rowMenu="matMenu">
+    @if (authService.hasPermission('mass_intentions.update')) {
+      <a mat-menu-item [routerLink]="['/mass-intentions', row.id, 'edit']">
+        <mat-icon>edit</mat-icon>
+        <span>{{ 'common.edit' | translate }}</span>
+      </a>
+    }
+    @if (authService.hasPermission('mass_intentions.delete')) {
+      <button mat-menu-item class="pi-list__delete" (click)="deleteRow(row)">
+        <mat-icon>delete</mat-icon>
+        <span>{{ 'common.delete' | translate }}</span>
+      </button>
+    }
+  </mat-menu>
+</ng-template>

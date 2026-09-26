@@ -1,0 +1,66 @@
+.pay-dialog {
+  width: 480px;
+  max-width: 100%;
+
+  h2[mat-dialog-title] {
+    padding: 20px 24px 14px;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 1px solid #edf2f7;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 24px;
+      width: 42px;
+      height: 2.5px;
+      background: linear-gradient(90deg, var(--coms-color-primary, #072a63) 0%, var(--coms-color-gold, #b08d2b) 100%);
+      border-radius: 2px;
+    }
+  }
+}
+
+mat-dialog-content {
+  padding: 20px 24px 16px !important;
+}
+
+.pay-dialog__summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  background: #f8fafc;
+  border: 1px solid #e8edf5;
+  border-radius: var(--coms-radius-md, 14px);
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 0.85rem;
+  }
+
+  .text-muted {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #64748b;
+  }
+
+  strong {
+    font-weight: 600;
+    color: #0f172a;
+  }
+}
+
+.pay-dialog__amount {
+  color: var(--coms-color-primary, #072a63) !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+}

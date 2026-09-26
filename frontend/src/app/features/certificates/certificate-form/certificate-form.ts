@@ -5,7 +5,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -14,8 +13,11 @@ import { MasterLookupService } from '../../../core/services/master-lookup.servic
 import { NotificationService } from '../../../core/services/notification.service';
 import { FileDownloadService } from '../../../core/services/file-download.service';
 import { extractErrorMessage } from '../../../core/utils/http-error.util';
+import { parseDateOnly } from '../../../core/utils/date-format.util';
 import { CertificateService, CertificateType } from '../certificate.service';
 import { CERTIFICATE_CONFIGS, CertificateFormField } from '../certificate-config';
+import { DatepickerTodayHeaderComponent } from '../../../shared/components/datepicker-today-header/datepicker-today-header';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'coms-certificate-form',
@@ -27,16 +29,17 @@ import { CERTIFICATE_CONFIGS, CertificateFormField } from '../certificate-config
     MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
-    MatNativeDateModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    TranslatePipe,
   ],
   templateUrl: './certificate-form.html',
   styleUrl: './certificate-form.scss',
 })
 export class CertificateFormComponent implements OnChanges {
   @Input({ required: true }) certType!: CertificateType;
+  private translate = inject(TranslateService);
 
   // Material's default ErrorStateMatcher shows an error once EITHER the
   // control is touched OR the enclosing FormGroupDirective has ever been
@@ -53,6 +56,9 @@ export class CertificateFormComponent implements OnChanges {
   private certificateService = inject(CertificateService);
   private notification = inject(NotificationService);
   private fileDownload = inject(FileDownloadService);
+
+  /** calendarHeaderComponent needs a class reference, not a template var. */
+  readonly todayHeader = DatepickerTodayHeaderComponent;
 
   config = CERTIFICATE_CONFIGS.baptism;
   form: FormGroup = this.fb.group({});
@@ -77,7 +83,7 @@ export class CertificateFormComponent implements OnChanges {
         next: (record) => {
           const patch: Record<string, unknown> = {};
           for (const field of this.config.formFields) {
-            patch[field.key] = field.type === 'date' && record[field.key] ? new Date(record[field.key]) : record[field.key];
+            patch[field.key] = field.type === 'date' ? parseDateOnly(record[field.key]) : record[field.key];
           }
           this.form.patchValue(patch);
           this.loading.set(false);
@@ -108,6 +114,29 @@ export class CertificateFormComponent implements OnChanges {
     }
   }
 
+  /** Latest pickable date for a field the config says "cannot be in the future" (today, in the user's calendar). */
+  maxDateFor(field: CertificateFormField): Date | null {
+    const rule = this.config.dateRules.find((r) => r.kind === 'notFuture' && r.field === field.key);
+    if (!rule) return null;
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  /** Earliest pickable date for a field the config says "cannot be before <other field>" -- follows that field as it changes. */
+  minDateFor(field: CertificateFormField): Date | null {
+    const rule = this.config.dateRules.find((r) => r.kind === 'notBefore' && r.field === field.key);
+    if (!rule || rule.kind !== 'notBefore') return null;
+    const other = this.form.get(rule.other)?.value;
+    return other instanceof Date && !Number.isNaN(other.getTime()) ? other : null;
+  }
+
+  /** The label of the field a "cannot be before" rule compares against, for the error text. */
+  otherLabelFor(field: CertificateFormField): string {
+    const rule = this.config.dateRules.find((r) => r.kind === 'notBefore' && r.field === field.key);
+    const other = rule && rule.kind === 'notBefore' ? this.config.formFields.find((f) => f.key === rule.other) : undefined;
+    return other ? this.translate.instant(other.label) : '';
+  }
+
   optionsFor(field: CertificateFormField): { id: number; name: string }[] {
     return field.masterKey ? this.optionsByMasterKey()[field.masterKey] ?? [] : [];
   }
@@ -136,11 +165,13 @@ export class CertificateFormComponent implements OnChanges {
       const editId = this.editId();
       if (editId) {
         await firstValueFrom(this.certificateService.update(this.certType, editId, payload));
-        this.notification.success('Certificate updated successfully.');
+        this.notification.success(this.translate.instant('certificates.common.updated'));
         this.router.navigate(['/certificates', this.certType]);
       } else {
         const created = await firstValueFrom(this.certificateService.create(this.certType, payload));
-        this.notification.success(`Saved. Certificate ${created.certificate_no} generated.`);
+        this.notification.success(
+          this.translate.instant('certificates.common.saved', { no: created.certificate_no })
+        );
         this.justSavedId.set(created.id);
         this.justSavedCertNo.set(created.certificate_no);
         this.formGroupDirective?.resetForm();
@@ -155,6 +186,6 @@ export class CertificateFormComponent implements OnChanges {
   async printCertificate(): Promise<void> {
     const id = this.justSavedId();
     if (!id) return;
-    await this.fileDownload.openInNewTab(this.certificateService.getPrintUrl(this.certType, id));
+    await this.fileDownload.printPdf(this.certificateService.getPrintUrl(this.certType, id));
   }
 }

@@ -26,10 +26,9 @@ const POLL_INTERVAL_MS = 30_000;
 export class HealthService {
   private http = inject(HttpClient);
 
-  // environment.apiBaseUrl is 'http://host:4000/api' in dev or '/api' in
-  // production (see environment.ts/environment.production.ts) -- /health
-  // sits at that same origin, one level up, outside the /api prefix.
-  private readonly healthUrl = `${environment.apiBaseUrl.replace(/\/api\/?$/, '')}/health`;
+  // Uses environment.apiBaseUrl ('http://host:4000/api' in dev, '/api' in prod)
+  // so IIS / reverse-proxy rewrite rules correctly forward the health check to backend.
+  private readonly healthUrl = `${environment.apiBaseUrl}/health`;
 
   readonly status = signal<HealthStatus>('checking');
 
@@ -53,7 +52,7 @@ export class HealthService {
         )
       )
       .subscribe((res) => {
-        this.status.set(res?.success === true && res?.status === 'ok' ? 'ok' : 'down');
+        this.status.set(res?.success === true && (res?.status === 'ok' || !res?.status) ? 'ok' : 'down');
       });
   }
 }

@@ -11,7 +11,7 @@ import { AuthService } from '../services/auth.service';
 // one) is the normal, expected boot-time "not logged in" signal that
 // restoreSession() already handles directly -- reacting to it here as well
 // would fire a redundant logout()+navigate on every fresh page load.
-const AUTH_FREE_PATHS = ['/auth/login', '/auth/logout', '/auth/me', '/public/'];
+const AUTH_FREE_PATHS = ['/auth/login', '/auth/logout', '/auth/me', '/public/', '/health'];
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);

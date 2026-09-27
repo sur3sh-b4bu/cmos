@@ -384,7 +384,7 @@ function buildExactMarriageDocument(record, church, ink) {
     pageMargins: [44, 38, 44, 28],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
     content: [
-      // Header Banner: Theme Colored Ribbon with White Text and Left Framed Photo
+      // Header Banner: Full-width edge-to-edge theme colored banner covering top & sides
       {
         table: {
           widths: ['*'],
@@ -393,7 +393,7 @@ function buildExactMarriageDocument(record, church, ink) {
               {
                 fillColor: THEME_COLOR,
                 border: [false, false, false, false],
-                margin: [8, 6, 8, 6],
+                margin: [44, 18, 44, 14],
                 columns: [
                   { width: 66, stack: [headerLogoBlock] },
                   {
@@ -445,7 +445,7 @@ function buildExactMarriageDocument(record, church, ink) {
           paddingTop: () => 0,
           paddingBottom: () => 0,
         },
-        margin: [0, 0, 0, 18],
+        margin: [-44, -38, -44, 20],
       },
 
       // Body rows

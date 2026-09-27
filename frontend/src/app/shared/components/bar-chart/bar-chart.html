@@ -2,17 +2,17 @@
   @if (orientation === 'horizontal') {
   @if (horizontalBars().length) {
   <div class="bar-chart__plot">
-    <svg [attr.viewBox]="'0 0 ' + viewBoxWidth + ' ' + totalHeight" [style.height.px]="totalHeight" role="img"
-      [attr.aria-label]="ariaLabel" preserveAspectRatio="none" class="bar-chart__svg">
+    <svg [attr.viewBox]="'0 0 ' + viewBoxWidth() + ' ' + totalHeight()" [style.height.px]="totalHeight()" role="img"
+      [attr.aria-label]="ariaLabel" class="bar-chart__svg">
       @for (line of gridlinesH(); track line.x) {
       <line class="bar-chart__gridline" [attr.x1]="line.x" [attr.x2]="line.x" [attr.y1]="0"
-        [attr.y2]="totalHeight - 20" />
-      <text class="bar-chart__tick" [attr.x]="line.x" [attr.y]="totalHeight - 6" text-anchor="middle">{{ line.label
+        [attr.y2]="totalHeight() - 20" />
+      <text class="bar-chart__tick" [attr.x]="line.x" [attr.y]="totalHeight() - 6" text-anchor="middle">{{ line.label
         }}</text>
       }
 
       @for (bar of horizontalBars(); track bar.label) {
-      <text class="bar-chart__row-label" [attr.x]="labelAreaWidth - 8" [attr.y]="bar.y + 17" text-anchor="end">
+      <text class="bar-chart__row-label" [attr.x]="labelAreaWidth() - 8" [attr.y]="bar.y + 17" text-anchor="end">
         <title>{{ bar.label }}</title>
         {{ bar.displayLabel }}
       </text>
@@ -40,7 +40,7 @@
   } @else {
   @if (verticalBars().length) {
   <div class="bar-chart__plot">
-    <svg [attr.viewBox]="'0 0 ' + viewBoxWidth + ' ' + totalHeight" [style.height.px]="totalHeight" role="img"
+    <svg [attr.viewBox]="'0 0 ' + viewBoxWidth() + ' ' + totalHeight()" [style.height.px]="totalHeight()" role="img"
       [attr.aria-label]="ariaLabel" class="bar-chart__svg">
       @for (line of gridlinesV(); track line.y) {
       <line class="bar-chart__gridline" [attr.x1]="line.x1" [attr.x2]="line.x2" [attr.y1]="line.y" [attr.y2]="line.y" />
@@ -53,9 +53,9 @@
         [attr.aria-label]="bar.label + ': ' + valueFormatter(bar.value)" (pointerenter)="showTooltip(bar, $event)"
         (pointerleave)="hideTooltip()" (focus)="showTooltip(bar, $event)" (blur)="hideTooltip()" />
       <rect class="bar-chart__hit" [attr.x]="bar.x - 4" [attr.y]="12" [attr.width]="bar.barWidth + 8"
-        [attr.height]="totalHeight - 12" (pointerenter)="showTooltip(bar, $event)" (pointerleave)="hideTooltip()" />
+        [attr.height]="totalHeight() - 12" (pointerenter)="showTooltip(bar, $event)" (pointerleave)="hideTooltip()" />
       @if (bar.showLabel) {
-      <text class="bar-chart__label" [attr.x]="bar.x + bar.barWidth / 2" [attr.y]="totalHeight - 4"
+      <text class="bar-chart__label" [attr.x]="bar.x + bar.barWidth / 2" [attr.y]="totalHeight() - 4"
         text-anchor="middle">
         {{ bar.displayLabel }}
       </text>

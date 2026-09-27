@@ -195,7 +195,9 @@ function footer(type, ink, church, certificateNo, topSpacing) {
  */
 function buildExactMarriageDocument(record, church, ink) {
   const logoDataUrl = getChurchLogoDataUrl(church);
-  const LINE_COLOR = '#555555';
+  const themeColor = ink || '#072a63';
+  const LINE_COLOR = themeColor;
+  const TEXT_COLOR = themeColor;
   const LABEL_COL_WIDTH = 155;
   const FULL_LINE_WIDTH = 352;
   const SUB_LABEL_WIDTH = 78;
@@ -214,7 +216,7 @@ function buildExactMarriageDocument(record, church, ink) {
 
   const singleLineRow = (label, valText) => ({
     columns: [
-      { width: LABEL_COL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+      { width: LABEL_COL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: TEXT_COLOR },
       {
         width: '*',
         stack: [
@@ -223,7 +225,7 @@ function buildExactMarriageDocument(record, church, ink) {
             font: 'Times',
             bold: true,
             fontSize: FONT_SIZE,
-            color: '#000000',
+            color: TEXT_COLOR,
             margin: [0, 0, 0, 2],
             ...(hasTamilText(valText) ? { font: 'NotoSansTamil' } : {}),
           },
@@ -236,14 +238,14 @@ function buildExactMarriageDocument(record, church, ink) {
 
   const pairedFieldsRow = (label, groomVal, brideVal) => ({
     columns: [
-      { width: LABEL_COL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+      { width: LABEL_COL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: TEXT_COLOR },
       {
         width: '*',
         stack: [
           // Bridegroom line
           {
             columns: [
-              { width: SUB_LABEL_WIDTH, text: 'Bridegroom', font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+              { width: SUB_LABEL_WIDTH, text: 'Bridegroom', font: 'Times', bold: true, fontSize: FONT_SIZE, color: TEXT_COLOR },
               {
                 width: '*',
                 stack: [
@@ -252,7 +254,7 @@ function buildExactMarriageDocument(record, church, ink) {
                     font: 'Times',
                     bold: true,
                     fontSize: FONT_SIZE,
-                    color: '#000000',
+                    color: TEXT_COLOR,
                     margin: [0, 0, 0, 2],
                     ...(hasTamilText(groomVal) ? { font: 'NotoSansTamil' } : {}),
                   },
@@ -265,7 +267,7 @@ function buildExactMarriageDocument(record, church, ink) {
           // Bride line
           {
             columns: [
-              { width: SUB_LABEL_WIDTH, text: 'Bride', font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+              { width: SUB_LABEL_WIDTH, text: 'Bride', font: 'Times', bold: true, fontSize: FONT_SIZE, color: TEXT_COLOR },
               {
                 width: '*',
                 stack: [
@@ -274,7 +276,7 @@ function buildExactMarriageDocument(record, church, ink) {
                     font: 'Times',
                     bold: true,
                     fontSize: FONT_SIZE,
-                    color: '#000000',
+                    color: TEXT_COLOR,
                     margin: [0, 0, 0, 2],
                     ...(hasTamilText(brideVal) ? { font: 'NotoSansTamil' } : {}),
                   },
@@ -304,7 +306,7 @@ function buildExactMarriageDocument(record, church, ink) {
             font: 'Times',
             bold: true,
             fontSize: FONT_SIZE,
-            color: '#000000',
+            color: TEXT_COLOR,
             margin: [0, 0, 0, 2],
             ...(hasTamilText(val) ? { font: 'NotoSansTamil' } : {}),
           },
@@ -316,7 +318,7 @@ function buildExactMarriageDocument(record, church, ink) {
 
     return {
       columns: [
-        { width: LABEL_COL_WIDTH, text: 'Witnesses', font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+        { width: LABEL_COL_WIDTH, text: 'Witnesses', font: 'Times', bold: true, fontSize: FONT_SIZE, color: TEXT_COLOR },
         { width: '*', stack: witnessItems },
       ],
       margin: [0, 0, 0, ROW_GAP],
@@ -336,13 +338,13 @@ function buildExactMarriageDocument(record, church, ink) {
                 fit: [60, 76],
                 alignment: 'center',
                 border: [true, true, true, true],
-                borderColor: '#444444',
+                borderColor: LINE_COLOR,
                 margin: [0, 0, 0, 0],
               },
             ],
           ],
         },
-        layout: { hLineWidth: () => 0.75, vLineWidth: () => 0.75, hLineColor: () => '#444444', vLineColor: () => '#444444' },
+        layout: { hLineWidth: () => 0.75, vLineWidth: () => 0.75, hLineColor: () => LINE_COLOR, vLineColor: () => LINE_COLOR },
       }
     : {
         table: {
@@ -350,23 +352,23 @@ function buildExactMarriageDocument(record, church, ink) {
           body: [
             [
               {
-                stack: [{ text: '✝', fontSize: 26, alignment: 'center', margin: [0, 18, 0, 0], color: '#333333' }],
+                stack: [{ text: '✝', fontSize: 26, alignment: 'center', margin: [0, 18, 0, 0], color: TEXT_COLOR }],
                 border: [true, true, true, true],
-                borderColor: '#444444',
+                borderColor: LINE_COLOR,
                 fillColor: '#f8f8f8',
                 height: 76,
               },
             ],
           ],
         },
-        layout: { hLineWidth: () => 0.75, vLineWidth: () => 0.75, hLineColor: () => '#444444', vLineColor: () => '#444444' },
+        layout: { hLineWidth: () => 0.75, vLineWidth: () => 0.75, hLineColor: () => LINE_COLOR, vLineColor: () => LINE_COLOR },
       };
 
   return {
     pageSize: 'A4',
     pageOrientation: 'portrait',
     pageMargins: [44, 38, 44, 28],
-    defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: '#000000' },
+    defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: TEXT_COLOR },
     content: [
       // Header: Left Framed Logo + Page-Centered Certificate Titles (using balanced 3-column layout)
       {
@@ -375,9 +377,9 @@ function buildExactMarriageDocument(record, church, ink) {
           {
             width: '*',
             stack: [
-              { text: 'CERTIFICATE OF MARRIAGE', font: 'Times', bold: true, fontSize: 16.5, alignment: 'center', margin: [0, 4, 0, 6] },
-              { text: 'EXTRACT FROM THE REGISTER OF INDIAN', font: 'Times', bold: true, fontSize: 12.5, alignment: 'center', margin: [0, 0, 0, 3] },
-              { text: 'CHRISTIAN MARRIAGES', font: 'Times', bold: true, fontSize: 12.5, alignment: 'center', margin: [0, 0, 0, 24] },
+              { text: 'CERTIFICATE OF MARRIAGE', font: 'Times', bold: true, fontSize: 16.5, alignment: 'center', color: TEXT_COLOR, margin: [0, 4, 0, 6] },
+              { text: 'EXTRACT FROM THE REGISTER OF INDIAN', font: 'Times', bold: true, fontSize: 12.5, alignment: 'center', color: TEXT_COLOR, margin: [0, 0, 0, 3] },
+              { text: 'CHRISTIAN MARRIAGES', font: 'Times', bold: true, fontSize: 12.5, alignment: 'center', color: TEXT_COLOR, margin: [0, 0, 0, 24] },
             ],
           },
           { width: 70, text: '' },
@@ -388,7 +390,7 @@ function buildExactMarriageDocument(record, church, ink) {
       // Body rows
       {
         columns: [
-          { width: LABEL_COL_WIDTH, text: 'Solemnized at', font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+          { width: LABEL_COL_WIDTH, text: 'Solemnized at', font: 'Times', bold: true, fontSize: FONT_SIZE, color: TEXT_COLOR },
           {
             width: '*',
             stack: [
@@ -397,7 +399,7 @@ function buildExactMarriageDocument(record, church, ink) {
                 font: 'Times',
                 bold: true,
                 fontSize: FONT_SIZE,
-                color: '#000000',
+                color: TEXT_COLOR,
                 margin: [0, 0, 0, 2],
                 ...(hasTamilText(solemnizedText) ? { font: 'NotoSansTamil' } : {}),
               },
@@ -423,13 +425,13 @@ function buildExactMarriageDocument(record, church, ink) {
       // Footer - nicely spaced to cover bottom of the page
       {
         columns: [
-          { width: '*', text: `Date:  ${formatDateSlash(new Date())}`, font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
-          { width: '*', text: 'Seal', font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: '#000000' },
-          { width: '*', text: 'Parish Priest', font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: '#000000' },
+          { width: '*', text: `Date:  ${formatDateSlash(new Date())}`, font: 'Times', bold: true, fontSize: FONT_SIZE, color: TEXT_COLOR },
+          { width: '*', text: 'Seal', font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: TEXT_COLOR },
+          { width: '*', text: 'Parish Priest', font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: TEXT_COLOR },
         ],
         margin: [0, 68, 0, 0],
       },
-      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8.5, color: '#888888', margin: [0, 18, 0, 0] },
+      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8.5, color: TEXT_COLOR, opacity: 0.65, margin: [0, 18, 0, 0] },
     ],
   };
 }

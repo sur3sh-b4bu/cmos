@@ -324,23 +324,42 @@ function buildExactMarriageDocument(record, church, ink) {
   };
 
   const headerLogoBlock = logoDataUrl
-    ? { image: logoDataUrl, width: 68, height: 82, fit: [68, 82], alignment: 'left' }
-    : {
+    ? {
         table: {
-          widths: [62],
+          widths: [60],
           body: [
             [
               {
-                stack: [{ text: '✝', fontSize: 28, alignment: 'center', margin: [0, 18, 0, 0], color: '#333333' }],
+                image: logoDataUrl,
+                width: 60,
+                height: 76,
+                fit: [60, 76],
+                alignment: 'center',
                 border: [true, true, true, true],
-                borderColor: '#333333',
+                borderColor: '#444444',
+                margin: [0, 0, 0, 0],
+              },
+            ],
+          ],
+        },
+        layout: { hLineWidth: () => 0.75, vLineWidth: () => 0.75, hLineColor: () => '#444444', vLineColor: () => '#444444' },
+      }
+    : {
+        table: {
+          widths: [60],
+          body: [
+            [
+              {
+                stack: [{ text: '✝', fontSize: 26, alignment: 'center', margin: [0, 18, 0, 0], color: '#333333' }],
+                border: [true, true, true, true],
+                borderColor: '#444444',
                 fillColor: '#f8f8f8',
                 height: 76,
               },
             ],
           ],
         },
-        layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => '#444444', vLineColor: () => '#444444' },
+        layout: { hLineWidth: () => 0.75, vLineWidth: () => 0.75, hLineColor: () => '#444444', vLineColor: () => '#444444' },
       };
 
   return {
@@ -349,20 +368,21 @@ function buildExactMarriageDocument(record, church, ink) {
     pageMargins: [44, 38, 44, 28],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: '#000000' },
     content: [
-      // Header: Left Image/Logo + Centered Certificate Titles
+      // Header: Left Framed Logo + Page-Centered Certificate Titles (using balanced 3-column layout)
       {
         columns: [
-          { width: 78, stack: [headerLogoBlock] },
+          { width: 70, stack: [headerLogoBlock] },
           {
             width: '*',
             stack: [
-              { text: 'CERTIFICATE OF MARRIAGE', font: 'Times', bold: true, fontSize: 17, alignment: 'center', margin: [0, 4, 0, 6] },
-              { text: 'EXTRACT FROM THE REGISTER OF INDIAN', font: 'Times', bold: true, fontSize: 13, alignment: 'center', margin: [0, 0, 0, 3] },
-              { text: 'CHRISTIAN MARRIAGES', font: 'Times', bold: true, fontSize: 13, alignment: 'center', margin: [0, 0, 0, 24] },
+              { text: 'CERTIFICATE OF MARRIAGE', font: 'Times', bold: true, fontSize: 16.5, alignment: 'center', margin: [0, 4, 0, 6] },
+              { text: 'EXTRACT FROM THE REGISTER OF INDIAN', font: 'Times', bold: true, fontSize: 12.5, alignment: 'center', margin: [0, 0, 0, 3] },
+              { text: 'CHRISTIAN MARRIAGES', font: 'Times', bold: true, fontSize: 12.5, alignment: 'center', margin: [0, 0, 0, 24] },
             ],
           },
+          { width: 70, text: '' },
         ],
-        margin: [0, 0, 0, 24],
+        margin: [0, 0, 0, 22],
       },
 
       // Body rows

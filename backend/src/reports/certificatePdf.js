@@ -22,16 +22,27 @@ function getChurchLogoDataUrl(church) {
     }
   }
 
-  // Default patron saint image
-  const defaultImagePath = path.join(__dirname, '../../assets/images/patron_saint.jpg');
-  try {
-    if (fs.existsSync(defaultImagePath)) {
-      const buffer = fs.readFileSync(defaultImagePath);
-      return `data:image/jpeg;base64,${buffer.toString('base64')}`;
+  // Check possible patron saint image locations (PNG prioritized, then JPG)
+  const candidatePaths = [
+    path.join(__dirname, '../../assets/images/patron_saint.png'),
+    path.join(__dirname, '../../assets/images/patron_saint.jpg'),
+    path.join(__dirname, '../../../frontend/src/assets/images/patron_saint.png'),
+    path.join(__dirname, '../../../frontend/src/assets/images/patron_saint.jpg'),
+  ];
+
+  for (const p of candidatePaths) {
+    try {
+      if (fs.existsSync(p)) {
+        const buffer = fs.readFileSync(p);
+        const ext = path.extname(p).slice(1).toLowerCase();
+        const mime = ext === 'jpg' ? 'jpeg' : ext;
+        return `data:image/${mime};base64,${buffer.toString('base64')}`;
+      }
+    } catch {
+      // continue to next candidate
     }
-  } catch {
-    return null;
   }
+
   return null;
 }
 

@@ -167,9 +167,28 @@ export class ReportService {
     return `${this.baseUrl}/contributions/detail/print?dateFrom=${dateFrom}&dateTo=${dateTo}${mine ? '&mine=true' : ''}${lang === 'ta' ? '&lang=ta' : ''}`;
   }
 
+  getMassIntentionsPrintUrl(query: DateRangeQuery, lang: AppLang = 'en'): string {
+    const params = new URLSearchParams();
+    if (query.dateFrom) params.set('dateFrom', query.dateFrom);
+    if (query.dateTo) params.set('dateTo', query.dateTo);
+    if (query['massId']) params.set('massId', String(query['massId']));
+    if (query['paidOnly'] !== undefined) params.set('paidOnly', String(query['paidOnly']));
+    if (lang === 'ta') params.set('lang', 'ta');
+    return `${this.baseUrl}/mass-intentions/print?${params.toString()}`;
+  }
+
   certificates(query: DateRangeQuery): Observable<CertificateReportData> {
     return this.http
       .get<ApiResponse<CertificateReportData>>(`${this.baseUrl}/certificates`, { params: this.buildParams(query) })
       .pipe(map((res) => res.data));
+  }
+
+  getCertificatesPrintUrl(query: DateRangeQuery, lang: AppLang = 'en'): string {
+    const params = new URLSearchParams();
+    if (query.dateFrom) params.set('dateFrom', query.dateFrom);
+    if (query.dateTo) params.set('dateTo', query.dateTo);
+    if (query['type']) params.set('type', String(query['type']));
+    if (lang === 'ta') params.set('lang', 'ta');
+    return `${this.baseUrl}/certificates/print?${params.toString()}`;
   }
 }

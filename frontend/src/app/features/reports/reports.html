@@ -28,6 +28,25 @@
             </div>
           </div>
 
+          <div class="reports__tab-toolbar">
+            <div></div>
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              class="reports__print-btn"
+              (click)="printMassIntentionsReport()"
+              [disabled]="printingPrayer()"
+            >
+              @if (printingPrayer()) {
+                <mat-progress-spinner diameter="18" mode="indeterminate" />
+              } @else {
+                <mat-icon>print</mat-icon>
+              }
+              <span>{{ 'reports.printReport' | translate }}</span>
+            </button>
+          </div>
+
           <coms-data-table
             tableId="report-mass-intentions"
             exportFileName="mass-intentions-report"
@@ -64,6 +83,44 @@
                 <div class="reports__summary-value">{{ currency(data.summary.totalOffering) }}</div>
                 <div class="reports__summary-label">{{ 'reports.colTotalCollected' | translate }}</div>
               </div>
+            </div>
+          </div>
+
+          <div class="reports__tab-toolbar">
+            <div></div>
+            <div class="reports__toolbar-actions">
+              @if (canPrintAllUsers) {
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  class="reports__print-btn"
+                  (click)="printCollectionsRangeReport(false)"
+                  [disabled]="printingFullCollections()"
+                >
+                  @if (printingFullCollections()) {
+                    <mat-progress-spinner diameter="18" mode="indeterminate" />
+                  } @else {
+                    <mat-icon>print</mat-icon>
+                  }
+                  <span>{{ 'reports.printAllCollections' | translate }}</span>
+                </button>
+              }
+              <button
+                mat-stroked-button
+                color="primary"
+                type="button"
+                class="reports__print-btn"
+                (click)="printCollectionsRangeReport(true)"
+                [disabled]="printingFullCollections()"
+              >
+                @if (printingFullCollections()) {
+                  <mat-progress-spinner diameter="18" mode="indeterminate" />
+                } @else {
+                  <mat-icon>person</mat-icon>
+                }
+                <span>{{ 'reports.printMyCollections' | translate }}</span>
+              </button>
             </div>
           </div>
 
@@ -120,6 +177,44 @@
                 <div class="reports__summary-value">{{ currency(data.summary.totalOffering) }}</div>
                 <div class="reports__summary-label">{{ 'reports.colTotalCollected' | translate }}</div>
               </div>
+            </div>
+          </div>
+
+          <div class="reports__tab-toolbar">
+            <div></div>
+            <div class="reports__toolbar-actions">
+              @if (canPrintAllUsers) {
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  class="reports__print-btn"
+                  (click)="printContributionsRangeReport(false)"
+                  [disabled]="printingFullContributions()"
+                >
+                  @if (printingFullContributions()) {
+                    <mat-progress-spinner diameter="18" mode="indeterminate" />
+                  } @else {
+                    <mat-icon>print</mat-icon>
+                  }
+                  <span>{{ 'reports.printAllContributions' | translate }}</span>
+                </button>
+              }
+              <button
+                mat-stroked-button
+                color="primary"
+                type="button"
+                class="reports__print-btn"
+                (click)="printContributionsRangeReport(true)"
+                [disabled]="printingFullContributions()"
+              >
+                @if (printingFullContributions()) {
+                  <mat-progress-spinner diameter="18" mode="indeterminate" />
+                } @else {
+                  <mat-icon>person</mat-icon>
+                }
+                <span>{{ 'reports.printMyContributions' | translate }}</span>
+              </button>
             </div>
           </div>
 
@@ -184,6 +279,25 @@
                 <div class="reports__summary-label">{{ 'reports.deaths' | translate }}</div>
               </div>
             </div>
+          </div>
+
+          <div class="reports__tab-toolbar">
+            <div></div>
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              class="reports__print-btn"
+              (click)="printCertificatesReport()"
+              [disabled]="printingCertificates()"
+            >
+              @if (printingCertificates()) {
+                <mat-progress-spinner diameter="18" mode="indeterminate" />
+              } @else {
+                <mat-icon>print</mat-icon>
+              }
+              <span>{{ 'reports.printReport' | translate }}</span>
+            </button>
           </div>
 
           <coms-data-table

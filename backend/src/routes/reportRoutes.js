@@ -7,6 +7,7 @@ const router = express.Router();
 router.use(authenticate, authorize('reports.view'));
 
 router.get('/mass-intentions', controller.massIntentions);
+router.get('/mass-intentions/print', controller.massIntentionsPrint);
 router.get('/collections', controller.collections);
 router.get('/collections/detail', controller.collectionsDetail);
 router.get('/collections/detail/print', controller.collectionsDetailPrint);
@@ -14,5 +15,6 @@ router.get('/contributions', controller.contributionCollections);
 router.get('/contributions/detail', controller.contributionCollectionsDetail);
 router.get('/contributions/detail/print', controller.contributionCollectionsDetailPrint);
 router.get('/certificates', controller.certificates);
+router.get('/certificates/print', controller.certificatesPrint);
 
 module.exports = router;

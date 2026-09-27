@@ -3,6 +3,8 @@ const lookupRepository = require('../repositories/lookupRepository');
 const auditService = require('../services/auditService');
 const { generateCollectionsDetailPdf } = require('../reports/collectionsDetailPdf');
 const { generateContributionCollectionsDetailPdf } = require('../reports/contributionCollectionsDetailPdf');
+const { generateMassIntentionsReportPdf } = require('../reports/massIntentionsReportPdf');
+const { generateCertificatesReportPdf } = require('../reports/certificatesReportPdf');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const { effectiveBranchId } = require('../utils/effectiveScope');
@@ -36,6 +38,45 @@ const massIntentions = asyncHandler(async (req, res) => {
     paidOnly: paidOnly !== undefined ? paidOnly === 'true' : undefined,
   });
   res.json({ success: true, data: result });
+});
+
+const massIntentionsPrint = asyncHandler(async (req, res) => {
+  const { dateFrom, dateTo, massId, paidOnly } = req.query;
+  const [result, church, currency] = await Promise.all([
+    reportRepository.massIntentionsReport({
+      churchId: req.user.churchId,
+      branchId: effectiveBranchId(req),
+      dateFrom,
+      dateTo,
+      massId,
+      paidOnly: paidOnly !== undefined ? paidOnly === 'true' : undefined,
+    }),
+    lookupRepository.getChurchById(req.user.churchId),
+    lookupRepository.getDefaultCurrency(),
+  ]);
+
+  const buffer = await generateMassIntentionsReportPdf({
+    dateFrom,
+    dateTo: dateTo || dateFrom,
+    church,
+    rows: result.rows,
+    summary: result.summary,
+    generatedBy: req.user.username,
+    currencySymbol: currency.symbol,
+    lang: req.query.lang === 'ta' ? 'ta' : 'en',
+  });
+
+  await auditService.fromRequest(req, {
+    action: 'PRINT_REPORT',
+    module: 'reports',
+    entityType: 'mass_intentions_report',
+    newValues: { dateFrom, dateTo, count: result.summary.totalCount, total: result.summary.totalOffering },
+  });
+
+  res.set('Content-Type', 'application/pdf');
+  const filenameSuffix = dateFrom === dateTo ? (dateFrom || 'all') : `${dateFrom}_to_${dateTo}`;
+  res.set('Content-Disposition', `inline; filename="MassIntentions-${filenameSuffix}.pdf"`);
+  res.send(buffer);
 });
 
 const collections = asyncHandler(async (req, res) => {
@@ -179,8 +220,45 @@ const certificates = asyncHandler(async (req, res) => {
   res.json({ success: true, data: result });
 });
 
+const certificatesPrint = asyncHandler(async (req, res) => {
+  const { type, dateFrom, dateTo } = req.query;
+  const [result, church] = await Promise.all([
+    reportRepository.certificatesReport({
+      churchId: req.user.churchId,
+      branchId: effectiveBranchId(req),
+      type,
+      dateFrom,
+      dateTo,
+    }),
+    lookupRepository.getChurchById(req.user.churchId),
+  ]);
+
+  const buffer = await generateCertificatesReportPdf({
+    dateFrom,
+    dateTo: dateTo || dateFrom,
+    church,
+    rows: result.rows,
+    summary: result.summary,
+    generatedBy: req.user.username,
+    lang: req.query.lang === 'ta' ? 'ta' : 'en',
+  });
+
+  await auditService.fromRequest(req, {
+    action: 'PRINT_REPORT',
+    module: 'reports',
+    entityType: 'certificates_report',
+    newValues: { dateFrom, dateTo, count: result.rows.length },
+  });
+
+  res.set('Content-Type', 'application/pdf');
+  const filenameSuffix = dateFrom === dateTo ? (dateFrom || 'all') : `${dateFrom}_to_${dateTo}`;
+  res.set('Content-Disposition', `inline; filename="Certificates-${filenameSuffix}.pdf"`);
+  res.send(buffer);
+});
+
 module.exports = {
   massIntentions,
+  massIntentionsPrint,
   collections,
   collectionsDetail,
   collectionsDetailPrint,
@@ -188,4 +266,5 @@ module.exports = {
   contributionCollectionsDetail,
   contributionCollectionsDetailPrint,
   certificates,
+  certificatesPrint,
 };

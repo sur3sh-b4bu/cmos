@@ -61,6 +61,10 @@ export class ReportsComponent implements OnInit {
   // while one print is in flight.
   printingCollections = signal<{ date: string; mine: boolean } | null>(null);
   printingContributions = signal<{ date: string; mine: boolean } | null>(null);
+  printingPrayer = signal<boolean>(false);
+  printingFullCollections = signal<boolean>(false);
+  printingFullContributions = signal<boolean>(false);
+  printingCertificates = signal<boolean>(false);
 
   range = signal<DateRange>({ from: '', to: '' });
   loading = signal(false);
@@ -118,6 +122,71 @@ export class ReportsComponent implements OnInit {
   onCertificatesPageChange(e: { pageIndex: number; pageSize: number }): void {
     this.certificatesPage.set(e.pageIndex);
     this.certificatesPageSize.set(e.pageSize);
+  }
+
+  async printMassIntentionsReport(): Promise<void> {
+    if (this.printingPrayer()) return;
+    this.printingPrayer.set(true);
+    try {
+      await this.fileDownload.printPdf(
+        this.reportService.getMassIntentionsPrintUrl(
+          { dateFrom: this.range().from, dateTo: this.range().to },
+          this.languageService.current()
+        )
+      );
+    } finally {
+      this.printingPrayer.set(false);
+    }
+  }
+
+  async printCollectionsRangeReport(mine = false): Promise<void> {
+    if (this.printingFullCollections()) return;
+    this.printingFullCollections.set(true);
+    try {
+      await this.fileDownload.printPdf(
+        this.reportService.getCollectionsDetailPrintUrl(
+          this.range().from,
+          this.range().to,
+          mine,
+          'payment',
+          this.languageService.current()
+        )
+      );
+    } finally {
+      this.printingFullCollections.set(false);
+    }
+  }
+
+  async printContributionsRangeReport(mine = false): Promise<void> {
+    if (this.printingFullContributions()) return;
+    this.printingFullContributions.set(true);
+    try {
+      await this.fileDownload.printPdf(
+        this.reportService.getContributionCollectionsDetailPrintUrl(
+          this.range().from,
+          this.range().to,
+          mine,
+          this.languageService.current()
+        )
+      );
+    } finally {
+      this.printingFullContributions.set(false);
+    }
+  }
+
+  async printCertificatesReport(): Promise<void> {
+    if (this.printingCertificates()) return;
+    this.printingCertificates.set(true);
+    try {
+      await this.fileDownload.printPdf(
+        this.reportService.getCertificatesPrintUrl(
+          { dateFrom: this.range().from, dateTo: this.range().to },
+          this.languageService.current()
+        )
+      );
+    } finally {
+      this.printingCertificates.set(false);
+    }
   }
 
   /** Prints the per-payment breakdown PDF for one day of the "by day" table

@@ -1,13 +1,37 @@
+const fs = require('fs');
+const path = require('path');
 const PDFDocument = require('@foliojs-fork/pdfkit');
 const { renderPdfBuffer } = require('../utils/pdfPrinter');
 const { formatDateDMY } = require('../utils/dateFormat');
 const { hasTamilText } = require('../utils/pdfLabels');
 const { getThemePrimaryColor } = require('../utils/themeColors');
+const { UPLOAD_ROOT } = require('../middlewares/upload');
+
+function getChurchLogoDataUrl(church) {
+  if (!church?.logo_url) return null;
+  const filePath = path.join(UPLOAD_ROOT, church.logo_url.replace(/^\/uploads\//, ''));
+  try {
+    const buffer = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).slice(1).toLowerCase();
+    const mime = ext === 'jpg' ? 'jpeg' : ext;
+    return `data:image/${mime};base64,${buffer.toString('base64')}`;
+  } catch {
+    return null;
+  }
+}
+
+function formatDateSlash(value) {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
+}
 
 /** Exact text width for a given font/size, via the same PDFKit build
- * pdfmake renders with underneath -- used to size the Baptism title's
- * pill-shaped border precisely instead of guessing a width and either
- * clipping the text or leaving it swimming in too much padding. */
+ * pdfmake renders with underneath */
 function measureTextWidth(text, font, fontSize) {
   const doc = new PDFDocument({ autoFirstPage: false });
   doc.font(font).fontSize(fontSize);
@@ -16,24 +40,8 @@ function measureTextWidth(text, font, fontSize) {
   return width;
 }
 
-/**
- * Renders each certificate as a plain "extract from the register" copy --
- * matching the physical diocese register-extract forms (Baptism/Marriage/
- * Death) this church already uses, down to the dotted fill-in lines and the
- * curly-brace grouping for paired rows (Bridegroom/Bride, Father/Mother,
- * ...) -- rather than a decorative ornamental certificate. Every labeled
- * line on the paper forms has a corresponding row here, in the same order.
- *
- * Ink color dynamically matches the church's brand theme color (e.g. maroon,
- * blue, etc.).
- */
-
 const LABEL_WIDTH = 168;
 const SUB_LABEL_WIDTH = 62;
-// A4 content width (595.28 - 48 - 48 margins) minus each row's fixed
-// columns, with a small safety margin -- a canvas line's width is a fixed
-// number, not "fill remaining space" like a column, so this has to be
-// gotten right or it overflows into (and corrupts) whatever sits next to it.
 const LINE_WIDTH = 320;
 const SUB_LINE_WIDTH = 258;
 const DOTS = { length: 1, space: 2 };
@@ -47,15 +55,10 @@ function dottedLine(width, ink) {
   return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: width, y2: 0, lineWidth: 1, lineColor: ink, dash: DOTS }] };
 }
 
-/** One "Label .................... value" row -- the value sits just above
- * the dotted line, the way a typed entry sits on these forms. The dotted
- * line is unconditional (blank fields still show the full fill-in line,
- * exactly like an unfilled spot on the paper form).
- *
- * marginBottom is a parameter (not a constant) so each certificate type can
- * spread its own fixed set of rows across the full page -- see SPACING
- * below: baptism has far fewer rows than death, so it needs a much bigger
- * per-row gap to fill the same A4 page. */
+function solidLine(width, color = '#333333') {
+  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: width, y2: 0, lineWidth: 0.75, lineColor: color }] };
+}
+
 function row(ink, label, value, marginBottom = 7) {
   return {
     columns: [
@@ -63,11 +66,6 @@ function row(ink, label, value, marginBottom = 7) {
       {
         width: '*',
         stack: [
-          // Names/places/remarks are free text and can be typed in Tamil --
-          // 'Times' is a built-in PDF font with no Tamil glyphs at all, so
-          // this one value falls back to NotoSansTamil rather than the
-          // whole certificate losing its formal serif look -- see
-          // receiptPdf.js's own comment on the same underlying issue.
           { text: value || '', style: 'value', margin: [3, 0, 0, 1], ...(hasTamilText(value) ? { font: 'NotoSansTamil' } : {}) },
           dottedLine(LINE_WIDTH, ink),
         ],
@@ -78,7 +76,6 @@ function row(ink, label, value, marginBottom = 7) {
   };
 }
 
-/** A sub-line inside a brace-grouped pair. See row() above re: marginBottom. */
 function subRow(ink, subLabel, value, marginBottom = 6) {
   return {
     columns: [
@@ -86,7 +83,6 @@ function subRow(ink, subLabel, value, marginBottom = 6) {
       {
         width: '*',
         stack: [
-          // See row() above.
           { text: value || '', style: 'value', margin: [3, 0, 0, 1], ...(hasTamilText(value) ? { font: 'NotoSansTamil' } : {}) },
           dottedLine(SUB_LINE_WIDTH, ink),
         ],
@@ -97,32 +93,11 @@ function subRow(ink, subLabel, value, marginBottom = 6) {
   };
 }
 
-// subRow()'s actual rendered height is ~15pt of text+dotted-line plus
-// whatever bottom margin it's given -- kept as a formula (not a flat
-// constant) so the brace below stays sized to exactly two subRow()s
-// regardless of which per-type margin SPACING hands it.
 const SUBROW_BASE_HEIGHT = 15;
 
-/** One outer label (e.g. "Name of the Parties") brace-grouping two
- * subRow()s (e.g. Bridegroom / Bride). The brace itself is the actual "{"
- * glyph from the font, not a hand-drawn curve -- a real typeface's brace is
- * a genuinely well-designed shape (the correct taper, the point, the
- * curvature), and no amount of hand-rolled SVG bezier-fiddling matched it
- * as convincingly as just asking the font for the character it already
- * has. Sized so its natural height roughly spans the two subRow()s below it.
- *
- * Its COLUMN width has to be measured, not guessed: this glyph gets scaled
- * up to 80+pt (tall enough to span two rows), and a "{" at that size is
- * nowhere near as narrow as it looks at body text size -- a fixed 16pt
- * column (this used to hardcode one) is far too narrow at that scale, so
- * the glyph's own ink spills out both sides into the label and the
- * subLabel text next to it. measureTextWidth (already used above for the
- * title's underline) gives the real width at this exact font size instead;
- * the label column shrinks by the same amount so nothing else on the row
- * shifts or overflows. */
 function pairedRow(ink, label, subLabelA, valueA, subLabelB, valueB, subMarginBottom = 6, pairMarginBottom = 2) {
   const braceHeight = (SUBROW_BASE_HEIGHT + subMarginBottom) * 2;
-  const braceWidth = Math.ceil(measureTextWidth('{', 'Times-Roman', braceHeight)) + 3; // +3: small safety margin around the measured ink
+  const braceWidth = Math.ceil(measureTextWidth('{', 'Times-Roman', braceHeight)) + 3;
   return {
     columns: [
       { width: LABEL_WIDTH - braceWidth - 2, text: label, style: 'label', margin: [0, 6, 0, 0] },
@@ -137,8 +112,6 @@ function pairedRow(ink, label, subLabelA, valueA, subLabelB, valueB, subMarginBo
   };
 }
 
-/** "Kept at / Solemnized at / at" -- the top line of every one of these
- * register-extract forms, filled with the church's own name. */
 function headerLine(ink, label, church, marginBottom) {
   return row(ink, label, church?.name, marginBottom);
 }
@@ -147,18 +120,9 @@ function dioceseLine(ink, church) {
   return { text: church?.diocese || '', style: 'diocese', color: ink, alignment: 'right', margin: [0, 0, 0, 20] };
 }
 
-const PAGE_CONTENT_WIDTH = 499.28; // A4 (595.28) minus 48+48 left/right margins
-// Marriage's title is the longest of the three -- sized down just enough to
-// fit on one line within the page (matching the original), rather than
-// wrapping like Death's intentionally-two-line title does.
+const PAGE_CONTENT_WIDTH = 499.28;
 const TITLE_FONT_SIZE = { baptism: 15, marriage: 12, death: 15 };
 
-/**
- * All three register forms use the same title treatment: plain bold text
- * with a straight underline sized to the exact measured text width (see
- * measureTextWidth), so it never reads as too wide/narrow or disconnected
- * from the text above it.
- */
 function titleBlock(type, ink) {
   const text = REGISTER_TITLE[type];
   const fontSize = TITLE_FONT_SIZE[type];
@@ -176,11 +140,6 @@ function titleBlock(type, ink) {
   };
 }
 
-/** Date/Place, the priest's title, and "Seal" sit side by side in one row
- * at the bottom of the original forms -- plain printed text with no ruled
- * line under any of them (unlike every field above, which does get a
- * dotted fill-in line). The signature and seal stamp go directly in the
- * blank space near their printed labels. */
 function footer(type, ink, church, certificateNo, topSpacing) {
   const signatureLabel = { baptism: 'Catholic Priest', marriage: 'Parish Priest', death: 'CATHOLIC PRIEST' }[type];
   const showPlace = type === 'death';
@@ -193,9 +152,6 @@ function footer(type, ink, church, certificateNo, topSpacing) {
     stack: [
       { text: '', margin: [0, topSpacing, 0, 0] },
       {
-        // Three equal-width columns, evenly spanning the full page width --
-        // not Date on the left with Priest/Seal crowded together at the
-        // far right edge.
         columns: [
           { width: '*', stack: dateBlock },
           { width: '*', text: signatureLabel, style: 'signature', color: ink, alignment: 'center' },
@@ -203,6 +159,240 @@ function footer(type, ink, church, certificateNo, topSpacing) {
         ],
       },
       { text: `Certificate No.: ${certificateNo}`, style: 'metadata', margin: [0, 22, 0, 0] },
+    ],
+  };
+}
+
+/**
+ * Builds the exact Marriage Certificate layout matching the Tuticorin Diocese
+ * "EXTRACT FROM THE REGISTER OF INDIAN CHRISTIAN MARRIAGES" paper certificate form.
+ */
+function buildExactMarriageDocument(record, church, ink) {
+  const logoDataUrl = getChurchLogoDataUrl(church);
+  const LINE_COLOR = '#555555';
+  const LABEL_COL_WIDTH = 155;
+  const FULL_LINE_WIDTH = 352;
+  const SUB_LABEL_WIDTH = 78;
+  const SUB_VAL_LINE_WIDTH = 274;
+  const ROW_GAP = 19.5;
+  const SUBROW_GAP = 13.5;
+  const FONT_SIZE = 11.5;
+
+  const solemnizedText = [
+    church?.name,
+    church?.address,
+    church?.diocese ? (church.diocese.toLowerCase().includes('diocese') ? church.diocese : `${church.diocese} Diocese`) : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  const singleLineRow = (label, valText) => ({
+    columns: [
+      { width: LABEL_COL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+      {
+        width: '*',
+        stack: [
+          {
+            text: valText ? `:  ${valText}` : ':',
+            font: 'Times',
+            bold: true,
+            fontSize: FONT_SIZE,
+            color: '#000000',
+            margin: [0, 0, 0, 2],
+            ...(hasTamilText(valText) ? { font: 'NotoSansTamil' } : {}),
+          },
+          solidLine(FULL_LINE_WIDTH, LINE_COLOR),
+        ],
+      },
+    ],
+    margin: [0, 0, 0, ROW_GAP],
+  });
+
+  const pairedFieldsRow = (label, groomVal, brideVal) => ({
+    columns: [
+      { width: LABEL_COL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+      {
+        width: '*',
+        stack: [
+          // Bridegroom line
+          {
+            columns: [
+              { width: SUB_LABEL_WIDTH, text: 'Bridegroom', font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+              {
+                width: '*',
+                stack: [
+                  {
+                    text: groomVal ? `:  ${groomVal}` : ':',
+                    font: 'Times',
+                    bold: true,
+                    fontSize: FONT_SIZE,
+                    color: '#000000',
+                    margin: [0, 0, 0, 2],
+                    ...(hasTamilText(groomVal) ? { font: 'NotoSansTamil' } : {}),
+                  },
+                  solidLine(SUB_VAL_LINE_WIDTH, LINE_COLOR),
+                ],
+              },
+            ],
+            margin: [0, 0, 0, SUBROW_GAP],
+          },
+          // Bride line
+          {
+            columns: [
+              { width: SUB_LABEL_WIDTH, text: 'Bride', font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+              {
+                width: '*',
+                stack: [
+                  {
+                    text: brideVal ? `:  ${brideVal}` : ':',
+                    font: 'Times',
+                    bold: true,
+                    fontSize: FONT_SIZE,
+                    color: '#000000',
+                    margin: [0, 0, 0, 2],
+                    ...(hasTamilText(brideVal) ? { font: 'NotoSansTamil' } : {}),
+                  },
+                  solidLine(SUB_VAL_LINE_WIDTH, LINE_COLOR),
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    margin: [0, 0, 0, ROW_GAP],
+  });
+
+  const witnessesBlock = () => ({
+    columns: [
+      { width: LABEL_COL_WIDTH, text: 'Witnesses', font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+      {
+        width: '*',
+        stack: [
+          // Witness 1
+          {
+            stack: [
+              {
+                text: record.witness1_name ? `:  ${record.witness1_name.toUpperCase()}` : ':',
+                font: 'Times',
+                bold: true,
+                fontSize: FONT_SIZE,
+                color: '#000000',
+                margin: [0, 0, 0, 2],
+                ...(hasTamilText(record.witness1_name) ? { font: 'NotoSansTamil' } : {}),
+              },
+              solidLine(FULL_LINE_WIDTH, LINE_COLOR),
+            ],
+            margin: [0, 0, 0, SUBROW_GAP],
+          },
+          // Witness 2
+          {
+            stack: [
+              {
+                text: record.witness2_name ? `   ${record.witness2_name.toUpperCase()}` : '',
+                font: 'Times',
+                bold: true,
+                fontSize: FONT_SIZE,
+                color: '#000000',
+                margin: [0, 0, 0, 2],
+                ...(hasTamilText(record.witness2_name) ? { font: 'NotoSansTamil' } : {}),
+              },
+              solidLine(FULL_LINE_WIDTH, LINE_COLOR),
+            ],
+          },
+        ],
+      },
+    ],
+    margin: [0, 0, 0, ROW_GAP],
+  });
+
+  const headerLogoBlock = logoDataUrl
+    ? { image: logoDataUrl, width: 68, height: 82, fit: [68, 82], alignment: 'left' }
+    : {
+        table: {
+          widths: [62],
+          body: [
+            [
+              {
+                stack: [{ text: '✝', fontSize: 28, alignment: 'center', margin: [0, 18, 0, 0], color: '#333333' }],
+                border: [true, true, true, true],
+                borderColor: '#333333',
+                fillColor: '#f8f8f8',
+                height: 76,
+              },
+            ],
+          ],
+        },
+        layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => '#444444', vLineColor: () => '#444444' },
+      };
+
+  return {
+    pageSize: 'A4',
+    pageOrientation: 'portrait',
+    pageMargins: [44, 38, 44, 28],
+    defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: '#000000' },
+    content: [
+      // Header: Left Image/Logo + Centered Certificate Titles
+      {
+        columns: [
+          { width: 78, stack: [headerLogoBlock] },
+          {
+            width: '*',
+            stack: [
+              { text: 'CERTIFICATE OF MARRIAGE', font: 'Times', bold: true, fontSize: 17, alignment: 'center', margin: [0, 4, 0, 6] },
+              { text: 'EXTRACT FROM THE REGISTER OF INDIAN', font: 'Times', bold: true, fontSize: 13, alignment: 'center', margin: [0, 0, 0, 3] },
+              { text: 'CHRISTIAN MARRIAGES', font: 'Times', bold: true, fontSize: 13, alignment: 'center', margin: [0, 0, 0, 24] },
+            ],
+          },
+        ],
+        margin: [0, 0, 0, 24],
+      },
+
+      // Body rows
+      {
+        columns: [
+          { width: LABEL_COL_WIDTH, text: 'Solemnized at', font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+          {
+            width: '*',
+            stack: [
+              {
+                text: solemnizedText,
+                font: 'Times',
+                bold: true,
+                fontSize: FONT_SIZE,
+                color: '#000000',
+                margin: [0, 0, 0, 2],
+                ...(hasTamilText(solemnizedText) ? { font: 'NotoSansTamil' } : {}),
+              },
+              solidLine(FULL_LINE_WIDTH, LINE_COLOR),
+            ],
+          },
+        ],
+        margin: [0, 0, 0, ROW_GAP],
+      },
+
+      singleLineRow('When Married', formatDateSlash(record.marriage_date)),
+      singleLineRow('Where Married', (record.where_married || church?.name || '').toUpperCase()),
+      pairedFieldsRow('Name of the Parties', record.groom_name?.toUpperCase(), record.bride_name?.toUpperCase()),
+      pairedFieldsRow('Age', record.groom_age, record.bride_age),
+      pairedFieldsRow('Condition', (record.groom_condition || 'BACHELOR').toUpperCase(), (record.bride_condition || 'SPINSTER').toUpperCase()),
+      pairedFieldsRow('Residence', (record.groom_residence || '').toUpperCase(), (record.bride_residence || '').toUpperCase()),
+      pairedFieldsRow("Father's Name & Surname", (record.groom_father_name || '').toUpperCase(), (record.bride_father_name || '').toUpperCase()),
+      singleLineRow('By Banns or Licence', (record.banns_or_licence || 'BY BANNS').toUpperCase()),
+      singleLineRow('Can.impediments dispensed', (record.impediments_dispensed || 'NIL').toUpperCase()),
+      witnessesBlock(),
+      singleLineRow('Minister of the Ceremony', (record.priest_display_name || '').toUpperCase()),
+
+      // Footer - nicely spaced to cover bottom of the page
+      {
+        columns: [
+          { width: '*', text: `Date:  ${formatDateSlash(new Date())}`, font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+          { width: '*', text: 'Seal', font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: '#000000' },
+          { width: '*', text: 'Parish Priest', font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: '#000000' },
+        ],
+        margin: [0, 68, 0, 0],
+      },
+      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8.5, color: '#888888', margin: [0, 18, 0, 0] },
     ],
   };
 }
@@ -220,26 +410,6 @@ function buildRows(type, ink, record, s) {
         row(ink, "Parent's Residence", record.parent_residence, s.row),
         pairedRow(ink, 'God Parents', 'Godfather', record.godfather_name, 'Godmother', record.godmother_name, s.subRow, s.pair),
         row(ink, 'Priest who Baptised', record.priest_display_name, s.row),
-        row(ink, 'Remarks', record.remarks, s.row),
-      ];
-    case 'marriage':
-      return [
-        row(ink, 'When Married', formatDate(record.marriage_date), s.row),
-        row(ink, 'Where Married', record.where_married, s.row),
-        pairedRow(ink, 'Name of the Parties', 'Bridegroom', record.groom_name, 'Bride', record.bride_name, s.subRow, s.pair),
-        pairedRow(ink, 'Age', 'Bridegroom', record.groom_age, 'Bride', record.bride_age, s.subRow, s.pair),
-        pairedRow(ink, 'Condition', 'Bridegroom', record.groom_condition, 'Bride', record.bride_condition, s.subRow, s.pair),
-        pairedRow(ink, 'Profession', 'Bridegroom', record.groom_profession, 'Bride', record.bride_profession, s.subRow, s.pair),
-        pairedRow(ink, 'Residence at the\ntime of Marriage', 'Bridegroom', record.groom_residence, 'Bride', record.bride_residence, s.subRow, s.pair),
-        pairedRow(ink, "Father's Name &\nSurname", 'Bridegroom', record.groom_father_name, 'Bride', record.bride_father_name, s.subRow, s.pair),
-        row(ink, 'By banns or Licence', record.banns_or_licence, s.row),
-        row(ink, 'Can. impediments dispensed', record.impediments_dispensed, s.row),
-        row(ink, 'Witnesses', [record.witness1_name, record.witness2_name].filter(Boolean).join('  &  '), s.row),
-        // Present on the original register but easy to miss since it isn't
-        // near the other priest-related fields -- it's its own line right
-        // before the signature block, distinct from the "Parish Priest"
-        // signature label below.
-        row(ink, 'Minister of the Ceremony', record.priest_display_name, s.row),
         row(ink, 'Remarks', record.remarks, s.row),
       ];
     case 'death':
@@ -265,34 +435,26 @@ function buildRows(type, ink, record, s) {
   }
 }
 
-const HEADER_LABEL = { baptism: 'Kept at', marriage: 'Solemnized at', death: 'at' };
+const HEADER_LABEL = { baptism: 'Kept at', death: 'at' };
 const REGISTER_TITLE = {
   baptism: 'EXTRACT FROM THE REGISTER OF BAPTISM',
-  marriage: 'EXTRACT FROM THE REGISTER OF INDIAN CHRISTIAN MARRIAGES',
   death: 'EXTRACT FROM THE REGISTER OF DEATHS KEPT',
 };
 
-// Per-type vertical rhythm -- row/subRow/pair are each type's own dotted-
-// line-row bottom margin (see row()/subRow()/pairedRow() above), footerTop
-// is the blank gap above the Date/Priest/Seal line. Every certificate of a
-// given type always renders the exact same fixed set of rows (dotted lines
-// show even for blank fields, same as the paper form), so -- unlike a
-// normal document -- how much space is needed to fill one A4 page is known
-// in advance and doesn't vary per record. It DOES vary a lot per type
-// though: Death has 15 single-value rows to spread across the page, Baptism
-// has only 9 (plus 2 paired) -- so Baptism needs much bigger gaps than
-// Death to reach the same full-page height. These values were tuned against
-// PDF_DEBUG_HEIGHT (see pdfPrinter.js) so each type's content -- including
-// the footer -- ends a modest, consistent distance above the bottom margin.
 const SPACING = {
   baptism: { row: 28, subRow: 26, pair: 10, footerTop: 70 },
-  marriage: { row: 13, subRow: 15, pair: 7, footerTop: 46 },
   death: { row: 22, subRow: 22, pair: 4, footerTop: 51 },
 };
 
 async function generateCertificatePdf(type, record, church) {
   const primaryColor = getThemePrimaryColor(church?.theme_color);
   const ink = primaryColor;
+
+  if (type === 'marriage') {
+    const docDefinition = buildExactMarriageDocument(record, church, ink);
+    return renderPdfBuffer(docDefinition);
+  }
+
   const s = SPACING[type];
   const docDefinition = {
     pageSize: 'A4',

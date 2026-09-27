@@ -413,6 +413,47 @@ async function run() {
     console.log('Master Administrator user already exists — skipping.');
   }
 
+  console.log('Seeding sample marriage certificate...');
+  if (await tableEmpty(conn, 'marriage_certificates')) {
+    await conn.query(
+      `INSERT INTO marriage_certificates (
+        church_id, branch_id, certificate_no,
+        marriage_date, where_married,
+        groom_name, bride_name,
+        groom_age, bride_age,
+        groom_condition, bride_condition,
+        groom_residence, bride_residence,
+        groom_father_name, bride_father_name,
+        banns_or_licence, impediments_dispensed,
+        witness1_name, witness2_name,
+        custom_priest_name
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        churchId,
+        branchId,
+        'MAR-0001',
+        '2023-10-25',
+        'ST.THOMAS CHURCH',
+        'SRIDHER',
+        'BELCIYA',
+        '36',
+        '19',
+        'BACHELOR',
+        'SPINSTER',
+        'THOOTHUKUDI',
+        'THOOTHUKUDI',
+        'RAJA',
+        'SATHISKUMAR',
+        'BY BANNS',
+        'NIL',
+        'RATHNAM',
+        'AROCKIA RAJAN',
+        'REV. FR. PRATHEEP',
+      ]
+    );
+    await conn.query("UPDATE certificate_series SET next_number = 2 WHERE church_id = ? AND certificate_type = 'Marriage'", [churchId]);
+  }
+
   console.log('Seed complete.');
   await conn.end();
 }

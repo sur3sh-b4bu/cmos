@@ -342,40 +342,40 @@ function buildExactMarriageDocument(record, church, ink) {
   const headerLogoBlock = logoDataUrl
     ? {
         table: {
-          widths: [58],
+          widths: [56],
           body: [
             [
               {
                 image: logoDataUrl,
-                width: 58,
-                height: 74,
-                fit: [58, 74],
+                width: 56,
+                height: 70,
+                fit: [56, 70],
                 alignment: 'center',
                 border: [true, true, true, true],
-                borderColor: LINE_COLOR,
+                borderColor: '#ffffff',
                 margin: [0, 0, 0, 0],
               },
             ],
           ],
         },
-        layout: { hLineWidth: () => 0.75, vLineWidth: () => 0.75, hLineColor: () => LINE_COLOR, vLineColor: () => LINE_COLOR },
+        layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => '#ffffff', vLineColor: () => '#ffffff' },
       }
     : {
         table: {
-          widths: [58],
+          widths: [56],
           body: [
             [
               {
-                stack: [{ text: '✝', fontSize: 26, alignment: 'center', margin: [0, 18, 0, 0], color: THEME_COLOR }],
+                stack: [{ text: '✝', fontSize: 26, alignment: 'center', margin: [0, 16, 0, 0], color: '#ffffff' }],
                 border: [true, true, true, true],
-                borderColor: LINE_COLOR,
-                fillColor: '#f8f8f8',
-                height: 74,
+                borderColor: '#ffffff',
+                fillColor: 'transparent',
+                height: 70,
               },
             ],
           ],
         },
-        layout: { hLineWidth: () => 0.75, vLineWidth: () => 0.75, hLineColor: () => LINE_COLOR, vLineColor: () => LINE_COLOR },
+        layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => '#ffffff', vLineColor: () => '#ffffff' },
       };
 
   return {
@@ -384,47 +384,67 @@ function buildExactMarriageDocument(record, church, ink) {
     pageMargins: [44, 38, 44, 28],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
     content: [
-      // Header: Left Framed Logo + Page-Centered Dignified Certificate Titles
+      // Header Banner: Theme Colored Ribbon with White Text and Left Framed Photo
       {
-        columns: [
-          { width: 70, stack: [headerLogoBlock] },
-          {
-            width: '*',
-            stack: [
+        table: {
+          widths: ['*'],
+          body: [
+            [
               {
-                text: 'CERTIFICATE OF MARRIAGE',
-                font: 'Times',
-                bold: true,
-                fontSize: 18,
-                characterSpacing: 0.8,
-                alignment: 'center',
-                color: THEME_COLOR,
-                margin: [0, 8, 0, 6],
-              },
-              {
-                text: 'EXTRACT FROM THE REGISTER OF INDIAN',
-                font: 'Times',
-                bold: true,
-                fontSize: 12.5,
-                characterSpacing: 0.5,
-                alignment: 'center',
-                color: THEME_COLOR,
-                margin: [0, 0, 0, 3],
-              },
-              {
-                text: 'CHRISTIAN MARRIAGES',
-                font: 'Times',
-                bold: true,
-                fontSize: 12.5,
-                characterSpacing: 0.5,
-                alignment: 'center',
-                color: THEME_COLOR,
-                margin: [0, 0, 0, 20],
+                fillColor: THEME_COLOR,
+                border: [false, false, false, false],
+                margin: [8, 6, 8, 6],
+                columns: [
+                  { width: 66, stack: [headerLogoBlock] },
+                  {
+                    width: '*',
+                    stack: [
+                      {
+                        text: 'CERTIFICATE OF MARRIAGE',
+                        font: 'Times',
+                        bold: true,
+                        fontSize: 18,
+                        characterSpacing: 0.8,
+                        alignment: 'center',
+                        color: '#ffffff',
+                        margin: [0, 6, 0, 4],
+                      },
+                      {
+                        text: 'EXTRACT FROM THE REGISTER OF INDIAN',
+                        font: 'Times',
+                        bold: true,
+                        fontSize: 12,
+                        characterSpacing: 0.5,
+                        alignment: 'center',
+                        color: '#ffffff',
+                        margin: [0, 0, 0, 2],
+                      },
+                      {
+                        text: 'CHRISTIAN MARRIAGES',
+                        font: 'Times',
+                        bold: true,
+                        fontSize: 12,
+                        characterSpacing: 0.5,
+                        alignment: 'center',
+                        color: '#ffffff',
+                        margin: [0, 0, 0, 6],
+                      },
+                    ],
+                  },
+                  { width: 66, text: '' },
+                ],
               },
             ],
-          },
-          { width: 70, text: '' },
-        ],
+          ],
+        },
+        layout: {
+          hLineWidth: () => 0,
+          vLineWidth: () => 0,
+          paddingLeft: () => 0,
+          paddingRight: () => 0,
+          paddingTop: () => 0,
+          paddingBottom: () => 0,
+        },
         margin: [0, 0, 0, 18],
       },
 

@@ -941,6 +941,10 @@ export const en = {
       fieldImpediments: 'Can. impediments dispensed',
       fieldWitness1: 'Witness 1',
       fieldWitness2: 'Witness 2',
+      fieldWitness3: 'Witness 3',
+      fieldWitness4: 'Witness 4',
+      addWitness: 'Add Witness',
+      removeWitness: 'Remove Witness',
       fieldMinister: 'Minister of the Ceremony',
     },
     death: {

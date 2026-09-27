@@ -917,6 +917,10 @@ export const ta = {
       fieldImpediments: 'விலக்கப்பட்ட தடைகள்',
       fieldWitness1: 'சாட்சி 1',
       fieldWitness2: 'சாட்சி 2',
+      fieldWitness3: 'சாட்சி 3',
+      fieldWitness4: 'சாட்சி 4',
+      addWitness: 'சாட்சியைச் சேர்க்கவும்',
+      removeWitness: 'சாட்சியை நீக்கு',
       fieldMinister: 'திருமணம் நடத்திய குரு',
     },
     death: {

@@ -134,6 +134,8 @@ export const CERTIFICATE_CONFIGS: Record<CertificateType, CertificateConfig> = {
       { key: 'impediments_dispensed', label: 'certificates.marriage.fieldImpediments', type: 'text' },
       { key: 'witness1_name', label: 'certificates.marriage.fieldWitness1', type: 'text' },
       { key: 'witness2_name', label: 'certificates.marriage.fieldWitness2', type: 'text' },
+      { key: 'witness3_name', label: 'certificates.marriage.fieldWitness3', type: 'text' },
+      { key: 'witness4_name', label: 'certificates.marriage.fieldWitness4', type: 'text' },
       { key: 'priest_id', label: 'certificates.marriage.fieldMinister', type: 'select', masterKey: 'priests' },
       { key: 'custom_priest_name', label: 'certificates.common.priestCustom', type: 'text' },
       { key: 'remarks', label: 'certificates.common.remarks', type: 'textarea', span2: true },

@@ -28,53 +28,103 @@
     <form class="cert-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
       <div class="cert-form__grid">
         @for (field of config.formFields; track field.key) {
-          <mat-form-field appearance="outline" [class.cert-form__span-2]="field.span2">
-            <mat-label>{{ field.label | translate }}</mat-label>
+          @if (isFieldVisible(field)) {
+            <mat-form-field appearance="outline" [class.cert-form__span-2]="field.span2">
+              <mat-label>{{ field.label | translate }}</mat-label>
 
-            @switch (field.type) {
-              @case ('text') {
-                <input matInput [formControlName]="field.key" />
-              }
-              @case ('textarea') {
-                <textarea matInput rows="3" [formControlName]="field.key"></textarea>
-              }
-              @case ('date') {
-                <ng-container>
-                  <input
-                    matInput
-                    [matDatepicker]="picker"
-                    [formControlName]="field.key"
-                    [max]="maxDateFor(field)"
-                    [min]="minDateFor(field)"
-                  />
-                  <mat-datepicker-toggle matIconSuffix [for]="picker" />
-                  <mat-datepicker #picker [calendarHeaderComponent]="todayHeader" />
-                </ng-container>
-              }
-              @case ('select') {
-                <mat-select [formControlName]="field.key">
-                  @for (opt of optionsFor(field); track opt.id) {
-                    <mat-option [value]="opt.id">{{ opt.name }}</mat-option>
+              @switch (field.type) {
+                @case ('text') {
+                  <input matInput [formControlName]="field.key" />
+                  @if (certType === 'marriage') {
+                    @if (field.key === 'witness2_name' && witnessCount() === 2) {
+                      <button
+                        mat-icon-button
+                        matIconSuffix
+                        type="button"
+                        [matTooltip]="'certificates.marriage.addWitness' | translate"
+                        (click)="addWitness(); $event.stopPropagation()"
+                        color="primary"
+                      >
+                        <mat-icon>add_circle</mat-icon>
+                      </button>
+                    }
+                    @if (field.key === 'witness3_name') {
+                      <button
+                        mat-icon-button
+                        matIconSuffix
+                        type="button"
+                        [matTooltip]="'certificates.marriage.removeWitness' | translate"
+                        (click)="removeWitness(3); $event.stopPropagation()"
+                      >
+                        <mat-icon>remove_circle_outline</mat-icon>
+                      </button>
+                      @if (witnessCount() === 3) {
+                        <button
+                          mat-icon-button
+                          matIconSuffix
+                          type="button"
+                          [matTooltip]="'certificates.marriage.addWitness' | translate"
+                          (click)="addWitness(); $event.stopPropagation()"
+                          color="primary"
+                        >
+                          <mat-icon>add_circle</mat-icon>
+                        </button>
+                      }
+                    }
+                    @if (field.key === 'witness4_name') {
+                      <button
+                        mat-icon-button
+                        matIconSuffix
+                        type="button"
+                        [matTooltip]="'certificates.marriage.removeWitness' | translate"
+                        (click)="removeWitness(4); $event.stopPropagation()"
+                      >
+                        <mat-icon>remove_circle_outline</mat-icon>
+                      </button>
+                    }
                   }
-                </mat-select>
+                }
+                @case ('textarea') {
+                  <textarea matInput rows="3" [formControlName]="field.key"></textarea>
+                }
+                @case ('date') {
+                  <ng-container>
+                    <input
+                      matInput
+                      [matDatepicker]="picker"
+                      [formControlName]="field.key"
+                      [max]="maxDateFor(field)"
+                      [min]="minDateFor(field)"
+                    />
+                    <mat-datepicker-toggle matIconSuffix [for]="picker" />
+                    <mat-datepicker #picker [calendarHeaderComponent]="todayHeader" />
+                  </ng-container>
+                }
+                @case ('select') {
+                  <mat-select [formControlName]="field.key">
+                    @for (opt of optionsFor(field); track opt.id) {
+                      <mat-option [value]="opt.id">{{ opt.name }}</mat-option>
+                    }
+                  </mat-select>
+                }
               }
-            }
 
-            @if (field.required && form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
-              <mat-error>{{ 'certificates.common.fieldRequired' | translate: { field: (field.label | translate) } }}</mat-error>
-            }
-            @if (form.get(field.key)?.hasError('matDatepickerParse')) {
-              <mat-error>{{ 'certificates.common.dateInvalid' | translate: { field: (field.label | translate) } }}</mat-error>
-            }
-            @if (form.get(field.key)?.hasError('matDatepickerMax')) {
-              <mat-error>{{ 'certificates.common.dateFuture' | translate: { field: (field.label | translate) } }}</mat-error>
-            }
-            @if (form.get(field.key)?.hasError('matDatepickerMin')) {
-              <mat-error>{{
-                'certificates.common.dateBefore' | translate: { field: (field.label | translate), other: otherLabelFor(field) }
-              }}</mat-error>
-            }
-          </mat-form-field>
+              @if (field.required && form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
+                <mat-error>{{ 'certificates.common.fieldRequired' | translate: { field: (field.label | translate) } }}</mat-error>
+              }
+              @if (form.get(field.key)?.hasError('matDatepickerParse')) {
+                <mat-error>{{ 'certificates.common.dateInvalid' | translate: { field: (field.label | translate) } }}</mat-error>
+              }
+              @if (form.get(field.key)?.hasError('matDatepickerMax')) {
+                <mat-error>{{ 'certificates.common.dateFuture' | translate: { field: (field.label | translate) } }}</mat-error>
+              }
+              @if (form.get(field.key)?.hasError('matDatepickerMin')) {
+                <mat-error>{{
+                  'certificates.common.dateBefore' | translate: { field: (field.label | translate), other: otherLabelFor(field) }
+                }}</mat-error>
+              }
+            </mat-form-field>
+          }
         }
       </div>
 

@@ -8,6 +8,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 import { MasterLookupService } from '../../../core/services/master-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -31,6 +32,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     MatDatepickerModule,
     MatButtonModule,
     MatIconModule,
+    MatTooltipModule,
     MatProgressSpinnerModule,
     TranslatePipe,
   ],
@@ -68,6 +70,7 @@ export class CertificateFormComponent implements OnChanges {
   justSavedId = signal<number | null>(null);
   justSavedCertNo = signal<string | null>(null);
   optionsByMasterKey = signal<Record<string, { id: number; name: string }[]>>({});
+  witnessCount = signal<number>(2);
 
   ngOnChanges(): void {
     this.config = CERTIFICATE_CONFIGS[this.certType];
@@ -81,6 +84,13 @@ export class CertificateFormComponent implements OnChanges {
       this.loading.set(true);
       this.certificateService.getById(this.certType, id).subscribe({
         next: (record) => {
+          if (record.witness4_name) {
+            this.witnessCount.set(4);
+          } else if (record.witness3_name) {
+            this.witnessCount.set(3);
+          } else {
+            this.witnessCount.set(2);
+          }
           const patch: Record<string, unknown> = {};
           for (const field of this.config.formFields) {
             patch[field.key] = field.type === 'date' ? parseDateOnly(record[field.key]) : record[field.key];
@@ -94,7 +104,28 @@ export class CertificateFormComponent implements OnChanges {
       this.editId.set(null);
       this.justSavedId.set(null);
       this.justSavedCertNo.set(null);
+      this.witnessCount.set(2);
     }
+  }
+
+  addWitness(): void {
+    if (this.witnessCount() < 4) {
+      this.witnessCount.update((c) => c + 1);
+    }
+  }
+
+  removeWitness(witnessNumber: number): void {
+    const key = `witness${witnessNumber}_name`;
+    this.form.get(key)?.setValue('');
+    if (this.witnessCount() >= witnessNumber) {
+      this.witnessCount.set(witnessNumber - 1);
+    }
+  }
+
+  isFieldVisible(field: CertificateFormField): boolean {
+    if (field.key === 'witness3_name') return this.witnessCount() >= 3;
+    if (field.key === 'witness4_name') return this.witnessCount() >= 4;
+    return true;
   }
 
   private buildForm(): void {

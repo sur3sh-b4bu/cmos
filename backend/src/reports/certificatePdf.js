@@ -278,48 +278,39 @@ function buildExactMarriageDocument(record, church, ink) {
     margin: [0, 0, 0, ROW_GAP],
   });
 
-  const witnessesBlock = () => ({
-    columns: [
-      { width: LABEL_COL_WIDTH, text: 'Witnesses', font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
-      {
-        width: '*',
+  const witnessesBlock = () => {
+    const list = [record.witness1_name, record.witness2_name, record.witness3_name, record.witness4_name].filter((w) => w && String(w).trim());
+    const count = Math.max(2, list.length);
+    const witnessItems = [];
+    for (let i = 0; i < count; i++) {
+      const val = list[i] ? list[i].toUpperCase() : '';
+      const isFirst = i === 0;
+      const isLast = i === count - 1;
+      witnessItems.push({
         stack: [
-          // Witness 1
           {
-            stack: [
-              {
-                text: record.witness1_name ? `:  ${record.witness1_name.toUpperCase()}` : ':',
-                font: 'Times',
-                bold: true,
-                fontSize: FONT_SIZE,
-                color: '#000000',
-                margin: [0, 0, 0, 2],
-                ...(hasTamilText(record.witness1_name) ? { font: 'NotoSansTamil' } : {}),
-              },
-              solidLine(FULL_LINE_WIDTH, LINE_COLOR),
-            ],
-            margin: [0, 0, 0, SUBROW_GAP],
+            text: isFirst ? (val ? `:  ${val}` : ':') : (val ? `   ${val}` : ''),
+            font: 'Times',
+            bold: true,
+            fontSize: FONT_SIZE,
+            color: '#000000',
+            margin: [0, 0, 0, 2],
+            ...(hasTamilText(val) ? { font: 'NotoSansTamil' } : {}),
           },
-          // Witness 2
-          {
-            stack: [
-              {
-                text: record.witness2_name ? `   ${record.witness2_name.toUpperCase()}` : '',
-                font: 'Times',
-                bold: true,
-                fontSize: FONT_SIZE,
-                color: '#000000',
-                margin: [0, 0, 0, 2],
-                ...(hasTamilText(record.witness2_name) ? { font: 'NotoSansTamil' } : {}),
-              },
-              solidLine(FULL_LINE_WIDTH, LINE_COLOR),
-            ],
-          },
+          solidLine(FULL_LINE_WIDTH, LINE_COLOR),
         ],
-      },
-    ],
-    margin: [0, 0, 0, ROW_GAP],
-  });
+        ...(isLast ? {} : { margin: [0, 0, 0, count > 2 ? 8 : SUBROW_GAP] }),
+      });
+    }
+
+    return {
+      columns: [
+        { width: LABEL_COL_WIDTH, text: 'Witnesses', font: 'Times', bold: true, fontSize: FONT_SIZE, color: '#000000' },
+        { width: '*', stack: witnessItems },
+      ],
+      margin: [0, 0, 0, ROW_GAP],
+    };
+  };
 
   const headerLogoBlock = logoDataUrl
     ? { image: logoDataUrl, width: 68, height: 82, fit: [68, 82], alignment: 'left' }

@@ -65,6 +65,8 @@ const FIELDS = {
     text('impediments_dispensed', 200, 'certificates.marriage.fieldImpediments'),
     text('witness1_name', 150, 'certificates.marriage.fieldWitness1'),
     text('witness2_name', 150, 'certificates.marriage.fieldWitness2'),
+    text('witness3_name', 150, 'certificates.marriage.fieldWitness3'),
+    text('witness4_name', 150, 'certificates.marriage.fieldWitness4'),
     { key: 'priest_id', exportKey: 'priest_name', type: 'priest', label: label('certificates.common.priest') },
     customPriest,
     remarks,

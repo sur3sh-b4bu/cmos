@@ -19,6 +19,7 @@ interface HorizontalBarViewModel extends BarChartPoint {
   y: number;
   rowHeight: number;
   barWidth: number;
+  displayLabel: string;
   valueLabelX: number;
   valueLabelAnchor: 'start' | 'end';
 }
@@ -35,9 +36,9 @@ const AXIS_HEIGHT = 22;
 const TOP_PADDING = 12;
 const MAX_BAR_THICKNESS = 24;
 const BAR_RADIUS = 4;
-const AVG_CHAR_WIDTH_PX = 5.6;
-const LABEL_AREA_MAX = 150;
-const LABEL_AREA_MIN = 60;
+const AVG_CHAR_WIDTH_PX = 6.4;
+const LABEL_AREA_MAX = 220;
+const LABEL_AREA_MIN = 70;
 // A horizontal chart's row height stretches to fill the same PLOT_HEIGHT
 // budget a vertical chart always uses, clamped to stay readable -- without
 // this, e.g. 4 categories at the old fixed 34px/row (170px total) rendered
@@ -222,26 +223,30 @@ export class BarChartComponent implements OnChanges, AfterViewInit, OnDestroy {
     const ticks = niceTicks(max);
     const niceMax = ticks[ticks.length - 1];
 
-    const longestLabelPx = Math.max(...this.data.map((d) => d.label.length)) * AVG_CHAR_WIDTH_PX;
-    this.labelAreaWidth = Math.min(LABEL_AREA_MAX, Math.max(LABEL_AREA_MIN, longestLabelPx + 12));
-
-    // Same 1:1 sizing rationale as recomputeVertical(): match the actual
-    // rendered width so the fixed-thickness bars aren't stretched.
     this.viewBoxWidth = Math.max(this.measuredWidth() || 600, 320);
-    const plotWidth = this.viewBoxWidth - this.labelAreaWidth - 16;
+
+    const maxAllowedLabelArea = Math.min(230, Math.max(80, Math.floor(this.viewBoxWidth * 0.42)));
+    const longestLabelPx = Math.max(...this.data.map((d) => d.label.length)) * AVG_CHAR_WIDTH_PX;
+    this.labelAreaWidth = Math.min(maxAllowedLabelArea, Math.max(LABEL_AREA_MIN, longestLabelPx + 16));
+
+    const plotWidth = Math.max(60, this.viewBoxWidth - this.labelAreaWidth - 16);
     const rowHeight = Math.min(MAX_ROW_HEIGHT, Math.max(MIN_ROW_HEIGHT, PLOT_HEIGHT / n));
     this.totalHeight = n * rowHeight + AXIS_HEIGHT + TOP_PADDING;
+
+    const maxChars = Math.max(8, Math.floor((this.labelAreaWidth - 14) / 6.2));
 
     this.horizontalBars.set(
       this.data.map((point, i) => {
         const barWidth = niceMax === 0 ? 0 : (point.value / niceMax) * plotWidth;
         const barPixelWidth = Math.max(barWidth, point.value > 0 ? 3 : 0);
         const fitsInside = barPixelWidth > 40;
+        const displayLabel = point.label.length > maxChars ? point.label.slice(0, maxChars - 1) + '…' : point.label;
         return {
           ...point,
           y: TOP_PADDING + i * rowHeight + (rowHeight - MAX_BAR_THICKNESS) / 2,
           rowHeight,
           barWidth: barPixelWidth,
+          displayLabel,
           valueLabelX: fitsInside ? this.labelAreaWidth + barPixelWidth - 8 : this.labelAreaWidth + barPixelWidth + 8,
           valueLabelAnchor: fitsInside ? 'end' : 'start',
         };

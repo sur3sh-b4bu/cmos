@@ -13,7 +13,8 @@
 
       @for (bar of horizontalBars(); track bar.label) {
       <text class="bar-chart__row-label" [attr.x]="labelAreaWidth - 8" [attr.y]="bar.y + 17" text-anchor="end">
-        {{ bar.label }}
+        <title>{{ bar.label }}</title>
+        {{ bar.displayLabel }}
       </text>
       <path class="bar-chart__bar" [class.bar-chart__bar--active]="tooltip()?.label === bar.label"
         [attr.d]="barRightPath(bar)" [style.fill]="color" tabindex="0"

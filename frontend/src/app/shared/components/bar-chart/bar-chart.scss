@@ -21,7 +21,7 @@
 .bar-chart__svg {
   display: block;
   width: 100%;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .bar-chart__gridline {
@@ -32,12 +32,15 @@
 .bar-chart__tick {
   font-size: 10px;
   fill: var(--coms-text-muted);
+  user-select: none;
 }
 
 .bar-chart__label,
 .bar-chart__row-label {
   font-size: 11.5px;
   fill: var(--coms-text-muted);
+  user-select: none;
+  cursor: default;
 }
 
 .bar-chart__value-label {

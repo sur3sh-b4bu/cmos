@@ -8,16 +8,31 @@ const { getThemePrimaryColor } = require('../utils/themeColors');
 const { UPLOAD_ROOT } = require('../middlewares/upload');
 
 function getChurchLogoDataUrl(church) {
-  if (!church?.logo_url) return null;
-  const filePath = path.join(UPLOAD_ROOT, church.logo_url.replace(/^\/uploads\//, ''));
+  if (church?.logo_url) {
+    const filePath = path.join(UPLOAD_ROOT, church.logo_url.replace(/^\/uploads\//, ''));
+    try {
+      if (fs.existsSync(filePath)) {
+        const buffer = fs.readFileSync(filePath);
+        const ext = path.extname(filePath).slice(1).toLowerCase();
+        const mime = ext === 'jpg' ? 'jpeg' : ext;
+        return `data:image/${mime};base64,${buffer.toString('base64')}`;
+      }
+    } catch {
+      // fallback to default image below
+    }
+  }
+
+  // Default patron saint image
+  const defaultImagePath = path.join(__dirname, '../../assets/images/patron_saint.jpg');
   try {
-    const buffer = fs.readFileSync(filePath);
-    const ext = path.extname(filePath).slice(1).toLowerCase();
-    const mime = ext === 'jpg' ? 'jpeg' : ext;
-    return `data:image/${mime};base64,${buffer.toString('base64')}`;
+    if (fs.existsSync(defaultImagePath)) {
+      const buffer = fs.readFileSync(defaultImagePath);
+      return `data:image/jpeg;base64,${buffer.toString('base64')}`;
+    }
   } catch {
     return null;
   }
+  return null;
 }
 
 function formatDateSlash(value) {

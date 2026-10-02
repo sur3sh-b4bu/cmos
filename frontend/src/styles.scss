@@ -594,3 +594,54 @@ a[mat-button] {
   user-select: none;
 }
 
+/* Sub-navigation tabs for Offering & Contributions */
+.sub-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1.5px solid var(--coms-border);
+  margin-bottom: 12px;
+  padding-bottom: 0;
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border-radius: var(--coms-radius-sm) var(--coms-radius-sm) 0 0;
+    color: var(--coms-text-muted);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 600;
+    position: relative;
+    transition: all var(--coms-transition-fast);
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    &:hover {
+      color: var(--coms-color-primary);
+      background: color-mix(in srgb, var(--coms-color-primary) 6%, transparent);
+    }
+
+    &--active {
+      color: var(--coms-color-primary);
+      font-weight: 700;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -1.5px;
+        left: 0;
+        right: 0;
+        height: 2.5px;
+        background: var(--coms-color-primary);
+        border-radius: 2px 2px 0 0;
+      }
+    }
+  }
+}
+

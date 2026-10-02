@@ -90,6 +90,7 @@ export interface DashboardRestrictedDate {
 
 export interface DashboardStats {
   todayCount: number;
+  tomorrowCount: number;
   todayCollections: number;
   pendingCount: number;
   monthlyCollections: number;

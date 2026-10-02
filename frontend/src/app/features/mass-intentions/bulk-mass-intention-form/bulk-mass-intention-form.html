@@ -140,9 +140,16 @@
               <td class="bulk-form__col-index">{{ i + 1 }}</td>
               <td>
                 <mat-form-field appearance="outline" class="bulk-form__cell-field">
-                  <input matInput [matDatepicker]="picker" formControlName="prayerDate" required />
+                  <input
+                    matInput
+                    [matDatepicker]="picker"
+                    [matDatepickerFilter]="dateFilter"
+                    [min]="minPrayerDate"
+                    formControlName="prayerDate"
+                    required
+                  />
                   <mat-datepicker-toggle matIconSuffix [for]="picker" />
-                  <mat-datepicker #picker [dateClass]="dateClass" [calendarHeaderComponent]="todayHeader" />
+                  <mat-datepicker #picker [dateClass]="dateClass" />
                 </mat-form-field>
               </td>
               <td>
@@ -283,9 +290,16 @@
                     </td>
                     <td>
                       <mat-form-field appearance="outline" class="bulk-form__cell-field">
-                        <input matInput [matDatepicker]="editPicker" formControlName="prayerDate" required />
+                        <input
+                          matInput
+                          [matDatepicker]="editPicker"
+                          [matDatepickerFilter]="dateFilter"
+                          [min]="minPrayerDate"
+                          formControlName="prayerDate"
+                          required
+                        />
                         <mat-datepicker-toggle matIconSuffix [for]="editPicker" />
-                        <mat-datepicker #editPicker [dateClass]="dateClass" [calendarHeaderComponent]="todayHeader" />
+                        <mat-datepicker #editPicker [dateClass]="dateClass" />
                       </mat-form-field>
                     </td>
                     <td>
@@ -406,9 +420,16 @@
             <div class="bulk-form__add-row-fields">
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'massIntentions.prayerDate' | translate }}</mat-label>
-                <input matInput [matDatepicker]="addPicker" formControlName="prayerDate" required />
+                <input
+                  matInput
+                  [matDatepicker]="addPicker"
+                  [matDatepickerFilter]="dateFilter"
+                  [min]="minPrayerDate"
+                  formControlName="prayerDate"
+                  required
+                />
                 <mat-datepicker-toggle matIconSuffix [for]="addPicker" />
-                <mat-datepicker #addPicker [dateClass]="dateClass" [calendarHeaderComponent]="todayHeader" />
+                <mat-datepicker #addPicker [dateClass]="dateClass" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'common.name' | translate }}</mat-label>

@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, TemplateRef, ViewChild, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -32,7 +32,7 @@ import { ContributionReceivePaymentDialogComponent } from '../contribution-recei
 @Component({
   selector: 'coms-contributions-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule, DataTableComponent, TranslatePipe],
+  imports: [CommonModule, RouterLink, RouterLinkActive, MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule, DataTableComponent, TranslatePipe],
   templateUrl: './contributions-list.html',
   styleUrl: './contributions-list.scss',
 })
@@ -79,11 +79,12 @@ export class ContributionsListComponent implements OnInit {
       accessor: (row) => formatDateDMY(row.created_at),
     },
     { key: 'name', label: 'common.name', sortable: true },
-    { key: 'phone', label: 'massIntentions.phoneNumber', accessor: (row) => row.phone || '-' },
-    { key: 'contribution_type', label: 'contributions.contributionType' },
+    { key: 'phone', label: 'massIntentions.phoneNumber', sortable: true, accessor: (row) => row.phone || '-' },
+    { key: 'contribution_type', label: 'contributions.contributionType', sortable: true },
     {
       key: 'contribution_amount',
       label: 'contributions.amount',
+      sortable: true,
       align: 'right',
       accessor: (row) => `${this.currencyService.current().symbol}${Number(row.contribution_amount).toFixed(2)}`,
     },
@@ -108,11 +109,14 @@ export class ContributionsListComponent implements OnInit {
 
   fetch(): void {
     this.loading.set(true);
+    const activeSort = this.sort();
     this.contributionService
       .list({
         page: this.pageIndex() + 1,
         pageSize: this.pageSize(),
         search: this.search() || undefined,
+        sortBy: activeSort.direction ? activeSort.active : undefined,
+        sortDir: activeSort.direction || undefined,
       })
       .subscribe({
         next: (res) => {
@@ -122,6 +126,12 @@ export class ContributionsListComponent implements OnInit {
         },
         error: () => this.loading.set(false),
       });
+  }
+
+  onSortChange(sort: DataTableSort): void {
+    this.sort.set(sort);
+    this.pageIndex.set(0);
+    this.fetch();
   }
 
   onPageChange(event: { pageIndex: number; pageSize: number }): void {

@@ -90,6 +90,21 @@ const FIELDS = {
     text('family_contact', 20, 'certificates.death.fieldFamilyContact'),
     remarks,
   ],
+  confirmation: [
+    text('name', 150, 'common.name', { required: true, aliases: both('certificates.confirmation.colName') }),
+    text('age', 10, 'certificates.confirmation.fieldAge'),
+    { key: 'gender_id', exportKey: 'gender_name', type: 'gender', label: label('certificates.confirmation.fieldSex'), aliases: both('certificates.common.gender') },
+    text('parents', 300, 'certificates.confirmation.fieldParents'),
+    text('caste', 100, 'certificates.confirmation.fieldCaste'),
+    text('sponsors', 300, 'certificates.confirmation.fieldSponsors'),
+    text('domicile', 200, 'certificates.confirmation.fieldDomicile'),
+    text('place_of_confirmation', 200, 'certificates.confirmation.fieldPlaceOfConfirmation'),
+    date('date_of_confirmation', 'certificates.confirmation.fieldDateOfConfirmation', { required: true, aliases: both('certificates.confirmation.colDateOfConfirmation') }),
+    text('bishop_name', 150, 'certificates.confirmation.fieldBishop'),
+    { key: 'priest_id', exportKey: 'priest_name', type: 'priest', label: label('certificates.common.priest') },
+    customPriest,
+    remarks,
+  ],
 };
 
 /** The ordered column list for a certificate type, certificate number first. */

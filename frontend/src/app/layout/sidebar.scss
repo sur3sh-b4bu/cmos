@@ -211,6 +211,53 @@
       color: var(--coms-color-gold-light);
     }
   }
+
+  &--group {
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    font-size: 14px;
+  }
+}
+
+.sidebar__group {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar__group-chevron {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin-left: auto;
+  opacity: 0.7;
+}
+
+.sidebar__subnav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 18px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.sidebar__sublink {
+  font-size: 13px !important;
+  padding: 8px 10px !important;
+  opacity: 0.88;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.sidebar__subicon {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
 }
 
 .sidebar__health {
@@ -274,7 +321,7 @@
 // labels/title/health text are still in the DOM (collapsed is a manual
 // @Input, not driven by viewport), so they're hidden here directly rather
 // than relying on that class.
-@media (max-width: 640px) {
+@media (max-width: 860px) {
   .sidebar {
     width: var(--coms-sidebar-width-collapsed);
   }

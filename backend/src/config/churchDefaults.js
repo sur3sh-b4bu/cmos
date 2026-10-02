@@ -10,7 +10,7 @@
  * The values match what database/seed.js gives the first church.
  */
 
-const CERTIFICATE_TYPES = ['Baptism', 'Marriage', 'Death'];
+const CERTIFICATE_TYPES = ['Baptism', 'Marriage', 'Death', 'Confirmation'];
 
 const RECEIPT_SERIES = { seriesName: 'Default Receipt Series', prefix: 'RCT', startNumber: 1, padding: 4 };
 
@@ -18,6 +18,7 @@ const CERTIFICATE_SERIES = {
   Baptism: { prefix: 'BAP', startNumber: 1, padding: 4 },
   Marriage: { prefix: 'MAR', startNumber: 1, padding: 4 },
   Death: { prefix: 'DTH', startNumber: 1, padding: 4 },
+  Confirmation: { prefix: 'CNF', startNumber: 1, padding: 4 },
 };
 
 const MASSES = [

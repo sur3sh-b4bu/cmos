@@ -265,7 +265,6 @@ export const MASTER_CONFIGS: Record<string, MasterConfig> = {
     columns: [
       { key: 'name', label: 'masters.fields.intention', sortable: true },
       { key: 'name_ta', label: 'masters.fields.intentionTamil', accessor: (r: any) => r.name_ta || '-' },
-      { key: 'category_name', label: 'common.category' },
       { key: 'is_custom', label: 'masters.fields.allowsCustomText', accessor: (r: any) => (r.is_custom ? 'common.yes' : 'common.no') },
     ],
     formFields: [
@@ -274,7 +273,6 @@ export const MASTER_CONFIGS: Record<string, MasterConfig> = {
       // and printed receipts/register when the site's language is Tamil
       // (see localized-name.util.ts); falls back to `name` when blank.
       TEXT('name_ta', 'masters.fields.intentionTextTamil', true),
-      { key: 'category_id', label: 'common.category', type: 'select', masterKey: 'prayer_categories' },
       { key: 'is_custom', label: 'masters.fields.isOthersFreeText', type: 'checkbox' },
     ],
   },
@@ -644,7 +642,6 @@ export const MASTER_GROUPS: MasterGroup[] = [
     label: 'masters.group.prayerAndCalendar',
     icon: 'volunteer_activism',
     items: [
-      { key: 'prayer_categories', label: 'masters.hub.prayerCategories' },
       { key: 'prayer_intention_master', label: 'masters.hub.prayerIntentionMaster' },
       { key: 'special_feasts', label: 'masters.hub.specialFeasts' },
       { key: 'holidays', label: 'masters.hub.holidays' },

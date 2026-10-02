@@ -16,19 +16,52 @@
 
   <nav class="sidebar__nav">
     @for (item of navItems(); track item.labelKey) {
-      <a
-        class="sidebar__link"
-        [routerLink]="item.route"
-        routerLinkActive="sidebar__link--active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        [matTooltip]="item.labelKey | translate"
-        matTooltipPosition="right"
-      >
-        <mat-icon>{{ item.icon }}</mat-icon>
-        @if (!collapsed) {
-          <span class="sidebar__link-label">{{ item.labelKey | translate }}</span>
-        }
-      </a>
+      @if (item.children?.length) {
+        <div class="sidebar__group" [class.sidebar__group--expanded]="isGroupExpanded(item)">
+          <button
+            type="button"
+            class="sidebar__link sidebar__link--group"
+            (click)="toggleGroup(item)"
+            [matTooltip]="collapsed ? (item.labelKey | translate) : ''"
+            matTooltipPosition="right"
+          >
+            <mat-icon>{{ item.icon }}</mat-icon>
+            @if (!collapsed) {
+              <span class="sidebar__link-label">{{ item.labelKey | translate }}</span>
+              <mat-icon class="sidebar__group-chevron">{{ isGroupExpanded(item) ? 'expand_less' : 'expand_more' }}</mat-icon>
+            }
+          </button>
+          @if (!collapsed && isGroupExpanded(item)) {
+            <div class="sidebar__subnav">
+              @for (child of item.children; track child.route) {
+                <a
+                  class="sidebar__link sidebar__sublink"
+                  [routerLink]="child.route"
+                  routerLinkActive="sidebar__link--active"
+                  [routerLinkActiveOptions]="{ exact: true }"
+                >
+                  <mat-icon class="sidebar__subicon">{{ child.icon }}</mat-icon>
+                  <span class="sidebar__link-label">{{ child.labelKey | translate }}</span>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <a
+          class="sidebar__link"
+          [routerLink]="item.route"
+          routerLinkActive="sidebar__link--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          [matTooltip]="item.labelKey | translate"
+          matTooltipPosition="right"
+        >
+          <mat-icon>{{ item.icon }}</mat-icon>
+          @if (!collapsed) {
+            <span class="sidebar__link-label">{{ item.labelKey | translate }}</span>
+          }
+        </a>
+      }
     }
   </nav>
 

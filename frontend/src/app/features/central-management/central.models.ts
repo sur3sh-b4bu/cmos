@@ -3,7 +3,7 @@
 export type Period = 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
 export type Granularity = 'day' | 'month' | 'year';
 export type ActivityLevel = 'high' | 'medium' | 'low' | 'none';
-export type CertificateType = 'baptism' | 'marriage' | 'death';
+export type CertificateType = 'baptism' | 'marriage' | 'death' | 'confirmation';
 
 /** What the filters ask for; sent as query parameters. */
 export interface CentralQuery {

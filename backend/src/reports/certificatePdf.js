@@ -1,271 +1,118 @@
-const fs = require('fs');
-const path = require('path');
-const PDFDocument = require('@foliojs-fork/pdfkit');
 const { renderPdfBuffer } = require('../utils/pdfPrinter');
-const { formatDateDMY } = require('../utils/dateFormat');
 const { hasTamilText } = require('../utils/pdfLabels');
 const { getThemePrimaryColor } = require('../utils/themeColors');
-const { UPLOAD_ROOT } = require('../middlewares/upload');
 
-function getChurchLogoDataUrl(church) {
-  if (church?.logo_url) {
-    const filePath = path.join(UPLOAD_ROOT, church.logo_url.replace(/^\/uploads\//, ''));
-    try {
-      if (fs.existsSync(filePath)) {
-        const buffer = fs.readFileSync(filePath);
-        const ext = path.extname(filePath).slice(1).toLowerCase();
-        const mime = ext === 'jpg' ? 'jpeg' : ext;
-        return `data:image/${mime};base64,${buffer.toString('base64')}`;
-      }
-    } catch {
-      // fallback to default image below
-    }
-  }
-
-  // Check possible patron saint image locations (PNG prioritized, then JPG)
-  const candidatePaths = [
-    path.join(__dirname, '../../assets/images/patron_saint.png'),
-    path.join(__dirname, '../../assets/images/patron_saint.jpg'),
-    path.join(__dirname, '../../../frontend/src/assets/images/patron_saint.png'),
-    path.join(__dirname, '../../../frontend/src/assets/images/patron_saint.jpg'),
-  ];
-
-  for (const p of candidatePaths) {
-    try {
-      if (fs.existsSync(p)) {
-        const buffer = fs.readFileSync(p);
-        const ext = path.extname(p).slice(1).toLowerCase();
-        const mime = ext === 'jpg' ? 'jpeg' : ext;
-        return `data:image/${mime};base64,${buffer.toString('base64')}`;
-      }
-    } catch {
-      // continue to next candidate
-    }
-  }
-
-  return null;
-}
-
-function formatDateSlash(value) {
-  if (!value) return '';
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
+function formatCertDate(val) {
+  if (!val) return '';
+  const date = val instanceof Date ? val : new Date(val);
+  if (Number.isNaN(date.getTime())) return String(val);
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = String(date.getFullYear()).slice(-2);
-  return `${day}/${month}/${year}`;
+  return `${day}/${month}/${date.getFullYear()}`;
 }
 
-/** Exact text width for a given font/size, via the same PDFKit build
- * pdfmake renders with underneath */
-function measureTextWidth(text, font, fontSize) {
-  const doc = new PDFDocument({ autoFirstPage: false });
-  doc.font(font).fontSize(fontSize);
-  const width = doc.widthOfString(text);
-  doc.end();
-  return width;
+function getDioceseLabel(church) {
+  if (church?.diocese && String(church.diocese).trim()) {
+    const d = String(church.diocese).trim();
+    return d.toLowerCase().includes('diocese') ? d : `${d} Diocese`;
+  }
+  return 'Tuticorin Diocese';
 }
 
-const LABEL_WIDTH = 168;
-const SUB_LABEL_WIDTH = 62;
-const LINE_WIDTH = 320;
-const SUB_LINE_WIDTH = 258;
-const DOTS = { length: 1, space: 2 };
-
-function formatDate(d) {
-  if (!d) return '';
-  return formatDateDMY(d);
-}
-
-function dottedLine(width, ink) {
-  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: width, y2: 0, lineWidth: 1, lineColor: ink, dash: DOTS }] };
+function dottedLine(width, color = '#333333') {
+  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: width, y2: 0, lineWidth: 0.8, lineColor: color, dash: { length: 1, space: 2 } }] };
 }
 
 function solidLine(width, color = '#333333') {
-  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: width, y2: 0, lineWidth: 0.75, lineColor: color }] };
-}
-
-function row(ink, label, value, marginBottom = 7) {
-  return {
-    columns: [
-      { width: LABEL_WIDTH, text: label, style: 'label' },
-      {
-        width: '*',
-        stack: [
-          { text: value || '', style: 'value', margin: [3, 0, 0, 1], ...(hasTamilText(value) ? { font: 'NotoSansTamil' } : {}) },
-          dottedLine(LINE_WIDTH, ink),
-        ],
-      },
-    ],
-    columnGap: 2,
-    margin: [0, 0, 0, marginBottom],
-  };
-}
-
-function subRow(ink, subLabel, value, marginBottom = 6) {
-  return {
-    columns: [
-      { width: SUB_LABEL_WIDTH, text: subLabel, style: 'subLabel' },
-      {
-        width: '*',
-        stack: [
-          { text: value || '', style: 'value', margin: [3, 0, 0, 1], ...(hasTamilText(value) ? { font: 'NotoSansTamil' } : {}) },
-          dottedLine(SUB_LINE_WIDTH, ink),
-        ],
-      },
-    ],
-    columnGap: 2,
-    margin: [0, 0, 0, marginBottom],
-  };
-}
-
-const SUBROW_BASE_HEIGHT = 15;
-
-function pairedRow(ink, label, subLabelA, valueA, subLabelB, valueB, subMarginBottom = 6, pairMarginBottom = 2) {
-  const braceHeight = (SUBROW_BASE_HEIGHT + subMarginBottom) * 2;
-  const braceWidth = Math.ceil(measureTextWidth('{', 'Times-Roman', braceHeight)) + 3;
-  return {
-    columns: [
-      { width: LABEL_WIDTH - braceWidth - 2, text: label, style: 'label', margin: [0, 6, 0, 0] },
-      { width: braceWidth, text: '{', font: 'Times', fontSize: braceHeight, color: ink, margin: [0, -4, 0, 0] },
-      {
-        width: '*',
-        stack: [subRow(ink, subLabelA, valueA, subMarginBottom), subRow(ink, subLabelB, valueB, subMarginBottom)],
-      },
-    ],
-    columnGap: 2,
-    margin: [0, 0, 0, pairMarginBottom],
-  };
-}
-
-function headerLine(ink, label, church, marginBottom) {
-  return row(ink, label, church?.name, marginBottom);
-}
-
-function dioceseLine(ink, church) {
-  return { text: church?.diocese || '', style: 'diocese', color: ink, alignment: 'right', margin: [0, 0, 0, 20] };
-}
-
-const PAGE_CONTENT_WIDTH = 499.28;
-const TITLE_FONT_SIZE = { baptism: 15, marriage: 12, death: 15 };
-
-function titleBlock(type, ink) {
-  const text = REGISTER_TITLE[type];
-  const fontSize = TITLE_FONT_SIZE[type];
-
-  const lineWidth = Math.min(PAGE_CONTENT_WIDTH, measureTextWidth(text, 'Times-Bold', fontSize) + 4);
-  return {
-    stack: [
-      { text, style: 'title', color: ink, fontSize, alignment: 'center', margin: [0, 0, 0, 4] },
-      {
-        canvas: [{ type: 'line', x1: 0, y1: 0, x2: lineWidth, y2: 0, lineWidth: 1.1, lineColor: ink }],
-        alignment: 'center',
-        margin: [0, 0, 0, 26],
-      },
-    ],
-  };
-}
-
-function footer(type, ink, church, certificateNo, topSpacing) {
-  const signatureLabel = { baptism: 'Catholic Priest', marriage: 'Parish Priest', death: 'CATHOLIC PRIEST' }[type];
-  const showPlace = type === 'death';
-
-  const dateBlock = [];
-  if (showPlace) dateBlock.push({ text: `Place : ${church?.city || ''}`, style: 'footerLine', margin: [0, 0, 0, 4] });
-  dateBlock.push({ text: `Date : ${formatDate(new Date())}`, style: 'footerLine' });
-
-  return {
-    stack: [
-      { text: '', margin: [0, topSpacing, 0, 0] },
-      {
-        columns: [
-          { width: '*', stack: dateBlock },
-          { width: '*', text: signatureLabel, style: 'signature', color: ink, alignment: 'center' },
-          { width: '*', text: 'Seal', style: 'signature', color: ink, alignment: 'center' },
-        ],
-      },
-      { text: `Certificate No.: ${certificateNo}`, style: 'metadata', margin: [0, 22, 0, 0] },
-    ],
-  };
+  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: width, y2: 0, lineWidth: 0.8, lineColor: color }] };
 }
 
 /**
- * Builds the exact Marriage Certificate layout matching the Tuticorin Diocese
- * "EXTRACT FROM THE REGISTER OF INDIAN CHRISTIAN MARRIAGES" paper certificate form.
+ * 1. MARRIAGE CERTIFICATE
+ * Exactly matches Photo 1:
+ * "EXTRACT FROM THE REGISTER OF INDIAN CHRISTIAN MARRIAGES"
+ * Solemnized at .................................................... Tuticorin Diocese
+ * All dotted lines, exact sublabels with 's, curly braces, footer with Parish Priest.
  */
-function buildExactMarriageDocument(record, church, ink) {
-  const logoDataUrl = getChurchLogoDataUrl(church);
+function buildExactMarriageDocument(record, church, ink, template = null) {
   const THEME_COLOR = ink || '#072a63';
-  const LINE_COLOR = THEME_COLOR;
   const DATA_COLOR = '#000000';
-  const LABEL_COL_WIDTH = 155;
-  const FULL_LINE_WIDTH = 352;
-  const SUB_LABEL_WIDTH = 78;
-  const SUB_VAL_LINE_WIDTH = 274;
-  const ROW_GAP = 19.5;
-  const SUBROW_GAP = 13.5;
-  const FONT_SIZE = 11.5;
+  const LABEL_WIDTH = 180;
+  const FULL_LINE_WIDTH = 330;
+  const SUB_LABEL_WIDTH = 90;
+  const SUB_LINE_WIDTH = 240;
+  const ROW_GAP = 20;
+  const SUBROW_GAP = 13;
+  const FONT_SIZE = 12;
+  const FOOTER_TOP = 68;
 
-  const solemnizedText = [
-    church?.name,
-    church?.address,
-    church?.diocese ? (church.diocese.toLowerCase().includes('diocese') ? church.diocese : `${church.diocese} Diocese`) : null,
-  ]
-    .filter(Boolean)
-    .join(', ');
+  const solemnizedText = [church?.name, church?.city].filter(Boolean).join(', ');
+  const labels = template?.field_labels || {};
+  const lbl = (key, def) => (labels[key] !== undefined && labels[key] !== null && String(labels[key]).trim() !== '' ? labels[key] : def);
 
-  const formatColonValue = (val) => {
-    if (!val) {
-      return [{ text: ':', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR }];
-    }
-    return [
-      { text: ':  ', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
-      {
-        text: val,
-        font: 'Times',
-        bold: true,
-        fontSize: FONT_SIZE,
-        color: DATA_COLOR,
-        ...(hasTamilText(val) ? { font: 'NotoSansTamil' } : {}),
-      },
-    ];
-  };
+  const titleText = template?.title || 'EXTRACT FROM THE REGISTER OF INDIAN CHRISTIAN MARRIAGES';
+  const subheaderPrefix = template?.subheader_prefix || 'Solemnized at';
+  const dioceseText = template?.diocese_label || getDioceseLabel(church);
+  const signatoryTitle = template?.signatory_title || 'Parish Priest';
+  const sealText = template?.seal_label || 'Seal';
+  const dateLabel = lbl('date_label', 'Date :');
 
-  const singleLineRow = (label, valText) => ({
+  const singleDottedRow = (label, valText) => ({
     columns: [
-      { width: LABEL_COL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+      { width: LABEL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
       {
         width: '*',
         stack: [
           {
-            text: formatColonValue(valText),
+            text: [
+              { text: ':  ', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+              {
+                text: valText ? String(valText).toUpperCase() : '',
+                font: 'Times',
+                bold: true,
+                fontSize: FONT_SIZE,
+                color: DATA_COLOR,
+                ...(hasTamilText(valText) ? { font: 'NotoSansTamil' } : {}),
+              },
+            ],
             margin: [0, 0, 0, 2],
           },
-          solidLine(FULL_LINE_WIDTH, LINE_COLOR),
+          dottedLine(FULL_LINE_WIDTH, THEME_COLOR),
         ],
       },
     ],
     margin: [0, 0, 0, ROW_GAP],
   });
 
-  const pairedFieldsRow = (label, groomVal, brideVal) => ({
+  const pairedDottedRow = (label, groomLabel, groomVal, brideLabel, brideVal) => ({
     columns: [
-      { width: LABEL_COL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+      { width: LABEL_WIDTH - 18, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR, margin: [0, 6, 0, 0] },
+      { width: 14, text: '{', font: 'Times', fontSize: 36, color: THEME_COLOR, margin: [0, -3, 0, 0] },
       {
         width: '*',
         stack: [
           // Bridegroom line
           {
             columns: [
-              { width: SUB_LABEL_WIDTH, text: 'Bridegroom', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+              { width: SUB_LABEL_WIDTH, text: groomLabel, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
               {
                 width: '*',
                 stack: [
                   {
-                    text: formatColonValue(groomVal),
+                    text: [
+                      { text: ':  ', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                      {
+                        text: groomVal ? String(groomVal).toUpperCase() : '',
+                        font: 'Times',
+                        bold: true,
+                        fontSize: FONT_SIZE,
+                        color: DATA_COLOR,
+                        ...(hasTamilText(groomVal) ? { font: 'NotoSansTamil' } : {}),
+                      },
+                    ],
                     margin: [0, 0, 0, 2],
                   },
-                  solidLine(SUB_VAL_LINE_WIDTH, LINE_COLOR),
+                  dottedLine(SUB_LINE_WIDTH, THEME_COLOR),
                 ],
               },
             ],
@@ -274,15 +121,25 @@ function buildExactMarriageDocument(record, church, ink) {
           // Bride line
           {
             columns: [
-              { width: SUB_LABEL_WIDTH, text: 'Bride', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+              { width: SUB_LABEL_WIDTH, text: brideLabel, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
               {
                 width: '*',
                 stack: [
                   {
-                    text: formatColonValue(brideVal),
+                    text: [
+                      { text: ':  ', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                      {
+                        text: brideVal ? String(brideVal).toUpperCase() : '',
+                        font: 'Times',
+                        bold: true,
+                        fontSize: FONT_SIZE,
+                        color: DATA_COLOR,
+                        ...(hasTamilText(brideVal) ? { font: 'NotoSansTamil' } : {}),
+                      },
+                    ],
                     margin: [0, 0, 0, 2],
                   },
-                  solidLine(SUB_VAL_LINE_WIDTH, LINE_COLOR),
+                  dottedLine(SUB_LINE_WIDTH, THEME_COLOR),
                 ],
               },
             ],
@@ -293,306 +150,749 @@ function buildExactMarriageDocument(record, church, ink) {
     margin: [0, 0, 0, ROW_GAP],
   });
 
-  const witnessesBlock = () => {
-    const list = [record.witness1_name, record.witness2_name, record.witness3_name, record.witness4_name].filter((w) => w && String(w).trim());
-    const count = Math.max(2, list.length);
-    const witnessItems = [];
-    for (let i = 0; i < count; i++) {
-      const val = list[i] ? list[i].toUpperCase() : '';
-      const isFirst = i === 0;
-      const isLast = i === count - 1;
+  // Extract all witness names (handles both individual fields witness1..4 and comma-separated text)
+  let extractedWitnessNames = [];
+  const rawFields = [record.witness1_name, record.witness2_name, record.witness3_name, record.witness4_name];
+  for (const f of rawFields) {
+    if (f && String(f).trim()) {
+      const parts = String(f).split(/,|\n/).map((s) => s.trim()).filter(Boolean);
+      extractedWitnessNames.push(...parts);
+    }
+  }
 
-      const lineContent = isFirst
-        ? formatColonValue(val)
-        : val
-        ? [
-            { text: '   ', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
-            {
-              text: val,
-              font: 'Times',
-              bold: true,
-              fontSize: FONT_SIZE,
-              color: DATA_COLOR,
-              ...(hasTamilText(val) ? { font: 'NotoSansTamil' } : {}),
-            },
-          ]
-        : [{ text: '', fontSize: FONT_SIZE }];
+  const witnessCountSetting = (labels['witness_count'] || 'auto').toString().trim().toLowerCase();
+  const maxPrefixes = [
+    lbl('witness1_prefix', '1.'),
+    lbl('witness2_prefix', '2.'),
+    lbl('witness3_prefix', '3.'),
+    lbl('witness4_prefix', '4.'),
+  ];
 
-      witnessItems.push({
+  let targetCount = 2;
+  if (witnessCountSetting === '4') {
+    targetCount = 4;
+  } else if (witnessCountSetting === '3') {
+    targetCount = 3;
+  } else if (witnessCountSetting === '2') {
+    targetCount = 2;
+  } else {
+    // 'auto' mode: match entered witnesses count (minimum 2, maximum 4)
+    if (extractedWitnessNames.length >= 4) {
+      targetCount = 4;
+    } else if (extractedWitnessNames.length === 3) {
+      targetCount = 3;
+    } else {
+      targetCount = 2;
+    }
+  }
+
+  const selectedWitnesses = [];
+  for (let i = 0; i < targetCount; i++) {
+    selectedWitnesses.push({
+      num: i + 1,
+      name: extractedWitnessNames[i] || '',
+      prefix: maxPrefixes[i] || `${i + 1}.`,
+    });
+  }
+
+  const buildWitnessesRow = (label) => {
+    const witnessItems = selectedWitnesses.map((w, idx) => {
+      const pfx = (w.prefix || '').trim();
+      const valText = w.name ? String(w.name).trim().toUpperCase() : '';
+      return {
         stack: [
           {
-            text: lineContent,
+            text: [
+              { text: idx === 0 ? ':  ' : '   ', font: 'Times', bold: true, fontSize: FONT_SIZE, color: idx === 0 ? THEME_COLOR : '#ffffff00' },
+              ...(pfx ? [{ text: `${pfx} `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR }] : []),
+              {
+                text: valText,
+                font: 'Times',
+                bold: true,
+                fontSize: FONT_SIZE,
+                color: DATA_COLOR,
+                ...(hasTamilText(valText) ? { font: 'NotoSansTamil' } : {}),
+              },
+            ],
             margin: [0, 0, 0, 2],
           },
-          solidLine(FULL_LINE_WIDTH, LINE_COLOR),
+          dottedLine(FULL_LINE_WIDTH, THEME_COLOR),
         ],
-        ...(isLast ? {} : { margin: [0, 0, 0, count > 2 ? 8 : SUBROW_GAP] }),
-      });
-    }
+        margin: [0, 0, 0, idx === selectedWitnesses.length - 1 ? 0 : SUBROW_GAP],
+      };
+    });
 
     return {
       columns: [
-        { width: LABEL_COL_WIDTH, text: 'Witnesses', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
-        { width: '*', stack: witnessItems },
+        { width: LABEL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+        {
+          width: '*',
+          stack: witnessItems,
+        },
       ],
       margin: [0, 0, 0, ROW_GAP],
     };
   };
 
-  const headerLogoBlock = logoDataUrl
-    ? {
-        table: {
-          widths: [56],
-          body: [
-            [
-              {
-                image: logoDataUrl,
-                width: 56,
-                height: 70,
-                fit: [56, 70],
-                alignment: 'center',
-                border: [true, true, true, true],
-                borderColor: '#ffffff',
-                margin: [0, 0, 0, 0],
-              },
-            ],
-          ],
-        },
-        layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => '#ffffff', vLineColor: () => '#ffffff' },
-      }
-    : {
-        table: {
-          widths: [56],
-          body: [
-            [
-              {
-                stack: [{ text: '✝', fontSize: 26, alignment: 'center', margin: [0, 16, 0, 0], color: '#ffffff' }],
-                border: [true, true, true, true],
-                borderColor: '#ffffff',
-                fillColor: 'transparent',
-                height: 70,
-              },
-            ],
-          ],
-        },
-        layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => '#ffffff', vLineColor: () => '#ffffff' },
-      };
+  const dynamicFooterTop = targetCount > 2 ? Math.max(32, FOOTER_TOP - (targetCount - 2) * 16) : FOOTER_TOP;
 
   return {
     pageSize: 'A4',
     pageOrientation: 'portrait',
-    pageMargins: [44, 38, 44, 28],
+    pageMargins: [42, 44, 42, 30],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
     content: [
-      // Header Banner: Full-width edge-to-edge theme colored banner covering top & sides
+      // Title: Underlined, Bold, Centered
       {
-        table: {
-          widths: ['*'],
-          body: [
-            [
-              {
-                fillColor: THEME_COLOR,
-                border: [false, false, false, false],
-                margin: [44, 18, 44, 14],
-                columns: [
-                  { width: 66, stack: [headerLogoBlock] },
-                  {
-                    width: '*',
-                    stack: [
-                      {
-                        text: 'CERTIFICATE OF MARRIAGE',
-                        font: 'Times',
-                        bold: true,
-                        fontSize: 18,
-                        characterSpacing: 0.8,
-                        alignment: 'center',
-                        color: '#ffffff',
-                        margin: [0, 6, 0, 4],
-                      },
-                      {
-                        text: 'EXTRACT FROM THE REGISTER OF INDIAN',
-                        font: 'Times',
-                        bold: true,
-                        fontSize: 12,
-                        characterSpacing: 0.5,
-                        alignment: 'center',
-                        color: '#ffffff',
-                        margin: [0, 0, 0, 2],
-                      },
-                      {
-                        text: 'CHRISTIAN MARRIAGES',
-                        font: 'Times',
-                        bold: true,
-                        fontSize: 12,
-                        characterSpacing: 0.5,
-                        alignment: 'center',
-                        color: '#ffffff',
-                        margin: [0, 0, 0, 6],
-                      },
-                    ],
-                  },
-                  { width: 66, text: '' },
-                ],
-              },
-            ],
-          ],
-        },
-        layout: {
-          hLineWidth: () => 0,
-          vLineWidth: () => 0,
-          paddingLeft: () => 0,
-          paddingRight: () => 0,
-          paddingTop: () => 0,
-          paddingBottom: () => 0,
-        },
-        margin: [-44, -38, -44, 20],
+        text: titleText,
+        font: 'Times',
+        bold: true,
+        fontSize: 13.5,
+        decoration: 'underline',
+        alignment: 'center',
+        color: THEME_COLOR,
+        margin: [0, 0, 0, 20],
       },
 
-      // Body rows
+      // Subheader: Solemnized at .................. Tuticorin Diocese
       {
         columns: [
-          { width: LABEL_COL_WIDTH, text: 'Solemnized at', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
           {
             width: '*',
             stack: [
               {
-                text: solemnizedText
-                  ? [
-                      { text: '   ', font: 'Times', fontSize: FONT_SIZE },
-                      {
-                        text: solemnizedText,
-                        font: 'Times',
-                        bold: true,
-                        fontSize: FONT_SIZE,
-                        color: DATA_COLOR,
-                        ...(hasTamilText(solemnizedText) ? { font: 'NotoSansTamil' } : {}),
-                      },
-                    ]
-                  : [{ text: '', fontSize: FONT_SIZE }],
+                text: [
+                  { text: `${subheaderPrefix} `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                  {
+                    text: solemnizedText ? solemnizedText.toUpperCase() : '',
+                    font: 'Times',
+                    bold: true,
+                    fontSize: FONT_SIZE,
+                    color: DATA_COLOR,
+                    ...(hasTamilText(solemnizedText) ? { font: 'NotoSansTamil' } : {}),
+                  },
+                ],
                 margin: [0, 0, 0, 2],
               },
-              solidLine(FULL_LINE_WIDTH, LINE_COLOR),
+              dottedLine(380, THEME_COLOR),
+            ],
+          },
+          {
+            width: 'auto',
+            text: dioceseText,
+            font: 'Times',
+            bold: true,
+            fontSize: FONT_SIZE,
+            alignment: 'right',
+            color: THEME_COLOR,
+            margin: [8, 0, 0, 0],
+          },
+        ],
+        margin: [0, 0, 0, 22],
+      },
+
+      // 1. When Married
+      singleDottedRow(lbl('marriage_date', 'When Married'), formatCertDate(record.marriage_date)),
+      // 2. Where Married
+      singleDottedRow(lbl('where_married', 'Where Married'), record.where_married || church?.name || ''),
+      // 3. Name of the Parties (Bridegroom / Bride)
+      pairedDottedRow(lbl('parties_name', 'Name of the Parties'), lbl('groom_sublabel', 'Bridegroom'), record.groom_name, lbl('bride_sublabel', 'Bride'), record.bride_name),
+      // 4. Age (Bridegroom's / Bride's)
+      pairedDottedRow(lbl('age', 'Age'), lbl('groom_age_sublabel', "Bridegroom's"), record.groom_age, lbl('bride_age_sublabel', "Bride's"), record.bride_age),
+      // 5. Condition (Bridegroom's / Bride's)
+      pairedDottedRow(lbl('condition', 'Condition'), lbl('groom_age_sublabel', "Bridegroom's"), record.groom_condition, lbl('bride_age_sublabel', "Bride's"), record.bride_condition),
+      // 6. Profession (Bridegroom's / Bride's)
+      pairedDottedRow(lbl('profession', 'Profession'), lbl('groom_age_sublabel', "Bridegroom's"), record.groom_profession, lbl('bride_age_sublabel', "Bride's"), record.bride_profession),
+      // 7. Residence at the time of Marriage
+      pairedDottedRow(lbl('residence', 'Residence at the\ntime of Marriage'), lbl('groom_age_sublabel', "Bridegroom's"), record.groom_residence, lbl('bride_age_sublabel', "Bride's"), record.bride_residence),
+      // 8. Father's Name & Surname
+      pairedDottedRow(lbl('father_name', "Father's Name\n& Surname"), lbl('groom_age_sublabel', "Bridegroom's"), record.groom_father_name, lbl('bride_age_sublabel', "Bride's"), record.bride_father_name),
+      // 9. By banns or Licence
+      singleDottedRow(lbl('banns_or_licence', 'By banns or Licence'), record.banns_or_licence || 'BY BANNS'),
+      // 10. Can. impediments dispensed
+      singleDottedRow(lbl('impediments_dispensed', 'Can. impediments dispensed'), record.impediments_dispensed || 'NIL'),
+      // 11. Witnesses (Multi-line dotted rows)
+      buildWitnessesRow(lbl('witnesses', 'Witnesses')),
+      // 12. Minister of the Ceremony
+      singleDottedRow(lbl('minister', 'Minister of the Ceremony'), record.priest_display_name || ''),
+
+      // Footer: Date : .........   Seal   Parish Priest
+      {
+        columns: [
+          {
+            width: '*',
+            text: [
+              { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+              { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
+            ],
+          },
+          { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR },
+          { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR },
+        ],
+        margin: [0, dynamicFooterTop, 0, 0],
+      },
+      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8, color: THEME_COLOR, opacity: 0.6, margin: [0, 16, 0, 0] },
+    ],
+  };
+}
+
+/**
+ * 2. BAPTISM CERTIFICATE
+ * Exactly matches Photo 2:
+ * Pill/capsule border: [ EXTRACT FROM THE REGISTER OF BAPTISM ]
+ * Kept at ____________________                  Tuticorin Diocese
+ * Solid lines across, Parent's Name with curly brace and 2 plain lines (no Father/Mother label),
+ * God Parents (single line), Footer: Catholic Priest.
+ */
+function buildExactBaptismDocument(record, church, ink, template = null) {
+  const THEME_COLOR = ink || '#072a63';
+  const DATA_COLOR = '#000000';
+  const LABEL_WIDTH = 195;
+  const LINE_WIDTH = 315;
+  const ROW_GAP = 35;
+  const FONT_SIZE = 13;
+  const PARENT_SUB_GAP = 20;
+  const FOOTER_TOP = 95;
+
+  const churchLocation = [church?.name, church?.city].filter(Boolean).join(', ');
+  const labels = template?.field_labels || {};
+  const lbl = (key, def) => (labels[key] !== undefined && labels[key] !== null && String(labels[key]).trim() !== '' ? labels[key] : def);
+
+  const titleText = template?.title || 'EXTRACT FROM THE REGISTER OF BAPTISM';
+  const subheaderPrefix = template?.subheader_prefix || 'Kept at';
+  const dioceseText = template?.diocese_label || getDioceseLabel(church);
+  const signatoryTitle = template?.signatory_title || 'Catholic Priest';
+  const sealText = template?.seal_label || 'Seal';
+  const dateLabel = lbl('date_label', 'Date :');
+
+  const singleSolidRow = (label, valText) => ({
+    columns: [
+      { width: LABEL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+      {
+        width: '*',
+        stack: [
+          {
+            text: valText ? String(valText).toUpperCase() : '',
+            font: 'Times',
+            bold: true,
+            fontSize: FONT_SIZE,
+            color: DATA_COLOR,
+            margin: [3, 0, 0, 2],
+            ...(hasTamilText(valText) ? { font: 'NotoSansTamil' } : {}),
+          },
+          solidLine(LINE_WIDTH, THEME_COLOR),
+        ],
+      },
+    ],
+    margin: [0, 0, 0, ROW_GAP],
+  });
+
+  const godParentsStr = [record.godfather_name, record.godmother_name].filter(Boolean).join(', ');
+
+  return {
+    pageSize: 'A4',
+    pageOrientation: 'portrait',
+    pageMargins: [44, 46, 44, 32],
+    defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
+    content: [
+      // Pill box header: [ EXTRACT FROM THE REGISTER OF BAPTISM ]
+      {
+        stack: [
+          {
+            canvas: [
+              {
+                type: 'rect',
+                x: 0,
+                y: 0,
+                w: 420,
+                h: 34,
+                r: 17,
+                lineWidth: 1.4,
+                lineColor: THEME_COLOR,
+              },
+            ],
+            alignment: 'center',
+          },
+          {
+            text: titleText,
+            font: 'Times',
+            bold: true,
+            fontSize: 15,
+            alignment: 'center',
+            color: THEME_COLOR,
+            margin: [0, -25, 0, 28],
+          },
+        ],
+      },
+
+      // Subheader: Kept at ____________________        Tuticorin Diocese
+      {
+        columns: [
+          {
+            width: '*',
+            stack: [
+              {
+                text: [
+                  { text: `${subheaderPrefix} `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                  {
+                    text: churchLocation ? churchLocation.toUpperCase() : '',
+                    font: 'Times',
+                    bold: true,
+                    fontSize: FONT_SIZE,
+                    color: DATA_COLOR,
+                    ...(hasTamilText(churchLocation) ? { font: 'NotoSansTamil' } : {}),
+                  },
+                ],
+                margin: [0, 0, 0, 2],
+              },
+              solidLine(380, THEME_COLOR),
+            ],
+          },
+          {
+            width: 'auto',
+            text: dioceseText,
+            font: 'Times',
+            bold: true,
+            fontSize: FONT_SIZE,
+            alignment: 'right',
+            color: THEME_COLOR,
+            margin: [8, 0, 0, 0],
+          },
+        ],
+        margin: [0, 0, 0, 28],
+      },
+
+      // 1. Place of Baptism
+      singleSolidRow(lbl('place_of_baptism', 'Place of Baptism'), record.place_of_baptism || church?.name || ''),
+      // 2. Date of Baptism
+      singleSolidRow(lbl('date_of_baptism', 'Date of Baptism'), formatCertDate(record.date_of_baptism)),
+      // 3. Child's Christian Name
+      singleSolidRow(lbl('child_name', "Child's Christian Name"), record.child_name),
+      // 4. Date of Birth
+      singleSolidRow(lbl('date_of_birth', 'Date of Birth'), formatCertDate(record.date_of_birth)),
+      // 5. Sex
+      singleSolidRow(lbl('gender', 'Sex'), record.gender_name || ''),
+
+      // 6. Parent's Name with curly brace and 2 blank/data lines (NO Father/Mother label)
+      {
+        columns: [
+          { width: LABEL_WIDTH - 20, text: lbl('parents_name', "Parent's Name"), font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR, margin: [0, 16, 0, 0] },
+          { width: 16, text: '{', font: 'Times', fontSize: 46, color: THEME_COLOR, margin: [0, -4, 0, 0] },
+          {
+            width: '*',
+            stack: [
+              {
+                stack: [
+                  {
+                    text: record.father_name ? String(record.father_name).toUpperCase() : '',
+                    font: 'Times',
+                    bold: true,
+                    fontSize: FONT_SIZE,
+                    color: DATA_COLOR,
+                    margin: [3, 0, 0, 2],
+                    ...(hasTamilText(record.father_name) ? { font: 'NotoSansTamil' } : {}),
+                  },
+                  solidLine(LINE_WIDTH, THEME_COLOR),
+                ],
+                margin: [0, 0, 0, PARENT_SUB_GAP],
+              },
+              {
+                stack: [
+                  {
+                    text: record.mother_name ? String(record.mother_name).toUpperCase() : '',
+                    font: 'Times',
+                    bold: true,
+                    fontSize: FONT_SIZE,
+                    color: DATA_COLOR,
+                    margin: [3, 0, 0, 2],
+                    ...(hasTamilText(record.mother_name) ? { font: 'NotoSansTamil' } : {}),
+                  },
+                  solidLine(LINE_WIDTH, THEME_COLOR),
+                ],
+              },
             ],
           },
         ],
         margin: [0, 0, 0, ROW_GAP],
       },
 
-      singleLineRow('When Married', formatDateSlash(record.marriage_date)),
-      singleLineRow('Where Married', (record.where_married || church?.name || '').toUpperCase()),
-      pairedFieldsRow('Name of the Parties', record.groom_name?.toUpperCase(), record.bride_name?.toUpperCase()),
-      pairedFieldsRow('Age', record.groom_age, record.bride_age),
-      pairedFieldsRow('Condition', (record.groom_condition || 'BACHELOR').toUpperCase(), (record.bride_condition || 'SPINSTER').toUpperCase()),
-      pairedFieldsRow('Residence', (record.groom_residence || '').toUpperCase(), (record.bride_residence || '').toUpperCase()),
-      pairedFieldsRow("Father's Name & Surname", (record.groom_father_name || '').toUpperCase(), (record.bride_father_name || '').toUpperCase()),
-      singleLineRow('By Banns or Licence', (record.banns_or_licence || 'BY BANNS').toUpperCase()),
-      singleLineRow('Can.impediments dispensed', (record.impediments_dispensed || 'NIL').toUpperCase()),
-      witnessesBlock(),
-      singleLineRow('Minister of the Ceremony', (record.priest_display_name || '').toUpperCase()),
+      // 7. Parent's Residence
+      singleSolidRow(lbl('parent_residence', "Parent's Residence"), record.parent_residence),
+      // 8. God Parents
+      singleSolidRow(lbl('godparents', 'God Parents'), godParentsStr),
+      // 9. Priest who Baptised
+      singleSolidRow(lbl('priest', 'Priest who Baptised'), record.priest_display_name || ''),
+      // 10. Remarks
+      singleSolidRow(lbl('remarks', 'Remarks'), record.remarks || ''),
 
-      // Footer - nicely spaced to cover bottom of the page
+      // Footer: Date : ____________________   Seal   Catholic Priest
       {
         columns: [
           {
             width: '*',
             text: [
-              { text: 'Date:  ', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
-              { text: formatDateSlash(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
+              { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+              { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
             ],
           },
-          { width: '*', text: 'Seal', font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR },
-          { width: '*', text: 'Parish Priest', font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR },
+          { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR },
+          { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR },
         ],
-        margin: [0, 68, 0, 0],
+        margin: [0, FOOTER_TOP, 0, 0],
       },
-      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8.5, color: THEME_COLOR, opacity: 0.65, margin: [0, 18, 0, 0] },
+      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8.5, color: THEME_COLOR, opacity: 0.6, margin: [0, 16, 0, 0] },
     ],
   };
 }
 
-function buildRows(type, ink, record, s) {
-  switch (type) {
-    case 'baptism':
-      return [
-        row(ink, 'Place of Baptism', record.place_of_baptism, s.row),
-        row(ink, 'Date of Baptism', formatDate(record.date_of_baptism), s.row),
-        row(ink, "Child's Christian Name", record.child_name, s.row),
-        row(ink, 'Date of Birth', formatDate(record.date_of_birth), s.row),
-        row(ink, 'Sex', record.gender_name, s.row),
-        pairedRow(ink, "Parent's Name", 'Father', record.father_name, 'Mother', record.mother_name, s.subRow, s.pair),
-        row(ink, "Parent's Residence", record.parent_residence, s.row),
-        pairedRow(ink, 'God Parents', 'Godfather', record.godfather_name, 'Godmother', record.godmother_name, s.subRow, s.pair),
-        row(ink, 'Priest who Baptised', record.priest_display_name, s.row),
-        row(ink, 'Remarks', record.remarks, s.row),
-      ];
-    case 'death':
-      return [
-        row(ink, 'Name', record.deceased_name, s.row),
-        row(ink, 'Age', record.age, s.row),
-        row(ink, 'Place', record.place, s.row),
-        row(ink, 'Profession', record.profession, s.row),
-        row(ink, 'Parents', record.parents, s.row),
-        row(ink, 'Date of death', formatDate(record.date_of_death), s.row),
-        row(ink, 'Place of death', record.place_of_death, s.row),
-        row(ink, 'Cause', record.cause, s.row),
-        row(ink, 'C. Confession', record.confession_received, s.row),
-        row(ink, 'V. Viaticum', record.viaticum_received, s.row),
-        row(ink, 'A. Anointing', record.anointing_received, s.row),
-        row(ink, 'Date of Burial', formatDate(record.burial_date), s.row),
-        row(ink, 'Place of Burial', record.cemetery, s.row),
-        row(ink, 'Minister', record.priest_display_name, s.row),
-        row(ink, 'Remarks', record.remarks, s.row),
-      ];
-    default:
-      return [];
-  }
+/**
+ * 3. DEATH CERTIFICATE
+ * Exactly matches Photo 3:
+ * Centered 2-line title:
+ * EXTRACT FROM THE REGISTER OF
+ * DEATHS KEPT
+ * at ____________________                  Tuticorin Diocese
+ * Exactly 14 fields with ':' and solid lines.
+ * Footer: Place & Date on left, Seal in center, CATHOLIC PRIEST (ALL CAPS) on right.
+ */
+function buildExactDeathDocument(record, church, ink, template = null) {
+  const THEME_COLOR = ink || '#072a63';
+  const DATA_COLOR = '#000000';
+  const LABEL_WIDTH = 160;
+  const LINE_WIDTH = 350;
+  const ROW_GAP = 24.5;
+  const FONT_SIZE = 12;
+  const FOOTER_TOP = 75;
+
+  const churchLocation = [church?.name, church?.city].filter(Boolean).join(', ');
+  const labels = template?.field_labels || {};
+  const lbl = (key, def) => (labels[key] !== undefined && labels[key] !== null && String(labels[key]).trim() !== '' ? labels[key] : def);
+
+  const rawTitle = template?.title || 'EXTRACT FROM THE REGISTER OF\nDEATHS KEPT';
+  const titleLines = String(rawTitle).split('\n');
+  const subheaderPrefix = template?.subheader_prefix || 'at';
+  const dioceseText = template?.diocese_label || getDioceseLabel(church);
+  const signatoryTitle = template?.signatory_title || 'CATHOLIC PRIEST';
+  const sealText = template?.seal_label || 'Seal';
+  const placeLabel = lbl('place_label', 'Place :');
+  const dateLabel = lbl('date_label', 'Date  :');
+
+  const deathRow = (label, valText) => ({
+    columns: [
+      { width: LABEL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+      {
+        width: '*',
+        stack: [
+          {
+            text: [
+              { text: ':  ', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+              {
+                text: valText ? String(valText).toUpperCase() : '',
+                font: 'Times',
+                bold: true,
+                fontSize: FONT_SIZE,
+                color: DATA_COLOR,
+                ...(hasTamilText(valText) ? { font: 'NotoSansTamil' } : {}),
+              },
+            ],
+            margin: [0, 0, 0, 2],
+          },
+          solidLine(LINE_WIDTH, THEME_COLOR),
+        ],
+      },
+    ],
+    margin: [0, 0, 0, ROW_GAP],
+  });
+
+  return {
+    pageSize: 'A4',
+    pageOrientation: 'portrait',
+    pageMargins: [42, 42, 42, 28],
+    defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
+    content: [
+      // 2-line Title (or dynamic lines from template)
+      {
+        stack: titleLines.map((line, idx) => ({
+          text: line,
+          font: 'Times',
+          bold: true,
+          fontSize: 14.5,
+          alignment: 'center',
+          color: THEME_COLOR,
+          margin: [0, idx === 0 ? 0 : 2, 0, idx === titleLines.length - 1 ? 20 : 0],
+        })),
+      },
+
+      // Subheader: at ____________________                  Tuticorin Diocese
+      {
+        columns: [
+          {
+            width: '*',
+            stack: [
+              {
+                text: [
+                  { text: `${subheaderPrefix} `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                  {
+                    text: churchLocation ? churchLocation.toUpperCase() : '',
+                    font: 'Times',
+                    bold: true,
+                    fontSize: FONT_SIZE,
+                    color: DATA_COLOR,
+                    ...(hasTamilText(churchLocation) ? { font: 'NotoSansTamil' } : {}),
+                  },
+                ],
+                margin: [0, 0, 0, 2],
+              },
+              solidLine(380, THEME_COLOR),
+            ],
+          },
+          {
+            width: 'auto',
+            text: dioceseText,
+            font: 'Times',
+            bold: true,
+            fontSize: FONT_SIZE,
+            alignment: 'right',
+            color: THEME_COLOR,
+            margin: [8, 0, 0, 0],
+          },
+        ],
+        margin: [0, 0, 0, 22],
+      },
+
+      // 14 exact rows matching Photo 3
+      deathRow(lbl('deceased_name', 'Name'), record.deceased_name),
+      deathRow(lbl('age', 'Age'), record.age),
+      deathRow(lbl('place', 'Place'), record.place),
+      deathRow(lbl('profession', 'Profession'), record.profession),
+      deathRow(lbl('parents', 'Parents'), record.parents),
+      deathRow(lbl('date_of_death', 'Date of death'), formatCertDate(record.date_of_death)),
+      deathRow(lbl('place_of_death', 'Place of death'), record.place_of_death),
+      deathRow(lbl('cause', 'Cause'), record.cause),
+      deathRow(lbl('confession', 'C.Confession'), record.confession_received),
+      deathRow(lbl('viaticum', 'V.Viaticum'), record.viaticum_received),
+      deathRow(lbl('anointing', 'A.Anointing'), record.anointing_received),
+      deathRow(lbl('burial_date', 'Date of Burial'), formatCertDate(record.burial_date)),
+      deathRow(lbl('cemetery', 'Place of Burial'), record.cemetery),
+      deathRow(lbl('minister', 'Minister'), record.priest_display_name || ''),
+
+      // Footer: Place & Date on left, Seal in center, CATHOLIC PRIEST on right
+      {
+        columns: [
+          {
+            width: '*',
+            stack: [
+              {
+                text: [
+                  { text: `${placeLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                  { text: church?.city ? String(church.city).toUpperCase() : '', font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
+                ],
+                margin: [0, 0, 0, 4],
+              },
+              {
+                text: [
+                  { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                  { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
+                ],
+              },
+            ],
+          },
+          { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR, margin: [0, 10, 0, 0] },
+          { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR, margin: [0, 10, 0, 0] },
+        ],
+        margin: [0, FOOTER_TOP, 0, 0],
+      },
+      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8, color: THEME_COLOR, opacity: 0.6, margin: [0, 14, 0, 0] },
+    ],
+  };
 }
 
-const HEADER_LABEL = { baptism: 'Kept at', death: 'at' };
-const REGISTER_TITLE = {
-  baptism: 'EXTRACT FROM THE REGISTER OF BAPTISM',
-  death: 'EXTRACT FROM THE REGISTER OF DEATHS KEPT',
-};
+/**
+ * 4. CONFIRMATION CERTIFICATE
+ * Exactly matches Photo 4:
+ * Centered Title: Extract from Confirmation Register
+ * Kept at ____________________                  Tuticorin Diocese
+ * Exactly 10 fields with ':' and solid lines.
+ * Signature line below field 10.
+ * Footer: SEAL (ALL CAPS) in center, Parish Priest on right.
+ */
+function buildExactConfirmationDocument(record, church, ink, template = null) {
+  const THEME_COLOR = ink || '#072a63';
+  const DATA_COLOR = '#000000';
+  const LABEL_WIDTH = 190;
+  const LINE_WIDTH = 320;
+  const ROW_GAP = 34;
+  const FONT_SIZE = 13;
+  const FOOTER_TOP = 88;
 
-const SPACING = {
-  baptism: { row: 28, subRow: 26, pair: 10, footerTop: 70 },
-  death: { row: 22, subRow: 22, pair: 4, footerTop: 51 },
-};
+  const churchLocation = [church?.name, church?.city].filter(Boolean).join(', ');
+  const labels = template?.field_labels || {};
+  const lbl = (key, def) => (labels[key] !== undefined && labels[key] !== null && String(labels[key]).trim() !== '' ? labels[key] : def);
 
-async function generateCertificatePdf(type, record, church) {
+  const titleText = template?.title || 'Extract from Confirmation Register';
+  const subheaderPrefix = template?.subheader_prefix || 'Kept at';
+  const dioceseText = template?.diocese_label || getDioceseLabel(church);
+  const signatoryTitle = template?.signatory_title || 'Parish Priest';
+  const sealText = template?.seal_label || 'SEAL';
+  const dateLabel = lbl('date_label', 'Date :');
+
+  const confirmationRow = (label, valText) => ({
+    columns: [
+      { width: LABEL_WIDTH, text: label, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+      {
+        width: '*',
+        stack: [
+          {
+            text: [
+              { text: ':  ', font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+              {
+                text: valText ? String(valText).toUpperCase() : '',
+                font: 'Times',
+                bold: true,
+                fontSize: FONT_SIZE,
+                color: DATA_COLOR,
+                ...(hasTamilText(valText) ? { font: 'NotoSansTamil' } : {}),
+              },
+            ],
+            margin: [0, 0, 0, 2],
+          },
+          solidLine(LINE_WIDTH, THEME_COLOR),
+        ],
+      },
+    ],
+    margin: [0, 0, 0, ROW_GAP],
+  });
+
+  return {
+    pageSize: 'A4',
+    pageOrientation: 'portrait',
+    pageMargins: [42, 46, 42, 32],
+    defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
+    content: [
+      // Title: Extract from Confirmation Register (Title Case)
+      {
+        text: titleText,
+        font: 'Times',
+        bold: true,
+        fontSize: 16.5,
+        alignment: 'center',
+        color: THEME_COLOR,
+        margin: [0, 0, 0, 26],
+      },
+
+      // Subheader: Kept at ____________________        Tuticorin Diocese
+      {
+        columns: [
+          {
+            width: '*',
+            stack: [
+              {
+                text: [
+                  { text: `${subheaderPrefix} `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                  {
+                    text: churchLocation ? churchLocation.toUpperCase() : '',
+                    font: 'Times',
+                    bold: true,
+                    fontSize: FONT_SIZE,
+                    color: DATA_COLOR,
+                    ...(hasTamilText(churchLocation) ? { font: 'NotoSansTamil' } : {}),
+                  },
+                ],
+                margin: [0, 0, 0, 2],
+              },
+              solidLine(380, THEME_COLOR),
+            ],
+          },
+          {
+            width: 'auto',
+            text: dioceseText,
+            font: 'Times',
+            bold: true,
+            fontSize: FONT_SIZE,
+            alignment: 'right',
+            color: THEME_COLOR,
+            margin: [8, 0, 0, 0],
+          },
+        ],
+        margin: [0, 0, 0, 28],
+      },
+
+      // 10 exact rows matching Photo 4
+      confirmationRow(lbl('name', 'Name'), record.name),
+      confirmationRow(lbl('age', 'Age'), record.age),
+      confirmationRow(lbl('gender', 'Sex'), record.gender_name || ''),
+      confirmationRow(lbl('parents', 'Parents'), record.parents),
+      confirmationRow(lbl('caste', 'Caste'), record.caste),
+      confirmationRow(lbl('sponsors', 'Sponsors'), record.sponsors),
+      confirmationRow(lbl('domicile', 'Domicile'), record.domicile),
+      confirmationRow(lbl('place_of_confirmation', 'Place of Confirmation'), record.place_of_confirmation || church?.name || ''),
+      confirmationRow(lbl('date_of_confirmation', 'Date of Confirmation'), formatCertDate(record.date_of_confirmation)),
+      confirmationRow(lbl('bishop', 'Bishop who confirmed'), record.bishop_name || ''),
+
+      // Signature line on left below Bishop who confirmed
+      {
+        columns: [
+          {
+            width: 190,
+            stack: [
+              { text: ' ', margin: [0, 0, 0, 26] },
+              solidLine(190, THEME_COLOR),
+            ],
+          },
+          { width: '*', text: '' },
+        ],
+        margin: [0, 0, 0, 16],
+      },
+
+      // Footer: Date on left, SEAL in center, Parish Priest on right
+      {
+        columns: [
+          {
+            width: '*',
+            text: [
+              { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+              { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
+            ],
+          },
+          { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR },
+          { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR },
+        ],
+        margin: [0, FOOTER_TOP, 0, 0],
+      },
+      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8, color: THEME_COLOR, opacity: 0.6, margin: [0, 16, 0, 0] },
+    ],
+  };
+}
+
+async function generateCertificatePdf(type, record, church, template = null) {
   const primaryColor = getThemePrimaryColor(church?.theme_color);
   const ink = primaryColor;
 
-  if (type === 'marriage') {
-    const docDefinition = buildExactMarriageDocument(record, church, ink);
-    return renderPdfBuffer(docDefinition);
+  let docDefinition;
+  switch (type) {
+    case 'marriage':
+      docDefinition = buildExactMarriageDocument(record, church, ink, template);
+      break;
+    case 'baptism':
+      docDefinition = buildExactBaptismDocument(record, church, ink, template);
+      break;
+    case 'death':
+      docDefinition = buildExactDeathDocument(record, church, ink, template);
+      break;
+    case 'confirmation':
+      docDefinition = buildExactConfirmationDocument(record, church, ink, template);
+      break;
+    default:
+      throw new Error(`Unsupported certificate type for PDF generation: ${type}`);
   }
-
-  const s = SPACING[type];
-  const docDefinition = {
-    pageSize: 'A4',
-    pageOrientation: 'portrait',
-    pageMargins: [48, 44, 48, 40],
-    defaultStyle: { font: 'Times', fontSize: 11, color: ink },
-    content: [
-      titleBlock(type, ink),
-      dioceseLine(ink, church),
-      headerLine(ink, HEADER_LABEL[type], church, s.row),
-      ...buildRows(type, ink, record, s),
-      footer(type, ink, church, record.certificate_no, s.footerTop),
-    ],
-    styles: {
-      title: { fontSize: 15, bold: true },
-      diocese: { fontSize: 11, italics: true },
-      label: { fontSize: 10.5 },
-      subLabel: { fontSize: 9.5, italics: true },
-      value: { fontSize: 11, bold: true, color: '#000000' },
-      signature: { fontSize: 10 },
-      metadata: { fontSize: 8, color: '#6B7280' },
-    },
-  };
 
   return renderPdfBuffer(docDefinition);
 }
 
-module.exports = { generateCertificatePdf };
+module.exports = {
+  generateCertificatePdf,
+  buildExactMarriageDocument,
+  buildExactBaptismDocument,
+  buildExactDeathDocument,
+  buildExactConfirmationDocument,
+};

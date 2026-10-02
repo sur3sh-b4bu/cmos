@@ -9,6 +9,10 @@ export class NotificationService {
     this.show(message, 'coms-snackbar--success');
   }
 
+  warning(message: string): void {
+    this.show(message, 'coms-snackbar--warning');
+  }
+
   error(message: string): void {
     this.show(message, 'coms-snackbar--error', 6000);
   }

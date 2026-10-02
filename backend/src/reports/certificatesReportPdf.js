@@ -58,8 +58,10 @@ async function generateCertificatesReportPdf({
         ],
       },
       layout: {
-        fillColor: (rowIndex) => (rowIndex === 0 ? primaryColor : rowIndex % 2 === 0 ? '#F4F6FB' : null),
-        hLineColor: () => '#D0D5DD',
+        fillColor: (rowIndex) => (rowIndex === 0 ? null : rowIndex % 2 === 0 ? '#F9FAFB' : null),
+        hLineWidth: (i, node) => (i === 0 || i === 1 || i === node.table.body.length ? 1.2 : 0.5),
+        hLineColor: (i) => (i === 0 || i === 1 ? primaryColor : '#D0D5DD'),
+        vLineWidth: () => 0.5,
         vLineColor: () => '#D0D5DD',
       },
     },
@@ -128,7 +130,7 @@ async function generateCertificatesReportPdf({
     styles: {
       churchName: { fontSize: 16, bold: true, color: primaryColor },
       docTitle: { fontSize: 11, bold: true, color: '#B08D2B', margin: [0, 2, 0, 4] },
-      tableHeader: { bold: true, color: '#FFFFFF', fontSize: 10 },
+      tableHeader: { bold: true, color: primaryColor, fontSize: 10 },
       cell: { fontSize: 10, margin: [0, 3, 0, 3] },
       cellSmall: { fontSize: 9, color: '#555555', margin: [0, 3, 0, 3] },
     },

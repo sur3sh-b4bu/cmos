@@ -113,8 +113,9 @@
 .app-header__left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .app-header__church {
@@ -122,7 +123,7 @@
   align-items: center;
   gap: 8px;
   height: 38px;
-  padding: 0 16px;
+  padding: 0 14px;
   border-radius: var(--coms-radius-full);
   background: color-mix(in srgb, var(--coms-color-gold) 14%, #ffffff);
   border: 1px solid color-mix(in srgb, var(--coms-color-gold) 38%, transparent);
@@ -131,10 +132,13 @@
   font-weight: 700;
   white-space: nowrap;
   box-shadow: 0 1px 3px rgba(176, 141, 43, 0.12);
+  flex-shrink: 0;
+  max-width: 220px;
 
   span {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   mat-icon {
@@ -151,7 +155,7 @@
   align-items: center;
   gap: 6px;
   height: 34px;
-  padding: 0 14px;
+  padding: 0 12px;
   border-radius: var(--coms-radius-full);
   background: color-mix(in srgb, var(--coms-color-primary) 8%, #ffffff);
   border: 1px solid color-mix(in srgb, var(--coms-color-primary) 18%, var(--coms-border));
@@ -159,10 +163,13 @@
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 180px;
 
   span {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   mat-icon {
@@ -218,6 +225,8 @@
   font-size: 15px;
   font-weight: 700;
   min-width: 0;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .app-header__crumb {
@@ -242,13 +251,15 @@
   width: 16px;
   height: 16px;
   color: #94a3b8;
+  flex-shrink: 0;
 }
 
 // Right actions container
 .app-header__actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .app-header__search {
@@ -300,6 +311,51 @@
     font-weight: 600;
     line-height: normal;
     flex-shrink: 0;
+  }
+}
+
+.app-header__typing-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--coms-radius-full);
+  border: 1px solid color-mix(in srgb, var(--coms-color-primary) 18%, var(--coms-border));
+  background: #ffffff;
+  color: var(--coms-text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all var(--coms-transition-fast);
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--coms-text-muted);
+    transition: color var(--coms-transition-fast);
+  }
+
+  &:hover {
+    border-color: var(--coms-color-primary);
+    background: var(--coms-surface-alt);
+    color: var(--coms-color-primary);
+
+    mat-icon {
+      color: var(--coms-color-primary);
+    }
+  }
+
+  &--tamil {
+    background: color-mix(in srgb, var(--coms-color-primary) 10%, #ffffff);
+    border-color: var(--coms-color-primary);
+    color: var(--coms-color-primary);
+
+    mat-icon {
+      color: var(--coms-color-primary);
+    }
   }
 }
 
@@ -370,13 +426,46 @@
   color: #64748b;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1300px) {
   .app-header__search {
-    width: auto;
-    padding: 0 10px;
+    width: 180px;
+    kbd {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 1100px) {
+  .app-header {
+    padding: 0 16px;
+  }
+
+  .app-header__search {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
 
     .app-header__search-label,
     kbd {
+      display: none !important;
+    }
+  }
+
+  .app-header__branch {
+    padding: 0 9px;
+    span {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .app-header__church {
+    padding: 0 9px;
+    span {
       display: none;
     }
   }
@@ -386,14 +475,29 @@
   .app-header__branch {
     display: none;
   }
-}
 
-@media (max-width: 680px) {
-  .app-header {
-    padding: 0 16px;
+  .app-header__typing-label {
+    display: none;
   }
 
-  .app-header__church span {
-    display: none;
+  .app-header__typing-btn {
+    padding: 0 8px;
+    min-width: 38px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-header {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .app-header__left {
+    gap: 8px;
+  }
+
+  .app-header__actions {
+    gap: 6px;
   }
 }

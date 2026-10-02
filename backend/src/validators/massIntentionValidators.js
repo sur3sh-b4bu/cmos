@@ -34,6 +34,9 @@ const registerDateQuery = z.object({
   // Second print button on the register: name + intention only, for handing
   // to the priest without exposing offering amounts/receipt numbers.
   namesOnly: z.coerce.boolean().optional(),
+  // Third print button: mass reasons only
+  reasonsOnly: z.coerce.boolean().optional(),
+  mode: z.string().optional(),
   // Print language -- see massIntentionService.buildDailyRegisterPdf's
   // `req.query?.lang` read. Zod objects silently STRIP any key not listed
   // here (validate.js's middleware replaces req.query with the parsed

@@ -66,6 +66,17 @@
       <kbd>Ctrl K</kbd>
     </button>
 
+    <button
+      type="button"
+      class="app-header__typing-btn"
+      [class.app-header__typing-btn--tamil]="languageService.textInputMode() === 'ta'"
+      (click)="languageService.toggleTextInputMode()"
+      [matTooltip]="(languageService.textInputMode() === 'ta' ? 'language.typingTamil' : 'language.typingEnglish') | translate"
+    >
+      <mat-icon>keyboard</mat-icon>
+      <span class="app-header__typing-label">{{ languageService.textInputMode() === 'ta' ? 'தமிழ்' : 'Eng' }}</span>
+    </button>
+
     <button mat-icon-button class="app-header__icon-btn" [matTooltip]="'language.selectLanguage' | translate" [matMenuTriggerFor]="languageMenu">
       <mat-icon>translate</mat-icon>
     </button>

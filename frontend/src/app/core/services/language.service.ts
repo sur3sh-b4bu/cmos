@@ -4,7 +4,8 @@ import { MasterLookupService } from './master-lookup.service';
 import { AppLang } from '../i18n/translations';
 
 const STORAGE_KEY = 'coms_lang';
-const DEFAULT_LANG: AppLang = 'en';
+const TEXT_INPUT_KEY = 'coms_text_input_mode';
+const DEFAULT_LANG: AppLang = 'ta';
 
 /** Masters -> Languages row codes this app actually has translations for. */
 const CODE_TO_LANG: Record<string, AppLang> = { en: 'en', eng: 'en', english: 'en', ta: 'ta', tam: 'ta', tamil: 'ta' };
@@ -17,14 +18,29 @@ export class LanguageService {
   readonly current = signal<AppLang>(this.readStored());
   private orgDefaultRequested = false;
 
-  /** Whether every "Type in Bamini" toggle (mass-intention-form.ts,
-   * bulk-mass-intention-form.ts, master-form.ts, data-table.ts's search
-   * box) should default to ON right now -- read at the moment a toggle is
-   * created/reset, and watched via `effect()` in each of those components
-   * so it also flips already-visible toggles live if someone switches
-   * language mid-session. One place to widen later if a second script
-   * ever needs its own transliteration toggle. */
+  /** Global text input typing mode: 'ta' (Bamini Tamil) or 'en' (English). Defaults to Tamil. */
+  readonly textInputMode = signal<'ta' | 'en'>(this.readStoredTextInput());
+
+  /** Whether the global text input mode is currently Tamil. */
+  readonly isTamilTextInput = computed(() => this.textInputMode() === 'ta');
+
+  /** Whether the UI interface language is currently Tamil. */
   readonly isTamil = computed(() => this.current() === 'ta');
+
+  /** Toggle text input typing mode between Tamil and English. */
+  toggleTextInputMode(): void {
+    const next = this.textInputMode() === 'ta' ? 'en' : 'ta';
+    this.setTextInputMode(next);
+  }
+
+  setTextInputMode(mode: 'ta' | 'en'): void {
+    this.textInputMode.set(mode);
+    try {
+      localStorage.setItem(TEXT_INPUT_KEY, mode);
+    } catch {
+      // ignore storage errors
+    }
+  }
 
   /** Call once at app bootstrap, before anything reads translations. */
   init(): void {
@@ -61,6 +77,8 @@ export class LanguageService {
   setLanguage(lang: AppLang): void {
     localStorage.setItem(STORAGE_KEY, lang);
     this.apply(lang);
+    // Also align typing mode with chosen UI language
+    this.setTextInputMode(lang === 'ta' ? 'ta' : 'en');
   }
 
   private apply(lang: AppLang): void {
@@ -72,6 +90,12 @@ export class LanguageService {
 
   private readStored(): AppLang {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'ta' ? 'ta' : DEFAULT_LANG;
+    return stored === 'en' ? 'en' : 'ta';
+  }
+
+  private readStoredTextInput(): 'ta' | 'en' {
+    const stored = localStorage.getItem(TEXT_INPUT_KEY);
+    if (stored === 'en' || stored === 'ta') return stored;
+    return this.readStored() === 'en' ? 'en' : 'ta';
   }
 }

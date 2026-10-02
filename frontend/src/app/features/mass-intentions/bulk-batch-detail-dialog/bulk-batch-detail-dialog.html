@@ -36,9 +36,16 @@
                 <td class="text-muted">{{ rec.receipt_no }}</td>
                 <td>
                   <mat-form-field appearance="outline" class="bbdd-dialog__cell-field">
-                    <input matInput [matDatepicker]="editPicker" formControlName="prayerDate" required />
+                    <input
+                      matInput
+                      [matDatepicker]="editPicker"
+                      [matDatepickerFilter]="dateFilter"
+                      [min]="minPrayerDate"
+                      formControlName="prayerDate"
+                      required
+                    />
                     <mat-datepicker-toggle matIconSuffix [for]="editPicker" />
-                    <mat-datepicker #editPicker [dateClass]="dateClass" [calendarHeaderComponent]="todayHeader" />
+                    <mat-datepicker #editPicker [dateClass]="dateClass" />
                   </mat-form-field>
                 </td>
                 <td>

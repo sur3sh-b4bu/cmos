@@ -56,15 +56,15 @@
       mat-stroked-button
       color="primary"
       type="button"
-      [disabled]="loading() || printingNamesOnly() || entries().length === 0"
-      (click)="printNamesOnly()"
+      [disabled]="loading() || printingReasonsOnly() || entries().length === 0"
+      (click)="printReasonsOnly()"
     >
-      @if (printingNamesOnly()) {
+      @if (printingReasonsOnly()) {
         <mat-progress-spinner diameter="16" mode="indeterminate" />
       } @else {
-        <mat-icon>print</mat-icon>
+        <mat-icon>format_list_bulleted</mat-icon>
       }
-      <span>{{ 'dailyRegister.printNamesOnly' | translate }}</span>
+      <span>{{ 'dailyRegister.printReasonsOnly' | translate }}</span>
     </button>
     <button mat-flat-button color="primary" type="button" [disabled]="loading() || printing() || entries().length === 0" (click)="print()">
       @if (printing()) {

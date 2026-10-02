@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, WritableSignal, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -132,6 +132,31 @@ export class BulkMassIntentionFormComponent implements OnInit {
   formatDateDMY = formatDateDMY;
   readonly defaultRestrictedDateReason = DEFAULT_RESTRICTED_DATE_REASON;
 
+  get tomorrowDate(): Date {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  get minPrayerDate(): Date {
+    return this.tomorrowDate;
+  }
+
+  dateFilter = (date: Date | null): boolean => {
+    if (!date) return false;
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() >= this.tomorrowDate.getTime();
+  };
+
+  futureDateValidator = (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    const d = new Date(control.value);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() >= this.tomorrowDate.getTime() ? null : { pastOrToday: true };
+  };
+
   masses = signal<MassOption[]>([]);
   intentionOptions = signal<IntentionMasterOption[]>([]);
   paymentMethods = signal<PaymentMethodOption[]>([]);
@@ -148,7 +173,7 @@ export class BulkMassIntentionFormComponent implements OnInit {
    * instead of only ever being printable once, right after saving. */
   private readonly bulkBatchId = crypto.randomUUID();
 
-  readonly quickCountPresets = [2, 3, 5, 7, 9, 30];
+  readonly quickCountPresets = [2, 4, 6, 8, 10, 15, 20, 30];
 
   /** Shared across every row -- see this component's own doc comment above. */
   headerForm = this.fb.group({
@@ -162,7 +187,7 @@ export class BulkMassIntentionFormComponent implements OnInit {
 
   private buildRow(): FormGroup {
     const group = this.fb.group({
-      prayerDate: this.fb.control<Date>(new Date(), Validators.required),
+      prayerDate: this.fb.control<Date>(this.tomorrowDate, [Validators.required, this.futureDateValidator]),
       name: this.fb.control('', [Validators.required, Validators.maxLength(150)]),
       massId: this.fb.control<number | null>(null, Validators.required),
       offeringAmount: this.fb.control<number>(0, [Validators.required, Validators.min(0)]),
@@ -313,7 +338,7 @@ export class BulkMassIntentionFormComponent implements OnInit {
    * LanguageService.isTamil's own doc comment. */
   constructor() {
     effect(() => {
-      const isTamil = this.languageService.isTamil();
+      const isTamil = this.languageService.isTamilTextInput();
       for (const sig of this.allBaminiSignals) sig.set(isTamil);
     });
   }
@@ -325,7 +350,7 @@ export class BulkMassIntentionFormComponent implements OnInit {
       this.baminiState.set(group, fields);
     }
     if (!fields[field]) {
-      fields[field] = signal(this.languageService.isTamil());
+      fields[field] = signal(this.languageService.isTamilTextInput());
       this.allBaminiSignals.push(fields[field]);
     }
     return fields[field];

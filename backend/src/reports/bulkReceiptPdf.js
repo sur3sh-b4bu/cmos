@@ -59,8 +59,10 @@ async function generateBulkReceiptPdf(intentions, church, currencySymbol = '₹'
         ],
       },
       layout: {
-        fillColor: (rowIndex) => (rowIndex === 0 ? primaryColor : rowIndex % 2 === 0 ? '#F4F6FB' : null),
-        hLineColor: () => '#D0D5DD',
+        fillColor: (rowIndex) => (rowIndex === 0 ? null : rowIndex % 2 === 0 ? '#F9FAFB' : null),
+        hLineWidth: (i, node) => (i === 0 || i === 1 || i === node.table.body.length ? 1.2 : 0.5),
+        hLineColor: (i) => (i === 0 || i === 1 ? primaryColor : '#D0D5DD'),
+        vLineWidth: () => 0.5,
         vLineColor: () => '#D0D5DD',
       },
     },
@@ -81,17 +83,19 @@ async function generateBulkReceiptPdf(intentions, church, currencySymbol = '₹'
                 {
                   columns: [
                     { text: localizedName(church?.name, church?.name_ta, lang) || t(lang, 'churchOffice'), style: 'churchName', width: '*' },
-                    { text: `${t(lang, 'page')} ${currentPage}`, alignment: 'right', fontSize: 9, color: 'rgba(255,255,255,0.85)', width: 80 },
+                    { text: `${t(lang, 'page')} ${currentPage}`, alignment: 'right', fontSize: 9, color: '#888888', width: 80 },
                   ],
-                  margin: [10, 8, 10, 8],
+                  margin: [8, 6, 8, 6],
                 },
               ],
             ],
           },
           layout: {
-            fillColor: () => primaryColor,
-            hLineWidth: () => 0,
-            vLineWidth: () => 0,
+            fillColor: () => null,
+            hLineWidth: () => 1.2,
+            vLineWidth: () => 1.2,
+            hLineColor: () => primaryColor,
+            vLineColor: () => primaryColor,
           },
           margin: [0, 0, 0, 6],
         },
@@ -126,7 +130,7 @@ async function generateBulkReceiptPdf(intentions, church, currencySymbol = '₹'
         { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 523, y2: 0, lineWidth: 0.5, lineColor: '#D0D5DD' }] },
         {
           columns: [
-            { text: `${t(lang, 'generated')}: ${formatDateDMY(generatedAt)} ${formatTime24(generatedAt)}`, fontSize: 8, color: '#888888' },
+            { text: '', fontSize: 8 },
             { text: `${t(lang, 'page')} ${currentPage} ${t(lang, 'of')} ${pageCount}`, alignment: 'right', fontSize: 8, color: '#888888' },
           ],
           margin: [0, 4, 0, 0],
@@ -135,9 +139,9 @@ async function generateBulkReceiptPdf(intentions, church, currencySymbol = '₹'
     }),
     content: body,
     styles: {
-      churchName: { fontSize: 16, bold: true, color: '#FFFFFF' },
+      churchName: { fontSize: 16, bold: true, color: primaryColor },
       docTitle: { fontSize: 11, bold: true, color: '#B08D2B', margin: [0, 2, 0, 6] },
-      tableHeader: { bold: true, color: '#FFFFFF', fontSize: 10 },
+      tableHeader: { bold: true, color: primaryColor, fontSize: 10 },
       cell: { fontSize: 11, margin: [0, 3, 0, 3] },
       cellSmall: { fontSize: 9, color: '#555555', margin: [0, 3, 0, 3] },
       totalLabel: { fontSize: 12, bold: true, margin: [0, 6, 0, 3] },

@@ -81,6 +81,17 @@ const LABELS = {
   "certificates.marriage.colGroom": { en: "Groom", ta: "மணமகன்" },
   "certificates.marriage.colBride": { en: "Bride", ta: "மணமகள்" },
   "certificates.death.colCemetery": { en: "Cemetery", ta: "கல்லறை" },
+  "certificates.confirmation.colName": { en: "Name", ta: "பெயர்" },
+  "certificates.confirmation.colDateOfConfirmation": { en: "Date of Confirmation", ta: "உறுதிப்பூசுதல் தேதி" },
+  "certificates.confirmation.fieldAge": { en: "Age", ta: "வயது" },
+  "certificates.confirmation.fieldSex": { en: "Sex", ta: "பாலினம்" },
+  "certificates.confirmation.fieldParents": { en: "Parents", ta: "பெற்றோர்" },
+  "certificates.confirmation.fieldCaste": { en: "Caste", ta: "சாதி" },
+  "certificates.confirmation.fieldSponsors": { en: "Sponsors", ta: "ஞானப்பெற்றோர் / ஆதரவாளர்கள்" },
+  "certificates.confirmation.fieldDomicile": { en: "Domicile", ta: "வசிப்பிடம்" },
+  "certificates.confirmation.fieldPlaceOfConfirmation": { en: "Place of Confirmation", ta: "உறுதிப்பூசுதல் இடம்" },
+  "certificates.confirmation.fieldDateOfConfirmation": { en: "Date of Confirmation", ta: "உறுதிப்பூசுதல் தேதி" },
+  "certificates.confirmation.fieldBishop": { en: "Bishop who confirmed", ta: "உறுதிப்பூசுதல் அளித்த ஆயர்" },
 };
 
 module.exports = { LABELS };

@@ -12,6 +12,7 @@ const CENTRAL_ROUTE_FOR: Record<string, string> = {
   '/mass-intentions/register': '/central/register',
   '/certificates/baptism': '/central/certificates/baptism',
   '/certificates/marriage': '/central/certificates/marriage',
+  '/certificates/confirmation': '/central/certificates/confirmation',
   '/certificates/death': '/central/certificates/death',
   '/contributions': '/central/contributions',
   '/reports': '/central/reports',

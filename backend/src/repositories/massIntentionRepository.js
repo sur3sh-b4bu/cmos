@@ -118,20 +118,58 @@ function buildListQuery({
   return { where, having, params };
 }
 
-async function list({ page = 1, pageSize = 25, ...query }) {
+const SORT_COLUMNS = {
+  receipt_no: 'pi.receipt_no',
+  created_at: 'pi.created_at',
+  prayer_date: 'pi.prayer_date',
+  name: 'pi.name',
+  offering_amount: 'pi.offering_amount',
+  booked_by: 'pi.booked_by',
+  phone: 'pi.phone',
+  mass_name: 'm.name',
+  intention: 'COALESCE(pim.name, pi.custom_intention)',
+};
+
+function buildOrderBy(sortBy, sortDir) {
+  const col = SORT_COLUMNS[sortBy];
+  if (!col) {
+    return 'ORDER BY pi.prayer_date DESC, m.sort_order ASC, pi.id DESC';
+  }
+  const dir = String(sortDir).toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+  return `ORDER BY ${col} ${dir}, pi.id DESC`;
+}
+
+async function list({ page = 1, pageSize = 25, sortBy, sortDir, ...query }) {
   page = clampPage(page);
   pageSize = clampPageSize(pageSize);
   const { where, having, params } = buildListQuery(query);
   const offset = (Number(page) - 1) * Number(pageSize);
+  const orderBy = buildOrderBy(sortBy || query.sortBy, sortDir || query.sortDir);
 
   const [rows] = await pool.query(
-    `${BASE_SELECT} ${where} ${having} ORDER BY pi.prayer_date DESC, m.sort_order ASC, pi.id DESC LIMIT ? OFFSET ?`,
+    `${BASE_SELECT} ${where} ${having} ${orderBy} LIMIT ? OFFSET ?`,
     [...params, Number(pageSize), offset]
   );
-  const [[{ total }]] = await pool.query(
-    `SELECT COUNT(*) AS total FROM (${BASE_SELECT} ${where} ${having}) t`,
-    params
-  );
+  const countQuery = having
+    ? `SELECT COUNT(*) AS total FROM (
+        SELECT pi.id, (pay.id IS NOT NULL OR pi.is_paid = 1) AS is_paid
+        FROM prayer_intentions pi
+        JOIN masses m ON m.id = pi.mass_id
+        LEFT JOIN prayer_intention_master pim ON pim.id = pi.prayer_intention_master_id
+        LEFT JOIN payment_methods pm ON pm.id = pi.payment_method_id
+        LEFT JOIN users u ON u.id = pi.created_by
+        ${PAYMENT_JOIN}
+        ${where}
+        ${having}
+      ) t`
+    : `SELECT COUNT(*) AS total
+       FROM prayer_intentions pi
+       JOIN masses m ON m.id = pi.mass_id
+       LEFT JOIN prayer_intention_master pim ON pim.id = pi.prayer_intention_master_id
+       LEFT JOIN payment_methods pm ON pm.id = pi.payment_method_id
+       LEFT JOIN users u ON u.id = pi.created_by
+       ${where}`;
+  const [[{ total }]] = await pool.query(countQuery, params);
   return { rows, total, page: Number(page), pageSize: Number(pageSize) };
 }
 
@@ -288,7 +326,7 @@ async function findPotentialDuplicate({ name, phone, prayerDate, massId, prayerI
     params.push(excludeId);
   }
   const [rows] = await pool.query(
-    `SELECT id, receipt_no FROM prayer_intentions WHERE ${conditions.join(' AND ')} LIMIT 1`,
+    `SELECT id, receipt_no, name, booked_by, phone, prayer_date, offering_amount, created_at FROM prayer_intentions WHERE ${conditions.join(' AND ')} LIMIT 1`,
     params
   );
   return rows[0] || null;
@@ -366,6 +404,10 @@ async function getRegisterData(prayerDate, churchId, branchId) {
  * as before this parameter existed. */
 async function getDashboardStats(churchId, branchId) {
   const today = toLocalDateString();
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = toLocalDateString(tomorrowDate);
+
   // Appended (in this exact form) to every WHERE below that already
   // filters by pi.church_id -- '' when unrestricted.
   const branchClause = branchId ? ' AND (pi.branch_id = ? OR pi.branch_id IS NULL)' : '';
@@ -374,6 +416,10 @@ async function getDashboardStats(churchId, branchId) {
   const [[todayCount]] = await pool.query(
     `SELECT COUNT(*) AS c FROM prayer_intentions pi WHERE prayer_date = ? AND church_id = ? AND is_deleted = 0${branchClause}`,
     [today, churchId, ...branchParam]
+  );
+  const [[tomorrowCount]] = await pool.query(
+    `SELECT COUNT(*) AS c FROM prayer_intentions pi WHERE prayer_date = ? AND church_id = ? AND is_deleted = 0${branchClause}`,
+    [tomorrow, churchId, ...branchParam]
   );
   // "Collections" is money actually received, dated by when the payment was
   // recorded (payment_date) -- not the offering_amount of every booking
@@ -442,6 +488,7 @@ async function getDashboardStats(churchId, branchId) {
 
   return {
     todayCount: todayCount.c,
+    tomorrowCount: tomorrowCount.c,
     todayCollections: Number(todayCollections.total),
     pendingCount: pendingCount.c,
     monthlyCollections: Number(monthlyCollections.total),

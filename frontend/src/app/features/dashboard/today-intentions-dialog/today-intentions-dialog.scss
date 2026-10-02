@@ -180,6 +180,19 @@ mat-dialog-content {
     text-align: center;
   }
 
+  .col-actions {
+    width: 60px !important;
+    text-align: center;
+    padding: 4px 8px !important;
+
+    button {
+      color: #64748b;
+      &:hover {
+        color: var(--coms-color-primary, #072a63);
+      }
+    }
+  }
+
   tbody tr:last-child td {
     border-bottom: none;
   }

@@ -106,18 +106,35 @@
 
         <mat-form-field appearance="outline">
           <mat-label>{{ 'massIntentions.prayerDate' | translate }}</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="prayerDate" required />
+          <input
+            matInput
+            [matDatepicker]="picker"
+            [matDatepickerFilter]="dateFilter"
+            [min]="minPrayerDate"
+            formControlName="prayerDate"
+            required
+          />
           <mat-datepicker-toggle matIconSuffix [for]="picker" />
-          <mat-datepicker #picker [dateClass]="dateClass" [calendarHeaderComponent]="todayHeader" />
+          <mat-datepicker #picker [dateClass]="dateClass" />
+          @if (form.controls.prayerDate.hasError('pastOrToday')) {
+            <mat-error>{{ 'massIntentions.futureDateOnly' | translate }}</mat-error>
+          }
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>{{ 'dashboard.colMass' | translate }}</mat-label>
-          <mat-select formControlName="massId" required>
-            @for (mass of masses(); track mass.id) {
-              <mat-option [value]="mass.id">{{ massLabel(mass) }} ({{ mass.mass_time }})</mat-option>
+          <mat-select formControlName="massId" [disabled]="!selectedPrayerDate()" required>
+            @for (group of massGroups(); track group.category) {
+              <mat-optgroup [label]="group.label">
+                @for (mass of group.masses; track mass.id) {
+                  <mat-option [value]="mass.id">{{ massLabel(mass) }} ({{ mass.mass_time }})</mat-option>
+                }
+              </mat-optgroup>
             }
           </mat-select>
+          @if (!selectedPrayerDate()) {
+            <mat-hint>{{ 'massIntentions.selectDateFirst' | translate }}</mat-hint>
+          }
         </mat-form-field>
 
         <mat-form-field appearance="outline">

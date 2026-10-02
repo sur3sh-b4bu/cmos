@@ -145,27 +145,16 @@ export class CertificateFormComponent implements OnChanges {
     }
   }
 
-  /** Latest pickable date for a field the config says "cannot be in the future" (today, in the user's calendar). */
-  maxDateFor(field: CertificateFormField): Date | null {
-    const rule = this.config.dateRules.find((r) => r.kind === 'notFuture' && r.field === field.key);
-    if (!rule) return null;
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  maxDateFor(_field: CertificateFormField): Date | null {
+    return null;
   }
 
-  /** Earliest pickable date for a field the config says "cannot be before <other field>" -- follows that field as it changes. */
-  minDateFor(field: CertificateFormField): Date | null {
-    const rule = this.config.dateRules.find((r) => r.kind === 'notBefore' && r.field === field.key);
-    if (!rule || rule.kind !== 'notBefore') return null;
-    const other = this.form.get(rule.other)?.value;
-    return other instanceof Date && !Number.isNaN(other.getTime()) ? other : null;
+  minDateFor(_field: CertificateFormField): Date | null {
+    return null;
   }
 
-  /** The label of the field a "cannot be before" rule compares against, for the error text. */
-  otherLabelFor(field: CertificateFormField): string {
-    const rule = this.config.dateRules.find((r) => r.kind === 'notBefore' && r.field === field.key);
-    const other = rule && rule.kind === 'notBefore' ? this.config.formFields.find((f) => f.key === rule.other) : undefined;
-    return other ? this.translate.instant(other.label) : '';
+  otherLabelFor(_field: CertificateFormField): string {
+    return '';
   }
 
   optionsFor(field: CertificateFormField): { id: number; name: string }[] {

@@ -471,4 +471,9 @@
     border: 1px solid #ccc;
     break-inside: avoid;
   }
+
+  .register__group + .register__group {
+    page-break-before: always;
+    break-before: page;
+  }
 }

@@ -1,4 +1,19 @@
 <div class="pi-list">
+  <nav class="sub-nav-tabs">
+    <a routerLink="/mass-intentions" routerLinkActive="sub-nav-tabs__link--active" [routerLinkActiveOptions]="{ exact: true }" class="sub-nav-tabs__link">
+      <mat-icon>volunteer_activism</mat-icon>
+      <span>{{ 'nav.massIntentions' | translate }}</span>
+    </a>
+    <a routerLink="/mass-intentions/register" routerLinkActive="sub-nav-tabs__link--active" class="sub-nav-tabs__link">
+      <mat-icon>menu_book</mat-icon>
+      <span>{{ 'nav.dailyRegister' | translate }}</span>
+    </a>
+    <a routerLink="/contributions" routerLinkActive="sub-nav-tabs__link--active" class="sub-nav-tabs__link">
+      <mat-icon>redeem</mat-icon>
+      <span>{{ 'nav.contributions' | translate }}</span>
+    </a>
+  </nav>
+
   <div class="pi-list__header">
     <div>
       <h1>{{ 'nav.massIntentions' | translate }}</h1>
@@ -36,11 +51,13 @@
     [total]="total()"
     [pageIndex]="pageIndex()"
     [pageSize]="pageSize()"
+    [sort]="sort()"
     [loading]="loading()"
     [cellTemplates]="cellTemplates"
     [showImport]="authService.hasPermission('mass_intentions.create')"
     [serverTransfer]="serverTransfer"
     (pageChange)="onPageChange($event)"
+    (sortChange)="onSortChange($event)"
     (searchChange)="onSearchChange($event)"
     (imported)="fetch()"
   >

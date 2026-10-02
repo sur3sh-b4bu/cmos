@@ -10,6 +10,7 @@
     "migrate": "node database/migrate.js",
     "seed": "node database/seed.js",
     "seed:mock": "node scripts/seed-mock-data.js",
+    "sync:db": "node scripts/sync-client-db.js",
     "db:setup": "npm run migrate && npm run seed",
     "backup": "node scripts/backup.js",
     "restore": "node scripts/restore.js",

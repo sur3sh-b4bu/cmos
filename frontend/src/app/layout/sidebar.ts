@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, Output, computed, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../core/services/auth.service';
 import { HealthService } from '../core/services/health.service';
-import { NAV_ITEMS } from '../core/models/nav-item.model';
+import { NAV_ITEMS, NavItem } from '../core/models/nav-item.model';
 import { centralRouteFor, inCentralManagement } from '../core/guards/central-mode.guard';
 import { resolveUploadUrl } from '../core/utils/asset-url.util';
 
@@ -19,9 +19,29 @@ import { resolveUploadUrl } from '../core/utils/asset-url.util';
 export class SidebarComponent {
   authService = inject(AuthService);
   healthService = inject(HealthService);
+  private router = inject(Router);
 
   @Input() collapsed = false;
   @Output() collapsedChange = new EventEmitter<boolean>();
+
+  expandedGroups = signal<Record<string, boolean>>({});
+
+  isGroupExpanded(item: NavItem): boolean {
+    if (this.expandedGroups()[item.labelKey] !== undefined) {
+      return !!this.expandedGroups()[item.labelKey];
+    }
+    return item.children?.some((c) => this.router.url.startsWith(c.route)) ?? true;
+  }
+
+  toggleGroup(item: NavItem): void {
+    if (this.collapsed) {
+      // In collapsed mode, clicking navigates to the group's main route
+      this.router.navigate([item.route]);
+      return;
+    }
+    const current = this.isGroupExpanded(item);
+    this.expandedGroups.update((g) => ({ ...g, [item.labelKey]: !current }));
+  }
 
   constructor() {
     this.healthService.start();
@@ -48,6 +68,12 @@ export class SidebarComponent {
     NAV_ITEMS.filter((item) => !item.permissions?.length || this.authService.hasAnyPermission(item.permissions)).map((item) => ({
       ...item,
       route: this.central() ? (centralRouteFor(item.route) ?? item.route) : item.route,
+      children: item.children
+        ?.filter((c) => !c.permissions?.length || this.authService.hasAnyPermission(c.permissions))
+        .map((c) => ({
+          ...c,
+          route: this.central() ? (centralRouteFor(c.route) ?? c.route) : c.route,
+        })),
     }))
   );
 

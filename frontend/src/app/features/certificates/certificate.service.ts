@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { ApiListResponse, ApiResponse } from '../../core/models/api-response.model';
 import { ServerTransfer } from '../../core/services/excel-transfer.service';
 
-export type CertificateType = 'baptism' | 'marriage' | 'death';
+export type CertificateType = 'baptism' | 'marriage' | 'death' | 'confirmation';
 
 @Injectable({ providedIn: 'root' })
 export class CertificateService {

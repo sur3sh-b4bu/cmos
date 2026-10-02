@@ -45,6 +45,8 @@ import { ImportResultDialogComponent, ImportResultDialogData } from '../import-r
 import { ImportMappingDialogComponent } from '../import-mapping-dialog/import-mapping-dialog';
 import { LanguageService } from '../../../core/services/language.service';
 import { baminiToUnicode } from '../../../core/utils/bamini-to-unicode.util';
+import { FileDownloadService } from '../../../core/services/file-download.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'coms-data-table',
@@ -74,6 +76,8 @@ export class DataTableComponent<T = Record<string, unknown>> implements OnInit, 
   private languageService = inject(LanguageService);
   private notification = inject(NotificationService);
   private excelTransfer = inject(ExcelTransferService);
+  private fileDownload = inject(FileDownloadService);
+  private authService = inject(AuthService);
   private dialog = inject(MatDialog);
 
   @Input({ required: true }) columns: DataTableColumn<T>[] = [];
@@ -83,10 +87,12 @@ export class DataTableComponent<T = Record<string, unknown>> implements OnInit, 
   @Input() pageSize = 25;
   @Input() pageSizeOptions = [10, 25, 50, 100];
   @Input() loading = false;
+  @Input() sort?: DataTableSort;
   @Input({ required: true }) tableId!: string;
   @Input() cellTemplates: Record<string, TemplateRef<unknown>> = {};
   @Input() exportFileName = 'export';
   @Input() showExport = true;
+  @Input() showPrint = true;
   /** A translation key (e.g. "certificates.noneRecorded"); falls back to a generic "No records found." if not set. */
   @Input() emptyMessageKey = '';
   /** Optional: fetch the full matching dataset (ignoring pagination) for export. Falls back to the currently loaded page. */
@@ -138,6 +144,7 @@ export class DataTableComponent<T = Record<string, unknown>> implements OnInit, 
   searchTerm = '';
   exporting = signal(false);
   importing = signal(false);
+  printing = signal(false);
   private searchSubject = new Subject<string>();
 
   /** "Type in Bamini" for the quick search box -- same convention as the
@@ -150,13 +157,12 @@ export class DataTableComponent<T = Record<string, unknown>> implements OnInit, 
    * results won't match a Tamil name mid-typing here (the stored data is
    * real Unicode, not raw Bamini) -- click/tab away once to convert and
    * get real results, same tradeoff as every other Bamini field. */
-  baminiSearch = signal(this.languageService.isTamil());
+  baminiSearch = signal(this.languageService.isTamilTextInput());
 
-  /** Keeps the toggle above in sync if the site language changes while
-   * this table is on screen, not just on initial load -- see
-   * LanguageService.isTamil's own doc comment. */
+  /** Keeps the toggle above in sync if the text input mode changes while
+   * this table is on screen, not just on initial load. */
   constructor() {
-    effect(() => this.baminiSearch.set(this.languageService.isTamil()));
+    effect(() => this.baminiSearch.set(this.languageService.isTamilTextInput()));
   }
 
   toggleBaminiSearch(): void {
@@ -282,6 +288,167 @@ export class DataTableComponent<T = Record<string, unknown>> implements OnInit, 
       await exportRowsToExcel(translatedColumns, rowsToExport, this.exportFileName);
     } finally {
       this.exporting.set(false);
+    }
+  }
+
+  async printTable(): Promise<void> {
+    if (this.printing()) return;
+    this.printing.set(true);
+    try {
+      const rowsToPrint = this.exportAllFn ? await this.exportAllFn() : this.rows;
+      if (!rowsToPrint || rowsToPrint.length === 0) {
+        this.notification.warning(this.translate.instant('common.noRecordsFound'));
+        return;
+      }
+
+      const cols = (this.exportColumns ?? this.visibleColumns()).filter(
+        (c) => c.key !== 'actions' && !c.hiddenByDefault
+      );
+
+      const currentUser = this.authService.currentUser();
+      const activeBranch = this.authService.activeChurchBranch();
+      const churchName = activeBranch?.churchName || currentUser?.churchName || 'CHURCH OFFICE MANAGEMENT SYSTEM';
+      const churchCity = '';
+      const title = this.exportFileName ? this.exportFileName.replace(/[-_]/g, ' ').toUpperCase() : 'REPORT';
+      const now = new Date().toLocaleString();
+
+      const headerHtml = `
+        <div class="print-header">
+          <div class="church-title">${churchName}</div>
+          ${churchCity ? `<div class="church-sub">${churchCity}</div>` : ''}
+          <div class="report-title">${title}</div>
+          <div class="report-meta">
+            <span><strong>Total Records:</strong> ${rowsToPrint.length}</span>
+            <span><strong>Printed Date:</strong> ${now}</span>
+          </div>
+        </div>
+      `;
+
+      const theadHtml = `
+        <thead>
+          <tr>
+            <th style="width: 35px; text-align: center;">#</th>
+            ${cols.map((c) => `<th style="text-align: ${c.align || 'left'}">${this.translate.instant(c.label)}</th>`).join('')}
+          </tr>
+        </thead>
+      `;
+
+      const tbodyHtml = `
+        <tbody>
+          ${rowsToPrint
+            .map(
+              (row, idx) => `
+            <tr>
+              <td style="text-align: center; color: #64748b; font-size: 11px;">${idx + 1}</td>
+              ${cols
+                .map((c) => {
+                  const val = this.getCellText(row, c);
+                  return `<td style="text-align: ${c.align || 'left'}">${val !== null && val !== undefined ? val : ''}</td>`;
+                })
+                .join('')}
+            </tr>
+          `
+            )
+            .join('')}
+        </tbody>
+      `;
+
+      const isLandscape = cols.length > 5;
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${title}</title>
+          <style>
+            @page {
+              size: ${isLandscape ? 'landscape' : 'portrait'};
+              margin: 12mm 10mm;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+              color: #1e293b;
+              margin: 0;
+              padding: 10px;
+              font-size: 12px;
+              line-height: 1.4;
+            }
+            .print-header {
+              text-align: center;
+              margin-bottom: 16px;
+              border-bottom: 2px solid #072a63;
+              padding-bottom: 10px;
+            }
+            .church-title {
+              font-size: 18px;
+              font-weight: 700;
+              color: #072a63;
+              letter-spacing: 0.5px;
+            }
+            .church-sub {
+              font-size: 12px;
+              color: #64748b;
+              margin-top: 2px;
+            }
+            .report-title {
+              font-size: 14px;
+              font-weight: 600;
+              color: #334155;
+              margin-top: 8px;
+              letter-spacing: 0.3px;
+            }
+            .report-meta {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 8px;
+              font-size: 11px;
+              color: #64748b;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 6px;
+            }
+            th {
+              background-color: #f1f5f9;
+              color: #072a63;
+              font-weight: 700;
+              font-size: 11px;
+              padding: 8px 6px;
+              border: 1px solid #cbd5e1;
+              text-transform: uppercase;
+              letter-spacing: 0.3px;
+            }
+            td {
+              padding: 6px;
+              border: 1px solid #e2e8f0;
+              font-size: 11.5px;
+              word-break: break-word;
+            }
+            tr:nth-child(even) {
+              background-color: #f8fafc;
+            }
+            @media print {
+              thead { display: table-header-group; }
+              tr { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          ${headerHtml}
+          <table>
+            ${theadHtml}
+            ${tbodyHtml}
+          </table>
+        </body>
+        </html>
+      `;
+
+      this.fileDownload.printHtmlContent(html);
+    } catch {
+      this.notification.error(this.translate.instant('common.somethingWentWrong'));
+    } finally {
+      this.printing.set(false);
     }
   }
 

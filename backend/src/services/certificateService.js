@@ -146,11 +146,14 @@ async function remove(type, id, req) {
   emitToChurch(req.user.churchId, 'certificates:changed', { type, action: 'deleted', id });
 }
 
+const templateRepo = require('../repositories/certificateTemplateRepository');
+
 async function buildPdf(type, id, req) {
   const config = resolveConfig(type);
   const record = await getById(type, id, req);
   const church = await lookupRepository.getChurchById(req.user.churchId);
-  const buffer = await generateCertificatePdf(type, record, church);
+  const template = await templateRepo.getTemplate(req.user.churchId, type);
+  const buffer = await generateCertificatePdf(type, record, church, template);
 
   await auditService.fromRequest(req, {
     action: 'PRINT_CERTIFICATE',

@@ -128,15 +128,15 @@ function receiptHeader(church, lang, logoDataUrl, primaryColor = '#072a63') {
   const churchName = localizedName(church?.name, church?.name_ta, lang) || t(lang, 'churchOffice');
   const address = addressLine(church, lang);
   const textStack = [
-    { text: churchName, style: 'churchName', alignment: logoDataUrl ? 'left' : 'center', color: '#ffffff' },
-    address ? { text: address, alignment: logoDataUrl ? 'left' : 'center', fontSize: 9.5, color: '#ffffff', margin: [0, 2, 0, 0] } : null,
-    church?.phone ? { text: `Ph: ${church.phone}`, alignment: logoDataUrl ? 'left' : 'center', fontSize: 9.5, color: '#ffffff', margin: [0, 1, 0, 0] } : null,
+    { text: churchName, style: 'churchName', alignment: logoDataUrl ? 'left' : 'center', color: primaryColor },
+    address ? { text: address, alignment: logoDataUrl ? 'left' : 'center', fontSize: 9, color: '#333333', margin: [0, 2, 0, 0] } : null,
+    church?.phone ? { text: `Ph: ${church.phone}`, alignment: logoDataUrl ? 'left' : 'center', fontSize: 9, color: '#333333', margin: [0, 1, 0, 0] } : null,
   ].filter(Boolean);
 
   const inner = logoDataUrl
     ? {
         columns: [
-          { image: logoDataUrl, width: 44, alignment: 'left' },
+          { image: logoDataUrl, width: 40, alignment: 'left' },
           { width: '*', stack: textStack },
         ],
         columnGap: 10,
@@ -151,17 +151,19 @@ function receiptHeader(church, lang, logoDataUrl, primaryColor = '#072a63') {
           [
             {
               ...inner,
-              margin: [10, 8, 10, 8],
+              margin: [8, 6, 8, 6],
             },
           ],
         ],
       },
       layout: {
-        fillColor: () => primaryColor,
-        hLineWidth: () => 0,
-        vLineWidth: () => 0,
+        hLineWidth: () => 1.2,
+        vLineWidth: () => 1.2,
+        hLineColor: () => primaryColor,
+        vLineColor: () => primaryColor,
+        fillColor: () => null,
       },
-      margin: [0, 0, 0, 8],
+      margin: [0, 0, 0, 6],
     },
   ];
 }
@@ -170,8 +172,8 @@ function receiptHeader(church, lang, logoDataUrl, primaryColor = '#072a63') {
 // point, so ~2.4pt keeps every module around 6-7 dots -- comfortably above the
 // point where speckle and ink bleed start costing scans.
 const MIN_PT_PER_MODULE = 2.4;
-const QR_MIN_WIDTH_PT = 92;
-const QR_MAX_WIDTH_PT = 150; // kept modest even on the wider A5 page -- scan reliability, not page fit, sets this ceiling
+const QR_MIN_WIDTH_PT = 80;
+const QR_MAX_WIDTH_PT = 110; // kept compact for ink and vertical height optimization
 
 async function generateReceiptPdf(intention, church, thankYouMessage, qrMode = 'calendar', currencySymbol = '₹', billedBy, lang = 'en') {
   const primaryColor = getThemePrimaryColor(church?.theme_color);
@@ -199,19 +201,9 @@ async function generateReceiptPdf(intention, church, thankYouMessage, qrMode = '
   const logoDataUrl = getChurchLogoDataUrl(church);
 
   const docDefinition = {
-    // Fixed, exact ISO A5 (148 x 210mm / 419.53 x 595.28pt) -- these receipts
-    // are printed on real A5 paper, so the PDF's own page size has to match
-    // that exactly for every printer driver, OS and browser to recognize and
-    // select "A5" correctly. A shorter, content-sized custom page (tried and
-    // reverted -- see git history) looks better in a PDF viewer but is not a
-    // named paper size at all, so a real printer's driver has nothing to
-    // match it to and can silently fall back to its own default paper
-    // (commonly A4/Letter) with unpredictable scaling -- inconsistent across
-    // devices is exactly what this must never be. The unused space below a
-    // short receipt's content is the accepted trade-off for that guarantee.
     pageSize: 'A5',
     pageOrientation: 'portrait',
-    pageMargins: [16, 16, 16, 16],
+    pageMargins: [14, 12, 14, 12],
     // Font choice also looks at the actual free-text fields, not just
     // `lang` -- Booked By / Name / the custom intention can be typed in
     // Tamil regardless of which language the receipt itself is printed
@@ -219,6 +211,24 @@ async function generateReceiptPdf(intention, church, thankYouMessage, qrMode = '
     defaultStyle: {
       font: fontFor(lang, intention.name, intention.booked_by, intentionText, massName, intention.mass_offering_description, thankYouMessage),
       fontSize: 10.5,
+    },
+    background: function (currentPage, pageSize) {
+      return [
+        {
+          canvas: [
+            {
+              type: 'rect',
+              x: 8,
+              y: 8,
+              w: pageSize.width - 16,
+              h: pageSize.height - 16,
+              lineWidth: 1.5,
+              lineColor: primaryColor,
+              r: 4,
+            },
+          ],
+        },
+      ];
     },
     content: [
       ...receiptHeader(church, lang, logoDataUrl, primaryColor),
@@ -327,16 +337,9 @@ async function generateReceiptPdf(intention, church, thankYouMessage, qrMode = '
       { text: t(lang, 'scanCalendar'), alignment: 'center', fontSize: 7.5, color: '#444444', margin: [0, 0, 0, 2] },
       { text: thankYouMessage || t(lang, 'defaultThankYou'), alignment: 'center', italics: true, fontSize: 8, margin: [0, 2, 0, 8] },
       ...receiptFooter(church, lang),
-      {
-        text: `${t(lang, 'generated')}: ${formatDateDMY(new Date())} ${formatTime24(new Date())}`,
-        alignment: 'center',
-        fontSize: 7,
-        color: '#666666',
-        margin: [0, 4, 0, 0],
-      },
     ].filter(Boolean),
     styles: {
-      churchName: { fontSize: 18, bold: true, color: '#ffffff' },
+      churchName: { fontSize: 16, bold: true, color: primaryColor },
       title: { fontSize: 12, bold: true, color: '#6E4E12' },
     },
   };

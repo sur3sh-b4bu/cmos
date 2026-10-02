@@ -8,9 +8,8 @@ const { t, fontFor, localizedName } = require('../utils/pdfLabels');
  * system (handed to the priest before Mass). Must be large, readable,
  * grouped by Mass, and correctly repeat its header across pages.
  */
-async function generateDailyRegisterPdf({ prayerDate, church, entries, generatedBy, currencySymbol = '₹', namesOnly = false, lang = 'en' }) {
+async function generateDailyRegisterPdf({ prayerDate, church, entries, generatedBy, currencySymbol = '₹', namesOnly = false, reasonsOnly = false, lang = 'en' }) {
   const groups = groupByMass(entries, lang);
-  const generatedAt = new Date();
   const primaryColor = getThemePrimaryColor(church?.theme_color);
   // See receiptPdf.js's own comment: names/intentions are free text that
   // can be Tamil regardless of `lang`, so every row across every group is
@@ -20,10 +19,17 @@ async function generateDailyRegisterPdf({ prayerDate, church, entries, generated
     ...groups.flatMap((g) => [g.massName, ...g.rows.flatMap((row) => [row.name, row.intentionText])])
   );
 
-  // Second print option: names + intentions only, for handing to the priest
-  // without exposing offering amounts or receipt numbers.
-  const widths = namesOnly ? [28, '25%', '*'] : [28, '18%', '*', 68, 60];
-  const headerCells = namesOnly
+  // Print options:
+  // 1. reasonsOnly: only intentions/reasons to read at altar/pulpit
+  // 2. namesOnly: names + intentions only, without exposing offering amounts or receipt numbers
+  // 3. full register: all columns
+  const widths = reasonsOnly ? [28, '*'] : namesOnly ? [28, '25%', '*'] : [28, '18%', '*', 68, 60];
+  const headerCells = reasonsOnly
+    ? [
+        { text: '#', style: 'tableHeader', alignment: 'center' },
+        { text: t(lang, 'massIntention'), style: 'tableHeader' },
+      ]
+    : namesOnly
     ? [
         { text: '#', style: 'tableHeader' },
         { text: t(lang, 'name'), style: 'tableHeader' },
@@ -39,11 +45,16 @@ async function generateDailyRegisterPdf({ prayerDate, church, entries, generated
 
   const body = [];
   groups.forEach((group, i) => {
-    body.push({
-      text: `${group.massName}  –  ${formatTime(group.massTime)}`,
+    const countLabel = t(lang, 'intentions') || 'Intentions';
+    const massHeader = {
+      text: `${group.massName}  –  ${formatTime(group.massTime)}  (${group.rows.length} ${countLabel})`,
       style: 'massHeader',
-      margin: [0, i === 0 ? 0 : 16, 0, 6],
-    });
+      margin: [0, 2, 0, 8],
+    };
+    if (i > 0) {
+      massHeader.pageBreak = 'before';
+    }
+    body.push(massHeader);
     body.push({
       table: {
         headerRows: 1,
@@ -52,7 +63,12 @@ async function generateDailyRegisterPdf({ prayerDate, church, entries, generated
         body: [
           headerCells,
           ...group.rows.map((row, idx) =>
-            namesOnly
+            reasonsOnly
+              ? [
+                  { text: String(idx + 1), style: 'cell', alignment: 'center' },
+                  { text: row.intentionText, style: 'cell', bold: true, fontSize: 13 },
+                ]
+              : namesOnly
               ? [
                   { text: String(idx + 1), style: 'cell', alignment: 'center' },
                   { text: row.name, style: 'cell', bold: true },
@@ -69,8 +85,10 @@ async function generateDailyRegisterPdf({ prayerDate, church, entries, generated
         ],
       },
       layout: {
-        fillColor: (rowIndex) => (rowIndex === 0 ? primaryColor : rowIndex % 2 === 0 ? '#F4F6FB' : null),
-        hLineColor: () => '#D0D5DD',
+        fillColor: (rowIndex) => (rowIndex === 0 ? null : rowIndex % 2 === 0 ? '#F9FAFB' : null),
+        hLineWidth: (i, node) => (i === 0 || i === 1 || i === node.table.body.length ? 1.2 : 0.5),
+        hLineColor: (i) => (i === 0 || i === 1 ? primaryColor : '#D0D5DD'),
+        vLineWidth: () => 0.5,
         vLineColor: () => '#D0D5DD',
       },
     });
@@ -93,18 +111,8 @@ async function generateDailyRegisterPdf({ prayerDate, church, entries, generated
             { text: `${t(lang, 'page')} ${currentPage}`, alignment: 'right', fontSize: 9, color: '#888888', width: 80 },
           ],
         },
-        { text: namesOnly ? t(lang, 'registerNamesOnlyTitle') : t(lang, 'registerTitle'), style: 'docTitle' },
-        {
-          columns: [
-            { text: `${t(lang, 'date')}: ${formatDate(prayerDate)}`, fontSize: 10 },
-            {
-              text: `${t(lang, 'generated')}: ${formatDateDMY(generatedAt)} ${formatTime24(generatedAt)}`,
-              alignment: 'right',
-              fontSize: 9,
-              color: '#888888',
-            },
-          ],
-        },
+        { text: reasonsOnly ? (t(lang, 'registerReasonsOnlyTitle') || 'DAILY REGISTER -- MASS INTENTIONS ONLY') : namesOnly ? t(lang, 'registerNamesOnlyTitle') : t(lang, 'registerTitle'), style: 'docTitle' },
+        { text: `${t(lang, 'date')}: ${formatDate(prayerDate)}`, fontSize: 10 },
         { canvas: [{ type: 'line', x1: 0, y1: 4, x2: 523, y2: 4, lineWidth: 1, lineColor: '#B08D2B' }] },
       ],
     }),
@@ -126,7 +134,7 @@ async function generateDailyRegisterPdf({ prayerDate, church, entries, generated
       churchName: { fontSize: 16, bold: true, color: primaryColor },
       docTitle: { fontSize: 11, bold: true, color: '#B08D2B', margin: [0, 2, 0, 4] },
       massHeader: { fontSize: 14, bold: true, color: primaryColor },
-      tableHeader: { bold: true, color: '#FFFFFF', fontSize: 11 },
+      tableHeader: { bold: true, color: primaryColor, fontSize: 11 },
       cell: { fontSize: 12, margin: [0, 3, 0, 3] },
       cellSmall: { fontSize: 9, color: '#555555', margin: [0, 3, 0, 3] },
     },
@@ -148,9 +156,7 @@ function groupByMass(entries, lang) {
     }
     map.get(e.mass_id).rows.push({
       name: e.name,
-      intentionText: e.intention_is_custom
-        ? e.custom_intention
-        : localizedName(e.intention_master_name, e.intention_master_name_ta, lang) || e.custom_intention || '-',
+      intentionText: e.custom_intention || localizedName(e.intention_master_name, e.intention_master_name_ta, lang) || '-',
       offeringAmount: Number(e.offering_amount),
       receiptNo: e.receipt_no,
     });

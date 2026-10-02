@@ -7,6 +7,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MassIntentionService } from '../mass-intention.service';
 import { MassIntention } from '../mass-intention.model';
 import { FileDownloadService } from '../../../core/services/file-download.service';
@@ -30,6 +31,8 @@ interface MassGroup {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
+    RouterLinkActive,
     MatFormFieldModule,
     MatInputModule,
     MatDatepickerModule,
@@ -53,7 +56,7 @@ export class DailyRegisterComponent implements OnInit {
   selectedDate = signal(new Date());
   loading = signal(false);
   printing = signal(false);
-  printingNamesOnly = signal(false);
+  printingReasonsOnly = signal(false);
   entries = signal<MassIntention[]>([]);
 
   groups = computed<MassGroup[]>(() => {
@@ -124,15 +127,15 @@ export class DailyRegisterComponent implements OnInit {
     }
   }
 
-  /** Same register, but names + intentions only -- for handing to the
-   * priest without exposing offering amounts/receipt numbers (see
-   * dailyRegisterPdf.js's namesOnly option). */
-  async printRegisterNamesOnly(): Promise<void> {
-    this.printingNamesOnly.set(true);
+  /** Print register with mass reasons/intentions only -- without donor names or amounts */
+  async printRegisterReasonsOnly(): Promise<void> {
+    this.printingReasonsOnly.set(true);
     try {
-      await this.fileDownload.printPdf(this.massIntentionService.getRegisterPrintUrl(this.dateParam, true, this.languageService.current()));
+      await this.fileDownload.printPdf(
+        this.massIntentionService.getRegisterReasonsOnlyPrintUrl(this.dateParam, this.languageService.current())
+      );
     } finally {
-      this.printingNamesOnly.set(false);
+      this.printingReasonsOnly.set(false);
     }
   }
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, WritableSignal, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroupDirective, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroupDirective, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -113,6 +113,52 @@ export class MassIntentionFormComponent implements OnInit {
   intentionOptions = signal<IntentionMasterOption[]>([]);
   paymentMethods = signal<PaymentMethodOption[]>([]);
   restrictedDates = signal<RestrictedDateRow[]>([]);
+  selectedPrayerDate = signal<Date | null>(new Date());
+
+  readonly filteredMasses = computed(() => {
+    return this.masses();
+  });
+
+  readonly massGroups = computed(() => {
+    const list = this.masses();
+    const date = this.selectedPrayerDate();
+    const isSunday = date ? new Date(date).getDay() === 0 : false;
+    // Show the matching day type first, followed by others
+    const dayTypes = isSunday ? ['Sunday', 'Daily', 'Special'] : ['Daily', 'Sunday', 'Special'];
+    const groups: { category: string; label: string; masses: MassOption[] }[] = [];
+    for (const t of dayTypes) {
+      const matching = list.filter((m) => m.day_type === t);
+      if (matching.length > 0) {
+        groups.push({
+          category: t,
+          label: this.getDayTypeLabel(t),
+          masses: matching,
+        });
+      }
+    }
+    const other = list.filter((m) => !dayTypes.includes(m.day_type));
+    if (other.length > 0) {
+      groups.push({
+        category: 'Other',
+        label: this.getDayTypeLabel('Other'),
+        masses: other,
+      });
+    }
+    return groups;
+  });
+
+  getDayTypeLabel(dayType: string): string {
+    switch (dayType) {
+      case 'Sunday':
+        return this.translate.instant('churchSetup.daySunday');
+      case 'Daily':
+        return this.translate.instant('churchSetup.dayDaily');
+      case 'Special':
+        return this.translate.instant('churchSetup.daySpecial');
+      default:
+        return dayType;
+    }
+  }
 
   /** "Type in Bamini" toggles -- one per free-text field that can hold a
    * Tamil name/intention. While on, that field renders in the Bamini font
@@ -123,16 +169,15 @@ export class MassIntentionFormComponent implements OnInit {
    * coverage, so leaving it on after conversion would render the
    * now-correct text as blank. A plain English name typed with the toggle
    * off is never touched. */
-  nameBamini = signal(this.languageService.isTamil());
-  bookedByBamini = signal(this.languageService.isTamil());
-  customIntentionBamini = signal(this.languageService.isTamil());
+  nameBamini = signal(this.languageService.isTamilTextInput());
+  bookedByBamini = signal(this.languageService.isTamilTextInput());
+  customIntentionBamini = signal(this.languageService.isTamilTextInput());
 
-  /** Keeps all three toggles above in sync if the site language changes
-   * while this form is open, not just on initial load -- see
-   * LanguageService.isTamil's own doc comment. */
+  /** Keeps all three toggles above in sync if the text input mode changes
+   * while this form is open, not just on initial load. */
   constructor() {
     effect(() => {
-      const isTamil = this.languageService.isTamil();
+      const isTamil = this.languageService.isTamilTextInput();
       this.nameBamini.set(isTamil);
       this.bookedByBamini.set(isTamil);
       this.customIntentionBamini.set(isTamil);
@@ -164,11 +209,38 @@ export class MassIntentionFormComponent implements OnInit {
   /** calendarHeaderComponent needs a class reference, not a template var. */
   readonly todayHeader = DatepickerTodayHeaderComponent;
 
+  get tomorrowDate(): Date {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  get minPrayerDate(): Date | null {
+    return this.editId() ? null : this.tomorrowDate;
+  }
+
+  dateFilter = (date: Date | null): boolean => {
+    if (!date) return false;
+    if (this.editId()) return true;
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() >= this.tomorrowDate.getTime();
+  };
+
+  futureDateValidator = (control: AbstractControl): ValidationErrors | null => {
+    if (this.editId()) return null;
+    if (!control.value) return null;
+    const d = new Date(control.value);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() >= this.tomorrowDate.getTime() ? null : { pastOrToday: true };
+  };
+
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(150)]],
     bookedBy: [''],
     phone: ['', phoneValidator],
-    prayerDate: [new Date(), Validators.required],
+    prayerDate: [this.tomorrowDate, [Validators.required, this.futureDateValidator]],
     massId: [null as number | null, Validators.required],
     prayerIntentionMasterId: [null as number | null],
     customIntention: [''],
@@ -311,9 +383,28 @@ export class MassIntentionFormComponent implements OnInit {
     this.masterLookup.list<MassOption>('masses').subscribe((rows) => this.masses.set(rows));
     this.masterLookup
       .list<IntentionMasterOption>('prayer_intention_master')
-      .subscribe((rows) => this.intentionOptions.set(rows));
+      .subscribe((rows) => {
+        this.intentionOptions.set(rows);
+        if (!this.editId() && !this.form.controls.prayerIntentionMasterId.value) {
+          const others = rows.find(
+            (o) => o.is_custom === 1 || o.name?.toLowerCase() === 'others' || o.name_ta === 'மற்றவை'
+          );
+          if (others) {
+            this.form.controls.prayerIntentionMasterId.setValue(others.id);
+          }
+        }
+      });
     this.masterLookup.list<PaymentMethodOption>('payment_methods').subscribe((rows) => this.paymentMethods.set(rows));
     this.masterLookup.list<RestrictedDateRow>('holidays').subscribe((rows) => this.restrictedDates.set(rows));
+
+    // When prayer date changes, re-evaluate filtered masses and clear massId if no longer valid
+    this.form.controls.prayerDate.valueChanges.subscribe((date) => {
+      this.selectedPrayerDate.set(date);
+      const currentMassId = this.form.controls.massId.value;
+      if (currentMassId && !this.filteredMasses().some((m) => m.id === currentMassId)) {
+        this.form.controls.massId.setValue(null);
+      }
+    });
 
     // "On selecting the Mass, the default offering amount should appear" --
     // fires for genuine user selections only (see suppressMassAutoFill).
@@ -380,7 +471,10 @@ export class MassIntentionFormComponent implements OnInit {
         massId: null,
         offeringAmount: 0,
         // Dates don't survive JSON round-tripping -- everything else does.
-        prayerDate: draft.prayerDate ? new Date(draft.prayerDate) : new Date(),
+        prayerDate:
+          draft.prayerDate && new Date(draft.prayerDate) >= this.tomorrowDate
+            ? new Date(draft.prayerDate)
+            : this.tomorrowDate,
       });
       this.suppressMassAutoFill = false;
       this.notification.info(this.translate.instant('massIntentions.draftRestored'));
@@ -513,19 +607,23 @@ export class MassIntentionFormComponent implements OnInit {
         // Offering Amount default, so the next booking should always start
         // from an explicit, fresh pick rather than silently reappearing
         // pre-selected.
+        const others = this.intentionOptions().find(
+          (o) => o.is_custom === 1 || o.name?.toLowerCase() === 'others' || o.name_ta === 'மற்றவை'
+        );
         this.suppressMassAutoFill = true;
         this.formGroupDirective?.resetForm({
           name: '',
           bookedBy: '',
           phone: '',
-          prayerDate: new Date(),
+          prayerDate: this.tomorrowDate,
           massId: null,
-          prayerIntentionMasterId: null,
+          prayerIntentionMasterId: others ? others.id : null,
           customIntention: '',
           offeringAmount: 0,
           paymentMethodId: null,
           remarks: '',
         });
+        this.selectedPrayerDate.set(this.tomorrowDate);
         this.suppressMassAutoFill = false;
       }
     } catch (err: any) {
@@ -548,7 +646,17 @@ export class MassIntentionFormComponent implements OnInit {
   }
 
   private async confirmDuplicate(err: any): Promise<boolean> {
-    const message = extractErrorMessage(err);
+    const details = err?.error?.details;
+    let message = extractErrorMessage(err);
+    if (details) {
+      message += '\n\n' + this.translate.instant('massIntentions.existingDetails') + ':\n' +
+        `• ${this.translate.instant('massIntentions.receiptNo')}: ${details.receiptNo}\n` +
+        `• ${this.translate.instant('common.name')}: ${details.name}` +
+        (details.bookedBy ? `\n• ${this.translate.instant('massIntentions.bookedBy')}: ${details.bookedBy}` : '') +
+        (details.phone ? `\n• ${this.translate.instant('massIntentions.phoneNumber')}: ${details.phone}` : '') +
+        `\n• ${this.translate.instant('massIntentions.prayerDate')}: ${details.prayerDate}` +
+        `\n• ${this.translate.instant('massIntentions.offeringAmount')}: ₹${details.offeringAmount}`;
+    }
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: this.translate.instant('massIntentions.duplicateTitle'),

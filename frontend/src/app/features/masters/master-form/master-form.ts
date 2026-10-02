@@ -115,7 +115,7 @@ export class MasterFormComponent implements OnChanges, OnDestroy {
    * see LanguageService.isTamil's own doc comment. */
   constructor() {
     effect(() => {
-      const isTamil = this.languageService.isTamil();
+      const isTamil = this.languageService.isTamilTextInput();
       for (const sig of this.baminiSignals.values()) sig.set(isTamil);
     });
   }
@@ -302,7 +302,7 @@ export class MasterFormComponent implements OnChanges, OnDestroy {
   baminiSignal(key: string): WritableSignal<boolean> {
     let sig = this.baminiSignals.get(key);
     if (!sig) {
-      sig = signal(this.languageService.isTamil());
+      sig = signal(this.languageService.isTamilTextInput());
       this.baminiSignals.set(key, sig);
     }
     return sig;

@@ -163,9 +163,28 @@ export class BulkBatchDetailDialogComponent {
   editRowForm: FormGroup = this.buildRow();
   private editOriginalDate: string | null = null;
 
+  get tomorrowDate(): Date {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  get minPrayerDate(): Date | null {
+    return this.editingId() ? null : this.tomorrowDate;
+  }
+
+  dateFilter = (date: Date | null): boolean => {
+    if (!date) return false;
+    if (this.editingId()) return true;
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() >= this.tomorrowDate.getTime();
+  };
+
   private buildRow(): FormGroup {
     return this.fb.group({
-      prayerDate: this.fb.control<Date>(new Date(), Validators.required),
+      prayerDate: this.fb.control<Date>(this.tomorrowDate, Validators.required),
       name: this.fb.control('', [Validators.required, Validators.maxLength(150)]),
       massId: this.fb.control<number | null>(null, Validators.required),
       offeringAmount: this.fb.control<number>(0, [Validators.required, Validators.min(0.01)]),

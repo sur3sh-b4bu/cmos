@@ -1,0 +1,294 @@
+<div class="cert-templates-container">
+  <!-- Top Navigation & Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <a routerLink="/settings" class="back-btn" mat-button>
+        <mat-icon>arrow_back</mat-icon>
+        <span>Back to Settings</span>
+      </a>
+      <div class="header-titles">
+        <h1 class="page-title">Certificate Print Templates</h1>
+        <p class="page-subtitle">
+          Customize titles, diocese headers, individual field labels, and signatory text printed on official certificates.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <mat-spinner diameter="44"></mat-spinner>
+    <p>Loading certificate templates…</p>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading() && currentTemplate() as tpl" class="content-wrapper">
+    <!-- Tabs Navigation -->
+    <mat-tab-group
+      class="cert-tabs"
+      animationDuration="250ms"
+      [selectedIndex]="activeTab() === 'baptism' ? 0 : activeTab() === 'marriage' ? 1 : activeTab() === 'confirmation' ? 2 : 3"
+      (selectedIndexChange)="onTabChange($event)"
+    >
+      <mat-tab *ngFor="let tab of tabs">
+        <ng-template mat-tab-label>
+          <div class="tab-label-content">
+            <mat-icon class="tab-icon">{{ tab.icon }}</mat-icon>
+            <span class="tab-title">{{ tab.label }}</span>
+            <span
+              *ngIf="templates()?.[tab.type]?.is_customized"
+              class="customized-pill"
+              matTooltip="Customized by your church"
+            >
+              Custom
+            </span>
+          </div>
+        </ng-template>
+      </mat-tab>
+    </mat-tab-group>
+
+    <!-- Main Card Body -->
+    <div class="template-card">
+      <!-- Status & Top Action Bar -->
+      <div class="card-action-bar">
+        <div class="status-indicator">
+          <div class="status-badge" [class.is-custom]="isCustomized()">
+            <mat-icon>{{ isCustomized() ? 'tune' : 'verified' }}</mat-icon>
+            <span>{{ isCustomized() ? 'Custom Church Design Text' : 'Official Diocese Standard' }}</span>
+          </div>
+          <p class="status-desc">
+            {{ isCustomized()
+              ? 'This certificate uses church-specific customized labels and headers on PDF printouts.'
+              : 'This certificate currently uses standard official diocese wording on all prints.' }}
+          </p>
+        </div>
+
+        <div class="action-buttons">
+          <button
+            mat-stroked-button
+            color="accent"
+            type="button"
+            class="action-btn"
+            (click)="previewPdf()"
+            [disabled]="previewing() || saving()"
+          >
+            <mat-icon *ngIf="!previewing()">visibility</mat-icon>
+            <mat-spinner *ngIf="previewing()" diameter="18" class="btn-spinner"></mat-spinner>
+            <span>{{ previewing() ? 'Generating…' : 'Print Sample / Preview' }}</span>
+          </button>
+
+          <button
+            *ngIf="isCustomized()"
+            mat-stroked-button
+            color="warn"
+            type="button"
+            class="action-btn"
+            (click)="confirmReset()"
+            [disabled]="saving() || previewing()"
+          >
+            <mat-icon>restart_alt</mat-icon>
+            <span>Reset to Default</span>
+          </button>
+
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            class="action-btn save-btn"
+            (click)="saveTemplate()"
+            [disabled]="saving() || previewing()"
+          >
+            <mat-icon *ngIf="!saving()">check</mat-icon>
+            <mat-spinner *ngIf="saving()" diameter="18" class="btn-spinner"></mat-spinner>
+            <span>{{ saving() ? 'Saving Changes…' : 'Save Changes' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section 1: Header & Diocese -->
+      <section class="config-section">
+        <div class="section-header">
+          <div class="section-icon-wrap header-color">
+            <mat-icon>title</mat-icon>
+          </div>
+          <div class="section-title-wrap">
+            <h2 class="section-title">Certificate Header & Jurisdiction</h2>
+            <p class="section-desc">Main document header, diocese label, and subheader prefix text.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <mat-form-field appearance="outline" class="full-span">
+            <mat-label>Main Certificate Title</mat-label>
+            <textarea
+              matInput
+              rows="2"
+              [ngModel]="tpl.title"
+              (ngModelChange)="updateHeaderProperty('title', $event)"
+              placeholder="e.g. EXTRACT FROM THE REGISTER OF BAPTISM"
+            ></textarea>
+            <mat-hint>The primary title at the top of the certificate. For Death Certificate, use Enter for two lines.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Subheader Prefix</mat-label>
+            <input
+              matInput
+              [ngModel]="tpl.subheader_prefix"
+              (ngModelChange)="updateHeaderProperty('subheader_prefix', $event)"
+              placeholder="e.g. Kept at / Solemnized at / at"
+            />
+            <mat-hint>Text immediately preceding the church location (e.g. 'Kept at' or 'Solemnized at')</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Diocese / Jurisdiction Label</mat-label>
+            <input
+              matInput
+              [ngModel]="tpl.diocese_label"
+              (ngModelChange)="updateHeaderProperty('diocese_label', $event)"
+              placeholder="e.g. Tuticorin Diocese"
+            />
+            <mat-hint>Diocese title printed on the top-right header line</mat-hint>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <!-- Section 2: Signatory & Seal -->
+      <section class="config-section">
+        <div class="section-header">
+          <div class="section-icon-wrap footer-color">
+            <mat-icon>draw</mat-icon>
+          </div>
+          <div class="section-title-wrap">
+            <h2 class="section-title">Footer, Signatory & Official Seal</h2>
+            <p class="section-desc">Signatory title, official seal text, and footer labels.</p>
+          </div>
+        </div>
+
+        <div class="section-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Signatory Title</mat-label>
+            <input
+              matInput
+              [ngModel]="tpl.signatory_title"
+              (ngModelChange)="updateHeaderProperty('signatory_title', $event)"
+              placeholder="e.g. Parish Priest / Catholic Priest"
+            />
+            <mat-hint>Signatory title printed on the bottom right (e.g. 'Parish Priest')</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Official Seal Label</mat-label>
+            <input
+              matInput
+              [ngModel]="tpl.seal_label"
+              (ngModelChange)="updateHeaderProperty('seal_label', $event)"
+              placeholder="e.g. Seal / SEAL"
+            />
+            <mat-hint>Official seal text printed in the bottom center</mat-hint>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <!-- Section 3: Field Labels -->
+      <section class="config-section">
+        <div class="section-header">
+          <div class="section-icon-wrap labels-color">
+            <mat-icon>list_alt</mat-icon>
+          </div>
+          <div class="section-title-wrap">
+            <h2 class="section-title">Certificate Field Labels</h2>
+            <p class="section-desc">
+              Change the exact label text printed before each value row on this certificate.
+            </p>
+          </div>
+        </div>
+
+        <!-- Grouped Fields -->
+        <div *ngFor="let group of fieldGroups[activeTab()]" class="field-subgroup">
+          <div class="subgroup-header">
+            <mat-icon class="subgroup-icon">{{ group.icon }}</mat-icon>
+            <div>
+              <h3 class="subgroup-title">{{ group.title }}</h3>
+              <p class="subgroup-desc">{{ group.description }}</p>
+            </div>
+          </div>
+
+          <div class="fields-grid">
+            <div *ngFor="let f of group.fields" class="field-item">
+              <!-- Select Field -->
+              <mat-form-field *ngIf="f.type === 'select'" appearance="outline" class="w-full" subscriptSizing="dynamic">
+                <mat-label>{{ f.label }}</mat-label>
+                <mat-select
+                  [ngModel]="getFieldLabel(f.key)"
+                  (ngModelChange)="updateFieldLabel(f.key, $event)"
+                  [placeholder]="f.placeholder || ''"
+                >
+                  <mat-option *ngFor="let opt of f.options" [value]="opt.value">
+                    {{ opt.label }}
+                  </mat-option>
+                </mat-select>
+                <mat-hint *ngIf="f.hint">{{ f.hint }}</mat-hint>
+              </mat-form-field>
+
+              <!-- Text Input Field -->
+              <mat-form-field *ngIf="f.type !== 'select'" appearance="outline" class="w-full" subscriptSizing="dynamic">
+                <mat-label>{{ f.label }}</mat-label>
+                <input
+                  matInput
+                  [ngModel]="getFieldLabel(f.key)"
+                  (ngModelChange)="updateFieldLabel(f.key, $event)"
+                  [placeholder]="f.placeholder || ''"
+                />
+                <mat-hint *ngIf="f.hint">{{ f.hint }}</mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Save Action Bar -->
+      <div class="bottom-action-bar">
+        <button
+          *ngIf="isCustomized()"
+          mat-stroked-button
+          color="warn"
+          type="button"
+          (click)="confirmReset()"
+          [disabled]="saving() || previewing()"
+        >
+          <mat-icon>restart_alt</mat-icon>
+          <span>Reset to Default</span>
+        </button>
+
+        <div class="right-buttons">
+          <button
+            mat-stroked-button
+            color="accent"
+            type="button"
+            (click)="previewPdf()"
+            [disabled]="previewing() || saving()"
+          >
+            <mat-icon *ngIf="!previewing()">visibility</mat-icon>
+            <mat-spinner *ngIf="previewing()" diameter="18" class="btn-spinner"></mat-spinner>
+            <span>{{ previewing() ? 'Generating…' : 'Print Sample / Preview' }}</span>
+          </button>
+
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            class="save-btn"
+            (click)="saveTemplate()"
+            [disabled]="saving() || previewing()"
+          >
+            <mat-icon *ngIf="!saving()">check</mat-icon>
+            <mat-spinner *ngIf="saving()" diameter="18" class="btn-spinner"></mat-spinner>
+            <span>{{ saving() ? 'Saving Changes…' : 'Save Changes' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

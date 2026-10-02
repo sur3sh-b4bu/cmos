@@ -227,6 +227,17 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  /** Register-style popup behind the Tomorrow's Mass Intentions stat card */
+  openTomorrowIntentions(): void {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    this.dialog.open(TodayIntentionsDialogComponent, {
+      data: { date: this.toIso(tomorrow) },
+      width: '820px',
+      maxWidth: '95vw',
+    });
+  }
+
   /** Same idea, for the Today's Contributions stat card. */
   openTodayContributions(): void {
     const todayIso = this.toIso(new Date());

@@ -75,6 +75,7 @@ async function run() {
     baptism_certificates: ['view', 'create', 'update', 'delete', 'print', 'export'],
     marriage_certificates: ['view', 'create', 'update', 'delete', 'print', 'export'],
     death_certificates: ['view', 'create', 'update', 'delete', 'print', 'export'],
+    confirmation_certificates: ['view', 'create', 'update', 'delete', 'print', 'export'],
     masters: ['view', 'create', 'update', 'delete'],
     // print_all gates the "day-wise, ALL users" Reports print button (shows
     // who billed each row) -- ADMIN gets it automatically below along with
@@ -113,6 +114,7 @@ async function run() {
       'baptism_certificates.view', 'baptism_certificates.create', 'baptism_certificates.update', 'baptism_certificates.print', 'baptism_certificates.export',
       'marriage_certificates.view', 'marriage_certificates.create', 'marriage_certificates.update', 'marriage_certificates.print', 'marriage_certificates.export',
       'death_certificates.view', 'death_certificates.create', 'death_certificates.update', 'death_certificates.print', 'death_certificates.export',
+      'confirmation_certificates.view', 'confirmation_certificates.create', 'confirmation_certificates.update', 'confirmation_certificates.print', 'confirmation_certificates.export',
       'reports.view', 'reports.export',
     ],
     PRIEST: ['dashboard.view', 'prayer_register.view', 'prayer_register.print', 'reports.view'],

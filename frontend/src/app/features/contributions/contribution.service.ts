@@ -12,6 +12,8 @@ export interface ContributionQuery {
   pageSize?: number;
   search?: string;
   paidOnly?: boolean;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }
 
 @Injectable({ providedIn: 'root' })

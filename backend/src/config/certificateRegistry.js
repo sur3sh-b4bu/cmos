@@ -104,6 +104,33 @@ const registry = {
       { key: 'burial_date', type: 'dateRange' },
     ],
   },
+  confirmation: {
+    table: 'confirmation_certificates',
+    certificateType: 'Confirmation',
+    title: 'Certificate of Confirmation',
+    permissionPrefix: 'confirmation_certificates',
+    // Order matches the "Extract from Confirmation Register" register
+    // format -- see certificatePdf.js.
+    columns: [
+      'name', 'age', 'gender_id', 'parents', 'caste', 'sponsors', 'domicile',
+      'place_of_confirmation', 'date_of_confirmation', 'bishop_name',
+      'priest_id', 'custom_priest_name', 'remarks',
+    ],
+    required: ['name', 'date_of_confirmation'],
+    searchable: [
+      'name', 'certificate_no', 'age', 'gender_name', 'parents', 'caste', 'sponsors', 'domicile',
+      'place_of_confirmation', 'bishop_name', 'priest_name', 'custom_priest_name', 'remarks',
+    ],
+    joins: [
+      { column: 'gender_id', table: 'genders', labelColumn: 'name', alias: 'gender_name' },
+      { column: 'priest_id', table: 'priests', labelColumn: 'name', alias: 'priest_name' },
+    ],
+    filters: [
+      { key: 'gender_id', type: 'select' },
+      { key: 'priest_id', type: 'select' },
+      { key: 'date_of_confirmation', type: 'dateRange' },
+    ],
+  },
 };
 
 module.exports = registry;

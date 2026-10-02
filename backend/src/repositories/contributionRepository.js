@@ -62,14 +62,36 @@ function buildListQuery({ search, paidOnly, churchId, branchId }) {
   return { where, having, params };
 }
 
-async function list({ page = 1, pageSize = 25, ...query }) {
+const SORT_COLUMNS = {
+  receipt_no: 'd.receipt_no',
+  created_at: 'd.created_at',
+  name: 'd.name',
+  phone: 'd.phone',
+  contribution_type: 'dt.name',
+  contribution_amount: 'd.contribution_amount',
+  amount: 'd.contribution_amount',
+  is_paid: 'is_paid',
+  payment_method: 'pm.name',
+};
+
+function buildOrderBy(sortBy, sortDir) {
+  const col = SORT_COLUMNS[sortBy];
+  if (!col) {
+    return 'ORDER BY d.id DESC';
+  }
+  const dir = String(sortDir).toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+  return `ORDER BY ${col} ${dir}, d.id DESC`;
+}
+
+async function list({ page = 1, pageSize = 25, sortBy, sortDir, ...query }) {
   page = clampPage(page);
   pageSize = clampPageSize(pageSize);
   const { where, having, params } = buildListQuery(query);
   const offset = (Number(page) - 1) * Number(pageSize);
+  const orderBy = buildOrderBy(sortBy || query.sortBy, sortDir || query.sortDir);
 
   const [rows] = await pool.query(
-    `${BASE_SELECT} ${where} ${having} ORDER BY d.id DESC LIMIT ? OFFSET ?`,
+    `${BASE_SELECT} ${where} ${having} ${orderBy} LIMIT ? OFFSET ?`,
     [...params, Number(pageSize), offset]
   );
   const [[{ total }]] = await pool.query(

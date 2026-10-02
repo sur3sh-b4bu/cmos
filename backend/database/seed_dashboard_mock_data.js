@@ -42,6 +42,7 @@ async function seedAllMockData() {
   await pool.query("DELETE FROM contributions WHERE receipt_no LIKE 'CON-MOCK-%'");
   await pool.query("DELETE FROM baptism_certificates WHERE certificate_no LIKE 'BAP-MOCK-%'");
   await pool.query("DELETE FROM marriage_certificates WHERE certificate_no LIKE 'MAR-MOCK-%'");
+  await pool.query("DELETE FROM confirmation_certificates WHERE certificate_no LIKE 'CNF-MOCK-%'");
   await pool.query("DELETE FROM death_certificates WHERE certificate_no LIKE 'DTH-MOCK-%'");
 
   const donorNames = [
@@ -1004,7 +1005,203 @@ async function seedAllMockData() {
     );
   }
 
-  // 7. Ensure certificate series numbers
+  // 7. Confirmation Certificates (10 records)
+  console.log('7. Seeding Confirmation Certificates...');
+  const confirmationData = [
+    {
+      no: 'CNF-MOCK-0001',
+      name: 'Maria Josephine Fernandez',
+      age: '14',
+      genderId: femaleGenderId,
+      parents: 'Francis & Maria Fernandez',
+      caste: 'RC Paravar',
+      sponsors: 'Agnes Rozario',
+      domicile: 'St. Mary Parish, Chennai',
+      place: "St. Mary's Church, Chennai",
+      doc: '2025-05-18',
+      bishop: 'Most Rev. Bishop Stephen Antony',
+      priestId: priests[0]?.id || null,
+      customPriest: null,
+      remarks: 'Confirmed during pastoral visitation',
+    },
+    {
+      no: 'CNF-MOCK-0002',
+      name: 'Antony Dominic Savio',
+      age: '15',
+      genderId: maleGenderId,
+      parents: 'Joseph & Mary Anthony',
+      caste: 'RC Paravar',
+      sponsors: 'Dominic Savio Thomas',
+      domicile: 'St. Mary Parish, Chennai',
+      place: "St. Mary's Church, Chennai",
+      doc: '2025-05-18',
+      bishop: 'Most Rev. Bishop Stephen Antony',
+      priestId: priests[0]?.id || null,
+      customPriest: null,
+      remarks: null,
+    },
+    {
+      no: 'CNF-MOCK-0003',
+      name: 'Theresa Stella Maris',
+      age: '14',
+      genderId: femaleGenderId,
+      parents: 'Peter & Stella Maris',
+      caste: 'RC Paravar',
+      sponsors: 'Theresa Lawrence',
+      domicile: 'St. Mary Parish, Chennai',
+      place: "St. Mary's Church, Chennai",
+      doc: '2025-05-18',
+      bishop: 'Most Rev. Bishop Stephen Antony',
+      priestId: priests[1]?.id || null,
+      customPriest: null,
+      remarks: null,
+    },
+    {
+      no: 'CNF-MOCK-0004',
+      name: 'Francis Xavier Paul',
+      age: '16',
+      genderId: maleGenderId,
+      parents: 'Xavier & Philomena Paul',
+      caste: 'RC Paravar',
+      sponsors: 'Francis Xavier',
+      domicile: 'St. Mary Parish, Chennai',
+      place: "St. Mary's Church, Chennai",
+      doc: '2025-11-23',
+      bishop: 'Most Rev. Bishop George Rajendran',
+      priestId: priests[0]?.id || null,
+      customPriest: null,
+      remarks: 'Christ the King Feast Solemn Confirmation',
+    },
+    {
+      no: 'CNF-MOCK-0005',
+      name: 'Clara Philomena Vincent',
+      age: '14',
+      genderId: femaleGenderId,
+      parents: 'Vincent & Clara',
+      caste: 'RC Paravar',
+      sponsors: 'Mary Stella',
+      domicile: 'St. Mary Parish, Chennai',
+      place: "St. Mary's Church, Chennai",
+      doc: '2025-11-23',
+      bishop: 'Most Rev. Bishop George Rajendran',
+      priestId: null,
+      customPriest: 'Rev. Fr. Lawrence David',
+      remarks: null,
+    },
+    {
+      no: 'CNF-MOCK-0006',
+      name: 'Emmanuel Augustine Cruz',
+      age: '15',
+      genderId: maleGenderId,
+      parents: 'Cruz & Selvi Daniel',
+      caste: 'RC Paravar',
+      sponsors: 'Augustine Cruz',
+      domicile: 'St. Mary Parish, Chennai',
+      place: "St. Mary's Church, Chennai",
+      doc: '2026-05-24',
+      bishop: 'Most Rev. Bishop Stephen Antony',
+      priestId: priests[0]?.id || null,
+      customPriest: null,
+      remarks: 'Pentecost Sunday Confirmation',
+    },
+    {
+      no: 'CNF-MOCK-0007',
+      name: 'Catherine Gomez Robert',
+      age: '14',
+      genderId: femaleGenderId,
+      parents: 'Gomez & Rita Robert',
+      caste: 'RC Paravar',
+      sponsors: 'Catherine Gomez',
+      domicile: 'St. Mary Parish, Chennai',
+      place: "St. Mary's Church, Chennai",
+      doc: '2026-05-24',
+      bishop: 'Most Rev. Bishop Stephen Antony',
+      priestId: priests[2]?.id || null,
+      customPriest: null,
+      remarks: null,
+    },
+    {
+      no: 'CNF-MOCK-0008',
+      name: 'வின்சென்ட் பால் அந்தோணி',
+      age: '15',
+      genderId: maleGenderId,
+      parents: 'அந்தோணி & ரோஸ்லின்',
+      caste: 'RC Paravar',
+      sponsors: 'சாமுவேல் ராஜ்',
+      domicile: 'மரியாள் பங்கு, சென்னை',
+      place: 'புனித மரியன்னை பேராலயம், சென்னை',
+      doc: '2026-05-24',
+      bishop: 'Most Rev. Bishop Stephen Antony',
+      priestId: priests[0]?.id || null,
+      customPriest: null,
+      remarks: 'தமிழ் மறைக்கல்வி மாணவர்',
+    },
+    {
+      no: 'CNF-MOCK-0009',
+      name: 'திரேசா எலிசபெத் ராணி',
+      age: '14',
+      genderId: femaleGenderId,
+      parents: 'சார்லஸ் & எலிசபெத் ராணி',
+      caste: 'RC Paravar',
+      sponsors: 'மரியாள் திரேசா',
+      domicile: 'மரியாள் பங்கு, சென்னை',
+      place: 'புனித மரியன்னை பேராலயம், சென்னை',
+      doc: '2026-05-24',
+      bishop: 'Most Rev. Bishop Stephen Antony',
+      priestId: priests[0]?.id || null,
+      customPriest: null,
+      remarks: null,
+    },
+    {
+      no: 'CNF-MOCK-0010',
+      name: 'Ignatius Loyola Doss',
+      age: '15',
+      genderId: maleGenderId,
+      parents: 'Victor & Mary Doss',
+      caste: 'RC Paravar',
+      sponsors: 'Ignatius Loyola',
+      domicile: 'St. Mary Parish, Chennai',
+      place: "St. Mary's Church, Chennai",
+      doc: '2026-05-24',
+      bishop: 'Most Rev. Bishop Stephen Antony',
+      priestId: priests[1]?.id || null,
+      customPriest: null,
+      remarks: null,
+    },
+  ];
+
+  for (const c of confirmationData) {
+    await pool.query(
+      `INSERT INTO confirmation_certificates (
+        church_id, branch_id, certificate_no, name, age, gender_id,
+        parents, caste, sponsors, domicile, place_of_confirmation,
+        date_of_confirmation, bishop_name, priest_id, custom_priest_name,
+        remarks, created_by, updated_by
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        churchId,
+        branchId,
+        c.no,
+        c.name,
+        c.age,
+        c.genderId,
+        c.parents,
+        c.caste,
+        c.sponsors,
+        c.domicile,
+        c.place,
+        c.doc,
+        c.bishop,
+        c.priestId,
+        c.customPriest,
+        c.remarks,
+        userId,
+        userId,
+      ]
+    );
+  }
+
+  // 8. Ensure certificate series numbers
   await pool.query("UPDATE certificate_series SET next_number = GREATEST(next_number, 20) WHERE church_id = ?", [churchId]);
   await pool.query("UPDATE receipt_series SET next_number = GREATEST(next_number, 500) WHERE church_id = ?", [churchId]);
 
@@ -1013,6 +1210,7 @@ async function seedAllMockData() {
   console.log(`Contributions: ${totalContribCount} across multiple categories`);
   console.log(`Baptism Certificates: ${baptismData.length} records`);
   console.log(`Marriage Certificates: ${marriageData.length} records (with 2, 3, 4 witnesses)`);
+  console.log(`Confirmation Certificates: ${confirmationData.length} records`);
   console.log(`Death Certificates: ${deathData.length} records`);
   console.log('Successfully seeded all places mock data!');
   process.exit(0);

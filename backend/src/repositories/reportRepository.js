@@ -291,6 +291,12 @@ const CERT_TABLES = {
     nameColumn: 'deceased_name',
     select: 'certificate_no, deceased_name AS name, date_of_death AS date, NULL AS father_name, NULL AS mother_name',
   },
+  confirmation: {
+    table: 'confirmation_certificates',
+    dateColumn: 'date_of_confirmation',
+    nameColumn: 'name',
+    select: 'certificate_no, name AS name, date_of_confirmation AS date, NULL AS father_name, NULL AS mother_name',
+  },
 };
 
 async function certificatesReport({ churchId, branchId, type, dateFrom, dateTo }) {

@@ -36,6 +36,11 @@ export const CENTRAL_ROUTES: Routes = [
         loadComponent: () => import('./pages/central-certificates').then((m) => m.CentralCertificatesComponent),
       },
       {
+        path: 'certificates/confirmation',
+        data: { breadcrumb: 'nav.confirmationCertificates', type: 'confirmation', titleKey: 'central.cert.title.confirmation', subtitleKey: 'central.cert.subtitle.confirmation' },
+        loadComponent: () => import('./pages/central-certificates').then((m) => m.CentralCertificatesComponent),
+      },
+      {
         path: 'certificates/death',
         data: { breadcrumb: 'nav.deathCertificates', type: 'death', titleKey: 'central.cert.title.death', subtitleKey: 'central.cert.subtitle.death' },
         loadComponent: () => import('./pages/central-certificates').then((m) => m.CentralCertificatesComponent),

@@ -24,7 +24,7 @@ import { ServerTransfer } from '../../../core/services/excel-transfer.service';
 import { CERTIFICATE_CONFIGS } from '../certificate-config';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-const DATE_KEYS = new Set(['date_of_birth', 'date_of_baptism', 'marriage_date', 'date_of_death', 'burial_date']);
+const DATE_KEYS = new Set(['date_of_birth', 'date_of_baptism', 'marriage_date', 'date_of_confirmation', 'date_of_death', 'burial_date']);
 
 @Component({
   selector: 'coms-certificate-list',

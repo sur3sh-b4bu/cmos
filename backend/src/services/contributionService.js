@@ -167,14 +167,25 @@ async function loadReceiptContext(id, req) {
   }
 
   const church = await lookupRepository.getChurchById(contribution.church_id);
+  const [settingRows] = await pool.query(
+    "SELECT setting_key, setting_value FROM system_settings WHERE setting_key = 'RECEIPT_THANK_YOU_MESSAGE'"
+  );
+  const settings = Object.fromEntries(settingRows.map((r) => [r.setting_key, r.setting_value]));
   const currency = await lookupRepository.getDefaultCurrency();
   const lang = req.query?.lang === 'ta' ? 'ta' : 'en';
-  return { contribution, church, currency, lang };
+  return { contribution, church, settings, currency, lang };
 }
 
 async function buildReceiptPdf(id, req) {
-  const { contribution, church, currency, lang } = await loadReceiptContext(id, req);
-  const buffer = await generateContributionReceiptPdf(contribution, church, currency.symbol, req.user.username, lang);
+  const { contribution, church, settings, currency, lang } = await loadReceiptContext(id, req);
+  const buffer = await generateContributionReceiptPdf(
+    contribution,
+    church,
+    currency.symbol,
+    req.user.username,
+    lang,
+    settings.RECEIPT_THANK_YOU_MESSAGE
+  );
 
   await auditService.fromRequest(req, {
     action: 'PRINT_RECEIPT',
@@ -189,8 +200,15 @@ async function buildReceiptPdf(id, req) {
  * receiptHtml.js's doc comment (Mass Intentions' equivalent) for why this
  * exists alongside, not instead of, the PDF above. */
 async function buildReceiptHtml(id, req) {
-  const { contribution, church, currency, lang } = await loadReceiptContext(id, req);
-  const html = generateContributionReceiptHtml(contribution, church, currency.symbol, req.user.username, lang);
+  const { contribution, church, settings, currency, lang } = await loadReceiptContext(id, req);
+  const html = await generateContributionReceiptHtml(
+    contribution,
+    church,
+    currency.symbol,
+    req.user.username,
+    lang,
+    settings.RECEIPT_THANK_YOU_MESSAGE
+  );
 
   await auditService.fromRequest(req, {
     action: 'PRINT_RECEIPT',

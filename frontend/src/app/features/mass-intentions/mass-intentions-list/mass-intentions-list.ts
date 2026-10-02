@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, TemplateRef, ViewChild, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -36,6 +36,7 @@ import { ReceivePaymentDialogComponent } from '../receive-payment-dialog/receive
   imports: [
     CommonModule,
     RouterLink,
+    RouterLinkActive,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
@@ -110,20 +111,21 @@ export class MassIntentionsListComponent implements OnInit {
       sortable: true,
       accessor: (row) => formatDateDMY(row.created_at),
     },
-    { key: 'booked_by', label: 'massIntentions.bookedBy', accessor: (row) => row.booked_by || '-' },
-    { key: 'phone', label: 'massIntentions.phoneNumber', accessor: (row) => row.phone || '-' },
+    { key: 'booked_by', label: 'massIntentions.bookedBy', sortable: true, accessor: (row) => row.booked_by || '-' },
+    { key: 'phone', label: 'massIntentions.phoneNumber', sortable: true, accessor: (row) => row.phone || '-' },
     {
       key: 'prayer_date',
       label: 'massIntentions.colMassDate',
       sortable: true,
       accessor: (row) => formatDateDMY(row.prayer_date),
     },
-    { key: 'mass_name', label: 'dashboard.colMass', accessor: (row) => this.massText(row) },
+    { key: 'mass_name', label: 'dashboard.colMass', sortable: true, accessor: (row) => this.massText(row) },
     { key: 'name', label: 'common.name', sortable: true },
-    { key: 'intention', label: 'massIntentions.colIntention' },
+    { key: 'intention', label: 'massIntentions.colIntention', sortable: true },
     {
       key: 'offering_amount',
       label: 'massIntentions.colOffering',
+      sortable: true,
       align: 'right',
       accessor: (row) => `${this.currencyService.current().symbol}${Number(row.offering_amount).toFixed(2)}`,
     },
@@ -202,6 +204,7 @@ export class MassIntentionsListComponent implements OnInit {
 
   fetch(): void {
     this.loading.set(true);
+    const activeSort = this.sort();
     this.massIntentionService
       .list({
         page: this.pageIndex() + 1,
@@ -209,6 +212,8 @@ export class MassIntentionsListComponent implements OnInit {
         search: this.search() || undefined,
         prayerDateFrom: this.range().from || undefined,
         prayerDateTo: this.range().to || undefined,
+        sortBy: activeSort.direction ? activeSort.active : undefined,
+        sortDir: activeSort.direction || undefined,
         ...this.filters(),
       })
       .subscribe({
@@ -219,6 +224,12 @@ export class MassIntentionsListComponent implements OnInit {
         },
         error: () => this.loading.set(false),
       });
+  }
+
+  onSortChange(sort: DataTableSort): void {
+    this.sort.set(sort);
+    this.pageIndex.set(0);
+    this.fetch();
   }
 
   onRangeChange(range: DateRange): void {

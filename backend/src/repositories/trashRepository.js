@@ -32,6 +32,12 @@ const MODULE_CONFIGS = {
     refExpr: 't.certificate_no',
     detailExpr: "CONCAT('DOD: ', DATE_FORMAT(t.date_of_death, '%d/%m/%Y'))",
   },
+  confirmation_certificates: {
+    table: 'confirmation_certificates',
+    titleExpr: 't.name',
+    refExpr: 't.certificate_no',
+    detailExpr: "CONCAT('Confirmation Date: ', DATE_FORMAT(t.date_of_confirmation, '%d/%m/%Y'))",
+  },
   priests: {
     table: 'priests',
     titleExpr: 't.name',

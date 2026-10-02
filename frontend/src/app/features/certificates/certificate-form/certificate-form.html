@@ -93,8 +93,6 @@
                       matInput
                       [matDatepicker]="picker"
                       [formControlName]="field.key"
-                      [max]="maxDateFor(field)"
-                      [min]="minDateFor(field)"
                     />
                     <mat-datepicker-toggle matIconSuffix [for]="picker" />
                     <mat-datepicker #picker [calendarHeaderComponent]="todayHeader" />
@@ -114,14 +112,6 @@
               }
               @if (form.get(field.key)?.hasError('matDatepickerParse')) {
                 <mat-error>{{ 'certificates.common.dateInvalid' | translate: { field: (field.label | translate) } }}</mat-error>
-              }
-              @if (form.get(field.key)?.hasError('matDatepickerMax')) {
-                <mat-error>{{ 'certificates.common.dateFuture' | translate: { field: (field.label | translate) } }}</mat-error>
-              }
-              @if (form.get(field.key)?.hasError('matDatepickerMin')) {
-                <mat-error>{{
-                  'certificates.common.dateBefore' | translate: { field: (field.label | translate), other: otherLabelFor(field) }
-                }}</mat-error>
               }
             </mat-form-field>
           }

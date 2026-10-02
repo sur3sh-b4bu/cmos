@@ -80,7 +80,6 @@ async function generateReceiptHtml(intention, church, thankYouMessage, qrMode = 
     <div class="scan-text">${esc(t(lang, 'scanCalendar'))}</div>
     <div class="thank-you">${esc(thankYouMessage || t(lang, 'defaultThankYou'))}</div>
     ${footerHtml(church, lang)}
-    <div class="generated">${esc(t(lang, 'generated'))}: ${esc(formatDateDMY(new Date()))} ${esc(formatTime24(new Date()))}</div>
   </div>
 </body>
 </html>`;
@@ -91,14 +90,14 @@ async function generateReceiptHtml(intention, church, thankYouMessage, qrMode = 
  * (right-aligned); without one, falls back to the plain centered block. */
 function headerHtml(churchName, address, phone, logoDataUrl, primaryColor) {
   const info = `
-    <div class="church-name" style="color: #ffffff !important;">${esc(churchName)}</div>
-    ${address ? `<div class="church-line" style="color: #ffffff !important; opacity: 0.95;">${esc(address)}</div>` : ''}
-    ${phone ? `<div class="church-line" style="color: #ffffff !important; opacity: 0.95;">Ph: ${esc(phone)}</div>` : ''}`;
+    <div class="church-name" style="color: ${primaryColor} !important;">${esc(churchName)}</div>
+    ${address ? `<div class="church-line" style="color: #333333 !important;">${esc(address)}</div>` : ''}
+    ${phone ? `<div class="church-line" style="color: #333333 !important;">Ph: ${esc(phone)}</div>` : ''}`;
   if (!logoDataUrl) {
-    return `<div class="receipt-header" style="background-color: ${primaryColor} !important; background: ${primaryColor} !important; color: #ffffff !important;">${info}</div>`;
+    return `<div class="receipt-header" style="border: 1.5pt solid ${primaryColor} !important; background: transparent !important; color: #111111 !important;">${info}</div>`;
   }
   return `
-    <div class="receipt-header header-row" style="background-color: ${primaryColor} !important; background: ${primaryColor} !important; color: #ffffff !important;">
+    <div class="receipt-header header-row" style="border: 1.5pt solid ${primaryColor} !important; background: transparent !important; color: #111111 !important;">
       <img class="church-logo" src="${logoDataUrl}" alt="${esc(churchName)}" />
       <div class="church-info">${info}</div>
     </div>`;
@@ -143,7 +142,12 @@ function baseStyles(primaryColor) {
       width: 148mm;
       max-width: 148mm;
       margin: 0 !important;
-      padding: 0 !important;
+      padding: 3mm 4mm !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .receipt {
+      border: 1.5pt solid ${primaryColor} !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
@@ -159,32 +163,48 @@ function baseStyles(primaryColor) {
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
-  body { width: 148mm; font-family: 'Noto Sans Tamil', Arial, sans-serif; font-size: 10.5pt; color: #1a1a1a; }
-  .receipt { width: 148mm; max-width: 148mm; padding: 14pt 16pt; margin: 0 auto; }
-  .receipt-header {
-    background: ${primaryColor};
-    color: #ffffff;
+  body {
+    width: 148mm;
+    font-family: 'Noto Sans Tamil', Arial, sans-serif;
+    font-size: 10.5pt;
+    color: #1a1a1a;
+    padding: 3mm 4mm;
+  }
+  .receipt {
+    width: 100%;
+    max-width: 140mm;
+    padding: 10pt 12pt;
+    margin: 0 auto;
+    border: 1.5pt solid ${primaryColor};
     border-radius: 6pt;
-    padding: 10pt 14pt;
-    margin-bottom: 8pt;
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .receipt-header {
+    background: transparent;
+    color: #111827;
+    border: 1.5pt solid ${primaryColor};
+    border-radius: 4pt;
+    padding: 8pt 12pt;
+    margin-bottom: 6pt;
     text-align: center;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
   .receipt-header .church-name {
-    font-size: 16pt;
+    font-size: 15pt;
     font-weight: bold;
-    color: #ffffff;
+    color: ${primaryColor} !important;
     text-align: center;
     letter-spacing: 0.02em;
     line-height: 1.2;
   }
   .receipt-header .church-line {
-    font-size: 9.5pt;
+    font-size: 9pt;
     text-align: center;
     margin-top: 2pt;
-    color: #ffffff;
-    opacity: 0.95;
+    color: #374151 !important;
     line-height: 1.3;
   }
   .receipt-header.header-row {

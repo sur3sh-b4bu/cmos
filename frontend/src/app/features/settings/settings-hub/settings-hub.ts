@@ -37,6 +37,7 @@ export class SettingsHubComponent {
     { labelKey: 'settings.churchInfo', descriptionKey: 'settings.churchInfoDesc', icon: 'church', route: '/masters/churches', permissions: ['masters.view'] },
     { labelKey: 'settings.receiptSettings', descriptionKey: 'settings.receiptSettingsDesc', icon: 'receipt_long', route: '/masters/receipt_series', permissions: ['masters.view'] },
     { labelKey: 'settings.printSettings', descriptionKey: 'settings.printSettingsDesc', icon: 'print', route: '/masters/print_templates', permissions: ['masters.view'] },
+    { labelKey: 'settings.certificateTemplates', descriptionKey: 'settings.certificateTemplatesDesc', icon: 'workspace_premium', route: '/settings/certificate-templates', permissions: ['masters.view', 'certificates.view'] },
   ];
 
   visibleCards(): SettingsCard[] {

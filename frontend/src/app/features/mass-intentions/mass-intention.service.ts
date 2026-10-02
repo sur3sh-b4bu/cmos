@@ -32,6 +32,8 @@ export interface MassIntentionQuery {
   /** The individual intentions belonging to one Bulk Mass Intention save --
    * see bulk-batch-detail-dialog.ts. */
   bulkBatchId?: string;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }
 
 export interface BulkBatchQuery {
@@ -133,8 +135,13 @@ export class MassIntentionService {
       .pipe(map((res) => res.data));
   }
 
-  getRegisterPrintUrl(date: string, namesOnly = false, lang: AppLang = 'en'): string {
-    return `${this.baseUrl}/register/print?date=${date}${namesOnly ? '&namesOnly=true' : ''}${lang === 'ta' ? '&lang=ta' : ''}`;
+  getRegisterPrintUrl(date: string, namesOnly = false, lang: AppLang = 'en', reasonsOnly = false): string {
+    const extra = reasonsOnly ? '&reasonsOnly=true' : namesOnly ? '&namesOnly=true' : '';
+    return `${this.baseUrl}/register/print?date=${date}${extra}${lang === 'ta' ? '&lang=ta' : ''}`;
+  }
+
+  getRegisterReasonsOnlyPrintUrl(date: string, lang: AppLang = 'en'): string {
+    return this.getRegisterPrintUrl(date, false, lang, true);
   }
 
   getDashboardStats(): Observable<DashboardStats> {

@@ -53,6 +53,16 @@
           {{ 'common.exportExcel' | translate }}
         </button>
       }
+      @if (showPrint) {
+        <button mat-stroked-button (click)="printTable()" [disabled]="printing()" [matTooltip]="'common.print' | translate">
+          @if (printing()) {
+            <mat-progress-spinner diameter="16" mode="indeterminate" />
+          } @else {
+            <mat-icon>print</mat-icon>
+          }
+          {{ 'common.print' | translate }}
+        </button>
+      }
       <button mat-icon-button [matMenuTriggerFor]="columnMenu" [matTooltip]="'common.chooseColumns' | translate">
         <mat-icon>view_column</mat-icon>
       </button>
@@ -80,7 +90,14 @@
   }
 
   <div class="data-table__scroll">
-    <table mat-table [dataSource]="rows" matSort (matSortChange)="onSortEvent($event)">
+    <table
+      mat-table
+      [dataSource]="rows"
+      matSort
+      [matSortActive]="sort?.active || ''"
+      [matSortDirection]="sort?.direction || ''"
+      (matSortChange)="onSortEvent($event)"
+    >
       @for (col of visibleColumns(); track col.key) {
         <ng-container [matColumnDef]="col.key">
           <th

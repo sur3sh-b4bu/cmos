@@ -1,3 +1,4 @@
+const QRCode = require('qrcode');
 const { renderPdfBuffer } = require('../utils/pdfPrinter');
 const { formatDateDMY } = require('../utils/dateFormat');
 const { getThemePrimaryColor } = require('../utils/themeColors');
@@ -7,14 +8,43 @@ const { getChurchLogoDataUrl, receiptHeader, receiptFooter } = require('./receip
 const PAGE_WIDTH_PT = 419.53; // A5 portrait width, same as receiptPdf.js (A5 = 419.53 x 595.28pt)
 
 /**
- * A Contribution's receipt -- deliberately simpler than a Mass Intention's (see
- * receiptPdf.js): no QR code, since there's no future Mass date/time to add
- * to a calendar. Just the church header, receipt details, and a thank-you.
- * Supports the same `lang` param as the Mass Intention receipt/register (see
- * pdfLabels.js) -- the Contributions module mirrors Mass Intentions closely
- * enough that leaving this one English-only would be an odd gap.
+ * Builds the verification QR payload for a contribution receipt.
+ * Contains church name, receipt number, date, donor, contribution type, and amount.
+ * Works completely offline when scanned with any smartphone camera or QR reader.
  */
-async function generateContributionReceiptPdf(contribution, church, currencySymbol = '₹', billedBy, lang = 'en') {
+function buildContributionQrPayload(contribution, church, currencySymbol = '₹', lang = 'en') {
+  const churchName = localizedName(church?.name, church?.name_ta, lang) || t(lang, 'churchOffice');
+  const contributionTypeText = contribution.contribution_type_is_custom
+    ? contribution.custom_contribution_type
+    : localizedName(contribution.contribution_type_name, contribution.contribution_type_name_ta, lang) ||
+      contribution.custom_contribution_type ||
+      '-';
+  const dateStr = formatDateDMY(contribution.payment_date || contribution.created_at);
+  const amountStr = `${currencySymbol}${Number(contribution.contribution_amount).toFixed(2)}`;
+
+  const lines = [
+    churchName,
+    t(lang, 'contributionReceiptTitle'),
+    `${t(lang, 'receiptNo')}: ${contribution.receipt_no}`,
+    `${t(lang, 'date')}: ${dateStr}`,
+    `${t(lang, 'donor')}: ${contribution.name}`,
+    `${t(lang, 'contributionType')}: ${contributionTypeText}`,
+    `${t(lang, 'amount')}: ${amountStr}`,
+  ];
+  if (church?.phone) {
+    lines.push(`Ph: ${church.phone}`);
+  }
+  if (church?.website) {
+    lines.push(church.website);
+  }
+  return lines.join('\n');
+}
+
+/**
+ * A Contribution's receipt -- formatted for ISO A5 portrait paper.
+ * Includes church header, receipt details, verification QR code, and thank-you footer.
+ */
+async function generateContributionReceiptPdf(contribution, church, currencySymbol = '₹', billedBy, lang = 'en', thankYouMessage) {
   const primaryColor = getThemePrimaryColor(church?.theme_color);
   const contributionTypeText = contribution.contribution_type_is_custom
     ? contribution.custom_contribution_type
@@ -22,6 +52,10 @@ async function generateContributionReceiptPdf(contribution, church, currencySymb
       contribution.custom_contribution_type ||
       '-';
   const logoDataUrl = getChurchLogoDataUrl(church);
+
+  const qrWidthPt = 90; // ~32mm square on real paper
+  const qrText = buildContributionQrPayload(contribution, church, currencySymbol, lang);
+  const qrDataUrl = await QRCode.toDataURL(qrText, { margin: 1, errorCorrectionLevel: 'M', width: 480 });
 
   const docDefinition = {
     // Fixed, exact ISO A5 -- printed on real A5 paper, so it must match a
@@ -34,6 +68,24 @@ async function generateContributionReceiptPdf(contribution, church, currencySymb
     // regardless of `lang` -- see receiptPdf.js's own comment on the same
     // issue.
     defaultStyle: { font: fontFor(lang, contribution.name, contributionTypeText), fontSize: 10.5 },
+    background: function (currentPage, pageSize) {
+      return [
+        {
+          canvas: [
+            {
+              type: 'rect',
+              x: 8,
+              y: 8,
+              w: pageSize.width - 16,
+              h: pageSize.height - 16,
+              lineWidth: 1.5,
+              lineColor: primaryColor,
+              r: 4,
+            },
+          ],
+        },
+      ];
+    },
     content: [
       ...receiptHeader(church, lang, logoDataUrl, primaryColor),
       { text: t(lang, 'contributionReceiptTitle'), style: 'title', alignment: 'center', margin: [0, 6, 0, 6] },
@@ -83,18 +135,13 @@ async function generateContributionReceiptPdf(contribution, church, currencySymb
         margin: [0, 8, 0, 10],
       },
       { canvas: [{ type: 'line', x1: 0, y1: 0, x2: PAGE_WIDTH_PT - 32, y2: 0, lineWidth: 1, dash: { length: 3 } }] },
-      { text: t(lang, 'contributionThankYou'), alignment: 'center', italics: true, fontSize: 8, margin: [0, 12, 0, 12] },
+      { image: qrDataUrl, width: qrWidthPt, alignment: 'center', margin: [0, 8, 0, 2] },
+      { text: t(lang, 'scanVerify'), alignment: 'center', fontSize: 7.5, color: '#444444', margin: [0, 0, 0, 2] },
+      { text: thankYouMessage || t(lang, 'contributionThankYou'), alignment: 'center', italics: true, fontSize: 8, margin: [0, 2, 0, 8] },
       ...receiptFooter(church, lang),
-      {
-        text: `${t(lang, 'generated')}: ${formatDateDMY(new Date())} ${formatTime24(new Date())}`,
-        alignment: 'center',
-        fontSize: 7,
-        color: '#666666',
-        margin: [0, 4, 0, 0],
-      },
     ].filter(Boolean),
     styles: {
-      churchName: { fontSize: 18, bold: true, color: '#ffffff' },
+      churchName: { fontSize: 18, bold: true, color: primaryColor },
       title: { fontSize: 12, bold: true, color: '#6E4E12' },
     },
   };
@@ -109,4 +156,4 @@ function formatCurrency(amount, symbol = '₹') {
   return `${symbol}${Number(amount).toFixed(2)}`;
 }
 
-module.exports = { generateContributionReceiptPdf };
+module.exports = { generateContributionReceiptPdf, buildContributionQrPayload };

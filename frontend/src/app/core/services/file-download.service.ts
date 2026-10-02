@@ -145,6 +145,36 @@ export class FileDownloadService {
     setTimeout(cleanup, 60_000);
   }
 
+  printHtmlContent(html: string): void {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+
+    const cleanup = () => iframe.remove();
+
+    iframe.onload = () => {
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch {
+          const blob = new Blob([html], { type: 'text/html' });
+          const objectUrl = URL.createObjectURL(blob);
+          window.open(objectUrl, '_blank');
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+        }
+      }, 150);
+    };
+
+    iframe.srcdoc = html;
+    document.body.appendChild(iframe);
+    setTimeout(cleanup, 60_000);
+  }
+
   async download(url: string, filename: string): Promise<void> {
     const blob = await firstValueFrom(this.http.get(url, { responseType: 'blob' }));
     const objectUrl = URL.createObjectURL(blob);

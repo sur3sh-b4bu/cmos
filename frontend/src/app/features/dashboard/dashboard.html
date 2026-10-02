@@ -80,6 +80,34 @@
         </div>
       </div>
 
+      <!-- Card: Tomorrow Mass Intentions -->
+      <div
+        class="stat-card stat-card--clickable stat-card--blue"
+        role="button"
+        tabindex="0"
+        (click)="openTomorrowIntentions()"
+        (keydown.enter)="openTomorrowIntentions()"
+      >
+        <div class="stat-card__watermark"></div>
+        <div class="stat-card__top">
+          <span class="stat-badge stat-badge--blue">
+            <span class="stat-badge__dot"></span>
+            {{ 'dashboard.tomorrow' | translate }}
+          </span>
+          <div class="stat-icon stat-icon--blue">
+            <mat-icon>event_repeat</mat-icon>
+          </div>
+        </div>
+        <div class="stat-card__main">
+          <div class="stat-card__value">{{ s.tomorrowCount }}</div>
+          <div class="stat-card__label">{{ 'dashboard.tomorrowMassIntentions' | translate }}</div>
+        </div>
+        <div class="stat-card__footer stat-card__footer--blue">
+          <span>{{ 'dashboard.clickToViewDetails' | translate }}</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+      </div>
+
       <!-- Card 2: Today Mass Collections -->
       <div
         class="stat-card stat-card--clickable stat-card--gold"
@@ -208,13 +236,19 @@
             </div>
           </div>
         </div>
-        <coms-bar-chart
-          [data]="collectionsTrendData()"
-          [valueFormatter]="currencyFormatter"
-          [showTableToggle]="false"
-          color="var(--coms-color-primary)"
-          ariaLabel="Daily collections for the selected period"
-        />
+        @if (periodLoading()) {
+          <div class="dashboard__chart-loading">
+            <mat-progress-spinner mode="indeterminate" diameter="28" />
+          </div>
+        } @else {
+          <coms-bar-chart
+            [data]="collectionsTrendData()"
+            [valueFormatter]="currencyFormatter"
+            [showTableToggle]="false"
+            color="var(--coms-color-primary)"
+            ariaLabel="Daily collections for the selected period"
+          />
+        }
       </div>
 
       <!-- Mass Intentions by Mass Time Horizontal Bar Chart -->
@@ -230,13 +264,19 @@
             </div>
           </div>
         </div>
-        <coms-bar-chart
-          [data]="intentionsByMassData()"
-          color="#b08d2b"
-          orientation="horizontal"
-          [showTableToggle]="false"
-          ariaLabel="Total mass intentions recorded per Mass"
-        />
+        @if (periodLoading()) {
+          <div class="dashboard__chart-loading">
+            <mat-progress-spinner mode="indeterminate" diameter="28" />
+          </div>
+        } @else {
+          <coms-bar-chart
+            [data]="intentionsByMassData()"
+            color="#b08d2b"
+            orientation="horizontal"
+            [showTableToggle]="false"
+            ariaLabel="Total mass intentions recorded per Mass"
+          />
+        }
       </div>
     </div>
 

@@ -290,6 +290,14 @@ export const routes: Routes = [
             loadComponent: () => import('./features/settings/trash/trash-list').then((m) => m.TrashListComponent),
           },
           {
+            path: 'certificate-templates',
+            data: { breadcrumb: 'settings.certificateTemplates' },
+            loadComponent: () =>
+              import('./features/settings/certificate-templates/certificate-templates').then(
+                (m) => m.CertificateTemplatesComponent
+              ),
+          },
+          {
             path: 'change-church-branch',
             canActivate: [masterAdminGuard],
             data: { breadcrumb: 'settings.changeChurchBranch' },

@@ -144,7 +144,15 @@
 }
 
 .bar-chart__empty {
-  padding: 48px 0;
+  padding: 40px 16px;
   text-align: center;
   color: var(--coms-text-muted);
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px dashed #e2e8f0;
+  margin: 8px 0;
 }

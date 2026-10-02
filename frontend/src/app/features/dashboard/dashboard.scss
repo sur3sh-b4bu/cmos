@@ -215,24 +215,33 @@
 }
 
 // =============================================================================
-// 5 Luxury Stat Cards Grid
+// 6 Luxury Stat Cards Grid
 // =============================================================================
 .dashboard__stats-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 14px;
+  width: 100%;
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1560px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 860px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @media (max-width: 520px) {
     grid-template-columns: 1fr;
   }
+}
+
+.dashboard__chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  padding: 30px 0;
 }
 
 .stat-card {
@@ -350,6 +359,46 @@
       background: #16a34a;
     }
   }
+
+  &--sky {
+    background: #eff6ff;
+    color: #1e40af;
+    .stat-badge__dot {
+      background: #2563eb;
+    }
+  }
+
+  &--royal {
+    background: color-mix(in srgb, var(--coms-color-primary, #072a63) 10%, #ffffff);
+    color: var(--coms-color-primary, #072a63);
+    .stat-badge__dot {
+      background: var(--coms-color-primary, #072a63);
+    }
+  }
+
+  &--rose {
+    background: #ffe4e6;
+    color: #9f1239;
+    .stat-badge__dot {
+      background: #e11d48;
+    }
+  }
+
+  &--indigo {
+    background: #eef2ff;
+    color: #312e81;
+    .stat-badge__dot {
+      background: #4338ca;
+    }
+  }
+
+  &--purple {
+    background: #eff6ff;
+    color: #1e40af;
+    .stat-badge__dot {
+      background: #2563eb;
+    }
+  }
 }
 
 .stat-icon {
@@ -369,6 +418,31 @@
   &--blue {
     background: color-mix(in srgb, var(--coms-color-primary, #072a63) 14%, #ffffff);
     color: var(--coms-color-primary, #072a63);
+  }
+
+  &--sky {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  &--royal {
+    background: color-mix(in srgb, var(--coms-color-primary, #072a63) 14%, #ffffff);
+    color: var(--coms-color-primary, #072a63);
+  }
+
+  &--rose {
+    background: #ffe4e6;
+    color: #e11d48;
+  }
+
+  &--indigo {
+    background: #e0e7ff;
+    color: #4338ca;
+  }
+
+  &--purple {
+    background: #dbeafe;
+    color: #1d4ed8;
   }
 
   &--gold {
@@ -425,6 +499,26 @@
 
   &--blue {
     color: var(--coms-color-primary, #072a63);
+  }
+
+  &--sky {
+    color: #1d4ed8;
+  }
+
+  &--royal {
+    color: var(--coms-color-primary, #072a63);
+  }
+
+  &--rose {
+    color: #e11d48;
+  }
+
+  &--indigo {
+    color: #4338ca;
+  }
+
+  &--purple {
+    color: #1d4ed8;
   }
 
   &--gold {

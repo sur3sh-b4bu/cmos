@@ -115,6 +115,13 @@ export class BarChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    const initialWidth = this.hostEl.nativeElement.getBoundingClientRect().width;
+    if (initialWidth > 0) {
+      this.measuredWidth.set(Math.floor(initialWidth));
+      this.recompute();
+      this.cdr.detectChanges();
+    }
+
     this.resizeObserver = new ResizeObserver((entries) => {
       const width = entries[0]?.contentRect.width ?? 0;
       if (width > 0 && Math.abs(width - this.measuredWidth()) > 1) {
@@ -219,17 +226,19 @@ export class BarChartComponent implements OnChanges, AfterViewInit, OnDestroy {
     const currentW = Math.max(this.measuredWidth() || 600, 320);
     this.viewBoxWidth.set(currentW);
 
-    const maxAllowedLabelArea = Math.min(230, Math.max(80, Math.floor(currentW * 0.40)));
-    const longestLabelPx = Math.max(...this.data.map((d) => d.label.length)) * AVG_CHAR_WIDTH_PX;
-    const calculatedLabelArea = Math.min(maxAllowedLabelArea, Math.max(LABEL_AREA_MIN, longestLabelPx + 16));
+    // Label area allocation: between 100px and 42% of width (up to 240px)
+    const maxAllowedLabelArea = Math.min(240, Math.max(100, Math.floor(currentW * 0.42)));
+    const longestLabelPx = Math.max(...this.data.map((d) => d.label.length)) * 7.4;
+    const calculatedLabelArea = Math.min(maxAllowedLabelArea, Math.max(110, longestLabelPx + 20));
     this.labelAreaWidth.set(calculatedLabelArea);
 
-    const plotWidth = Math.max(60, currentW - calculatedLabelArea - 16);
+    const plotWidth = Math.max(60, currentW - calculatedLabelArea - 20);
     const rowHeight = Math.min(MAX_ROW_HEIGHT, Math.max(MIN_ROW_HEIGHT, PLOT_HEIGHT / n));
     const calcTotalH = n * rowHeight + AXIS_HEIGHT + TOP_PADDING;
     this.totalHeight.set(calcTotalH);
 
-    const maxChars = Math.max(8, Math.floor((calculatedLabelArea - 14) / 6.2));
+    // Max characters that can safely fit inside calculatedLabelArea without negative X
+    const maxChars = Math.max(6, Math.floor((calculatedLabelArea - 16) / 7.5));
 
     this.horizontalBars.set(
       this.data.map((point, i) => {

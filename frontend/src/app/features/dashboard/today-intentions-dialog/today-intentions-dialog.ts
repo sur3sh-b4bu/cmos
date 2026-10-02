@@ -12,6 +12,8 @@ import { CurrencyInrPipe } from '../../../shared/pipes/currency-inr.pipe';
 import { formatDateDMY } from '../../../core/utils/date-format.util';
 import { localizedName } from '../../../core/utils/localized-name.util';
 
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 export interface TodayIntentionsDialogData {
   date: string;
 }
@@ -34,7 +36,7 @@ interface MassGroup {
 @Component({
   selector: 'coms-today-intentions-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, CurrencyInrPipe, TranslatePipe],
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressSpinnerModule, CurrencyInrPipe, TranslatePipe],
   templateUrl: './today-intentions-dialog.html',
   styleUrl: './today-intentions-dialog.scss',
 })
@@ -47,7 +49,7 @@ export class TodayIntentionsDialogComponent {
 
   loading = signal(true);
   printing = signal(false);
-  printingNamesOnly = signal(false);
+  printingReasonsOnly = signal(false);
   entries = signal<MassIntention[]>([]);
 
   readonly formattedDate = formatDateDMY(this.data.date);
@@ -95,17 +97,15 @@ export class TodayIntentionsDialogComponent {
     }
   }
 
-  /** Same register, but names + intentions only -- for handing to the
-   * priest without exposing offering amounts/receipt numbers (see
-   * daily-register.ts's printRegisterNamesOnly() / dailyRegisterPdf.js's
-   * namesOnly option). */
-  async printNamesOnly(): Promise<void> {
-    if (this.printingNamesOnly()) return;
-    this.printingNamesOnly.set(true);
+  async printReasonsOnly(): Promise<void> {
+    if (this.printingReasonsOnly()) return;
+    this.printingReasonsOnly.set(true);
     try {
-      await this.fileDownload.printPdf(this.massIntentionService.getRegisterPrintUrl(this.data.date, true, this.languageService.current()));
+      await this.fileDownload.printPdf(
+        this.massIntentionService.getRegisterReasonsOnlyPrintUrl(this.data.date, this.languageService.current())
+      );
     } finally {
-      this.printingNamesOnly.set(false);
+      this.printingReasonsOnly.set(false);
     }
   }
 }

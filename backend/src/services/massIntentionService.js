@@ -95,7 +95,17 @@ async function create(payload, req) {
     });
     if (duplicate) {
       throw ApiError.conflict(
-        `A mass intention for "${payload.name}" on this date and Mass already exists (Receipt ${duplicate.receipt_no}).`
+        `A mass intention for "${payload.name}" on this date and Mass already exists (Receipt ${duplicate.receipt_no}).`,
+        {
+          id: duplicate.id,
+          receiptNo: duplicate.receipt_no,
+          name: duplicate.name,
+          bookedBy: duplicate.booked_by,
+          phone: duplicate.phone,
+          prayerDate: duplicate.prayer_date,
+          offeringAmount: duplicate.offering_amount,
+          createdAt: duplicate.created_at,
+        }
       );
     }
   }
@@ -335,7 +345,7 @@ async function buildBulkReceiptPdf({ ids, batchId }, req) {
   return buffer;
 }
 
-async function buildDailyRegisterPdf(prayerDate, req, { namesOnly = false } = {}) {
+async function buildDailyRegisterPdf(prayerDate, req, { namesOnly = false, reasonsOnly = false } = {}) {
   const entries = await massIntentionRepository.getRegisterData(prayerDate, req.user.churchId, effectiveBranchId(req));
   const church = await lookupRepository.getChurchById(req.user.churchId);
   const currency = await lookupRepository.getDefaultCurrency();
@@ -347,13 +357,14 @@ async function buildDailyRegisterPdf(prayerDate, req, { namesOnly = false } = {}
     generatedBy: req.user.username,
     currencySymbol: currency.symbol,
     namesOnly,
+    reasonsOnly,
     lang,
   });
   await auditService.fromRequest(req, {
     action: 'PRINT_REGISTER',
     module: 'prayer_register',
     entityType: 'prayer_register',
-    newValues: { prayerDate, count: entries.length, namesOnly },
+    newValues: { prayerDate, count: entries.length, namesOnly, reasonsOnly },
   });
   return buffer;
 }

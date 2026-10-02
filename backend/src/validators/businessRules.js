@@ -25,15 +25,10 @@ function isValidPhone(value) {
  *  - notBefore: must not be earlier than another date field of the same record.
  */
 const CERTIFICATE_DATE_RULES = {
-  baptism: [
-    { field: 'date_of_birth', notFuture: true },
-    { field: 'date_of_baptism', notBefore: 'date_of_birth' },
-  ],
-  marriage: [{ field: 'marriage_date', notFuture: true }],
-  death: [
-    { field: 'date_of_death', notFuture: true },
-    { field: 'burial_date', notBefore: 'date_of_death' },
-  ],
+  baptism: [],
+  marriage: [],
+  death: [],
+  confirmation: [],
 };
 
 /**

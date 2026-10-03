@@ -139,28 +139,41 @@ function mergeWithDefault(type, custom) {
 }
 
 async function getTemplate(churchId, certificateType) {
-  const [rows] = await pool.query(
-    'SELECT * FROM certificate_print_templates WHERE church_id = ? AND certificate_type = ? LIMIT 1',
-    [churchId, certificateType]
-  );
-  return mergeWithDefault(certificateType, rows[0] || null);
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM certificate_print_templates WHERE church_id = ? AND certificate_type = ? LIMIT 1',
+      [churchId, certificateType]
+    );
+    return mergeWithDefault(certificateType, rows[0] || null);
+  } catch (err) {
+    // If table doesn't exist on client database or query fails, safely fallback to defaults
+    return getDefaultTemplate(certificateType);
+  }
 }
 
 async function getAllTemplates(churchId) {
-  const [rows] = await pool.query(
-    'SELECT * FROM certificate_print_templates WHERE church_id = ?',
-    [churchId]
-  );
-  const byType = {};
-  for (const row of rows) {
-    byType[row.certificate_type] = row;
-  }
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM certificate_print_templates WHERE church_id = ?',
+      [churchId]
+    );
+    const byType = {};
+    for (const row of rows) {
+      byType[row.certificate_type] = row;
+    }
 
-  const result = {};
-  for (const type of ['baptism', 'marriage', 'confirmation', 'death']) {
-    result[type] = mergeWithDefault(type, byType[type] || null);
+    const result = {};
+    for (const type of ['baptism', 'marriage', 'confirmation', 'death']) {
+      result[type] = mergeWithDefault(type, byType[type] || null);
+    }
+    return result;
+  } catch (err) {
+    const result = {};
+    for (const type of ['baptism', 'marriage', 'confirmation', 'death']) {
+      result[type] = getDefaultTemplate(type);
+    }
+    return result;
   }
-  return result;
 }
 
 async function upsertTemplate(churchId, certificateType, data) {

@@ -25,7 +25,18 @@ CREATE TABLE IF NOT EXISTS `languages` (
   INDEX `idx_languages_default` (`is_default`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. Add `is_default` column if `languages` table already existed without it
+-- 2. Add `is_default` and `name_ta` column if `languages` table already existed without them
+SET @col_exists = (
+  SELECT COUNT(*) FROM information_schema.columns
+  WHERE table_schema = DATABASE()
+    AND table_name = 'languages'
+    AND column_name = 'name_ta'
+);
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `languages` ADD COLUMN `name_ta` VARCHAR(100) NULL AFTER `name`', 'SELECT 1');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 SET @col_exists = (
   SELECT COUNT(*) FROM information_schema.columns
   WHERE table_schema = DATABASE()

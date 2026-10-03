@@ -19,9 +19,48 @@
       @for (group of groups(); track group.massId) {
         <div class="tid-dialog__group">
           <div class="tid-dialog__group-header">
-            <mat-icon>church</mat-icon>
-            <h3>{{ massLabel(group) }}</h3>
-            <span class="text-muted">{{ group.massTime }}</span>
+            <div class="tid-dialog__group-title">
+              <mat-icon>church</mat-icon>
+              <h3>{{ massLabel(group) }}</h3>
+              <span class="tid-dialog__time-badge">{{ group.massTime }}</span>
+              <span class="tid-dialog__group-count">
+                ({{ group.entries.length }} {{ (group.entries.length === 1 ? 'nav.massIntentions' : 'nav.massIntentions') | translate }})
+              </span>
+            </div>
+            <div class="tid-dialog__group-actions">
+              <button
+                mat-stroked-button
+                color="accent"
+                type="button"
+                class="tid-dialog__group-btn"
+                [disabled]="printingGroupReasonsMassId() === group.massId"
+                (click)="printGroupReasonsOnly(group)"
+                [matTooltip]="'dailyRegister.printMassReasonsOnly' | translate"
+              >
+                @if (printingGroupReasonsMassId() === group.massId) {
+                  <mat-progress-spinner diameter="14" mode="indeterminate" />
+                } @else {
+                  <mat-icon>format_list_bulleted</mat-icon>
+                }
+                <span>{{ 'dailyRegister.printMassReasonsOnly' | translate }}</span>
+              </button>
+              <button
+                mat-stroked-button
+                color="primary"
+                type="button"
+                class="tid-dialog__group-btn"
+                [disabled]="printingGroupMassId() === group.massId"
+                (click)="printGroup(group)"
+                [matTooltip]="'dailyRegister.printMass' | translate"
+              >
+                @if (printingGroupMassId() === group.massId) {
+                  <mat-progress-spinner diameter="14" mode="indeterminate" />
+                } @else {
+                  <mat-icon>print</mat-icon>
+                }
+                <span>{{ 'dailyRegister.printMass' | translate }}</span>
+              </button>
+            </div>
           </div>
           <table class="tid-dialog__table">
             <thead>
@@ -45,6 +84,10 @@
               }
             </tbody>
           </table>
+          <div class="tid-dialog__group-footer">
+            <span class="tid-dialog__group-total-label">{{ 'reports.totalOffering' | translate }}:</span>
+            <span class="tid-dialog__group-total-val">{{ groupOffering(group) | currencyInr }}</span>
+          </div>
         </div>
       }
     }

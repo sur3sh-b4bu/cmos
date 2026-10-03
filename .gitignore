@@ -21,3 +21,5 @@ Thumbs.db
 *.log
 coverage/
 screenshot_ref.png
+coms_build_repo/
+

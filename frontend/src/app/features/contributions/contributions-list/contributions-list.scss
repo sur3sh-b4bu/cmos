@@ -58,6 +58,65 @@
   }
 }
 
+.offering-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.offering-refunded {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+
+  mat-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+  }
+
+  &--refunded {
+    background: #ffe4e6;
+    color: #b91c1c;
+    border: 1px solid #fecdd3;
+  }
+
+  &--unpaid {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+}
+
+.action-btn--refund {
+  color: #e11d48 !important;
+}
+
+.action-btn--unrefund {
+  color: #059669 !important;
+}
+
+.action-btn--print {
+  color: #2563eb !important;
+  transition: transform 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    color: #1d4ed8 !important;
+    transform: scale(1.1);
+  }
+}
+
 ::ng-deep .pi-list__delete {
   color: var(--coms-color-danger) !important;
 }

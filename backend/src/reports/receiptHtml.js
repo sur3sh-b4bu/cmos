@@ -32,9 +32,14 @@ async function generateReceiptHtml(intention, church, thankYouMessage, qrMode = 
   const qrText = buildQrPayload(intention, church, qrMode, lang);
   const qrDataUrl = await QRCode.toDataURL(qrText, { margin: 1, errorCorrectionLevel: 'M', width: 480 });
 
+  const baseIntention = intention.intention_is_custom
+    ? ''
+    : localizedName(intention.intention_master_name, intention.intention_master_name_ta, lang);
   const intentionText = intention.intention_is_custom
-    ? intention.custom_intention
-    : localizedName(intention.intention_master_name, intention.intention_master_name_ta, lang) || intention.custom_intention || '-';
+    ? intention.custom_intention || '-'
+    : baseIntention && intention.custom_intention
+    ? `${baseIntention} - ${intention.custom_intention}`
+    : baseIntention || intention.custom_intention || '-';
   const massName = localizedName(intention.mass_name, intention.mass_name_ta, lang);
   const churchName = localizedName(church?.name, church?.name_ta, lang) || t(lang, 'churchOffice');
   const address = addressLine(church, lang);
@@ -131,22 +136,25 @@ function baseStyles(primaryColor) {
   return `
   @page {
     size: 148mm 210mm;
-    margin: 0;
+    margin: 3.5mm 4mm;
   }
   @media print {
     @page {
       size: 148mm 210mm;
-      margin: 0;
+      margin: 3.5mm 4mm;
     }
     html, body {
-      width: 148mm;
-      max-width: 148mm;
+      width: 100% !important;
+      max-width: 100% !important;
       margin: 0 !important;
-      padding: 3mm 4mm !important;
+      padding: 0 !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
     .receipt {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 auto !important;
       border: 1.5pt solid ${primaryColor} !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
@@ -162,17 +170,23 @@ function baseStyles(primaryColor) {
     font-display: swap;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
   body {
-    width: 148mm;
+    width: 100%;
     font-family: 'Noto Sans Tamil', Arial, sans-serif;
     font-size: 10.5pt;
     color: #1a1a1a;
-    padding: 3mm 4mm;
+    padding: 3.5mm 4mm;
+    box-sizing: border-box;
   }
   .receipt {
     width: 100%;
-    max-width: 140mm;
+    max-width: 100%;
     padding: 10pt 12pt;
     margin: 0 auto;
     border: 1.5pt solid ${primaryColor};

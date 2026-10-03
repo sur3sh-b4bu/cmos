@@ -1,6 +1,7 @@
 .tid-dialog {
-  min-width: 620px;
-  max-width: 860px;
+  min-width: 780px;
+  max-width: 1080px;
+  width: 100%;
 
   h2[mat-dialog-title] {
     display: flex;
@@ -71,7 +72,7 @@ mat-dialog-content {
 
 .tid-dialog__group {
   padding: 16px 18px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   background: #ffffff;
   border-radius: var(--coms-radius-md, 14px);
   border: 1px solid #e8edf5;
@@ -85,11 +86,24 @@ mat-dialog-content {
 .tid-dialog__group-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.tid-dialog__group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 
   mat-icon {
     color: var(--coms-color-gold, #b08d2b);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
   }
 
   h3 {
@@ -98,6 +112,66 @@ mat-dialog-content {
     font-weight: 700;
     color: var(--coms-color-primary, #072a63);
   }
+}
+
+.tid-dialog__time-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.tid-dialog__group-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.tid-dialog__group-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tid-dialog__group-btn {
+  height: 32px !important;
+  line-height: 32px !important;
+  padding: 0 12px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+
+  mat-icon {
+    font-size: 15px !important;
+    width: 15px !important;
+    height: 15px !important;
+    margin-right: 4px !important;
+  }
+}
+
+.tid-dialog__group-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 4px;
+  font-size: 13px;
+}
+
+.tid-dialog__group-total-label {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.tid-dialog__group-total-val {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--coms-color-primary, #072a63);
 }
 
 .tid-dialog__table {

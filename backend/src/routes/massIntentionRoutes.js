@@ -46,6 +46,8 @@ router.post('/import/preview', authorize('mass_intentions.create'), uploadExcel,
 router.get('/:id', authorize('mass_intentions.view'), controller.getById);
 router.post('/', authorize('mass_intentions.create'), validate({ body: createSchema }), controller.create);
 router.put('/:id', authorize('mass_intentions.update'), validate({ body: updateSchema }), controller.update);
+router.post('/:id/refund', authorize('mass_intentions.update'), controller.refund);
+router.post('/:id/unrefund', authorize('mass_intentions.update'), controller.unrefund);
 router.delete('/:id', authorize('mass_intentions.delete'), controller.remove);
 
 // Static route -- must be registered before '/:id/receipt' below for

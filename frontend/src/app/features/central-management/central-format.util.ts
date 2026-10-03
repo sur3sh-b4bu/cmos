@@ -2,8 +2,8 @@ import { AppLang } from '../../core/i18n/translations';
 import { localizedName } from '../../core/utils/localized-name.util';
 import { ChurchRef, Granularity } from './central.models';
 
-/** Locale used for number and month/day formatting: Indian digit grouping for both English and Tamil. */
-const LOCALE: Record<AppLang, string> = { en: 'en-IN', ta: 'ta-IN' };
+/** Locale used for number and month/day formatting: Indian digit grouping for English, Tamil, and Hindi. */
+const LOCALE: Record<AppLang, string> = { en: 'en-IN', ta: 'ta-IN', hi: 'hi-IN' };
 
 export interface CurrencyInfo {
   code: string;

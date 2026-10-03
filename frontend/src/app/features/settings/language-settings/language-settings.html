@@ -1,0 +1,167 @@
+<div class="lang-settings">
+  <!-- Header -->
+  <div class="lang-settings__header">
+    <div class="lang-settings__title-area">
+      <div class="lang-settings__breadcrumb">
+        <a routerLink="/settings" class="lang-settings__back-link">
+          <mat-icon>arrow_back</mat-icon>
+          <span>{{ 'nav.settings' | translate }}</span>
+        </a>
+        <span class="lang-settings__slash">/</span>
+        <span class="lang-settings__current">{{ 'settings.languageSettings' | translate }}</span>
+      </div>
+      <h1>
+        <mat-icon class="header-icon">translate</mat-icon>
+        {{ 'settings.languageSettings' | translate }}
+      </h1>
+      <p class="text-muted">{{ 'settings.languageSettingsSubtitle' | translate }}</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="lang-settings__loading">
+      <mat-progress-spinner mode="indeterminate" diameter="36" />
+    </div>
+  } @else {
+    <!-- Main Default Language Card -->
+    <div class="surface-card lang-settings__main-card">
+      <div class="card-section-title">
+        <div class="title-icon"><mat-icon>language</mat-icon></div>
+        <div>
+          <h3>{{ 'settings.systemDefaultLanguage' | translate }}</h3>
+          <p>{{ 'settings.systemDefaultLanguageDesc' | translate }}</p>
+        </div>
+      </div>
+
+      <div class="language-cards-grid">
+        @for (row of languages(); track row.id) {
+          <div
+            class="lang-card"
+            [class.selected]="selectedDefaultId() === row.id"
+            [class.active-default]="row.is_default === 1"
+            (click)="selectedDefaultId.set(row.id)"
+          >
+            <div class="lang-card__header">
+              <div class="lang-flag-box">
+                @if (row.code === 'TA' || row.code === 'tam' || row.code === 'tamil') {
+                  <span class="flag-icon">🇮🇳</span>
+                } @else if (row.code === 'EN' || row.code === 'eng' || row.code === 'english') {
+                  <span class="flag-icon">🌐</span>
+                } @else {
+                  <span class="flag-icon">🏳️</span>
+                }
+              </div>
+              <div class="lang-radio-check">
+                <input
+                  type="radio"
+                  name="defaultLangRadio"
+                  [id]="'lang_' + row.id"
+                  [checked]="selectedDefaultId() === row.id"
+                  (change)="selectedDefaultId.set(row.id)"
+                />
+              </div>
+            </div>
+
+            <div class="lang-card__body">
+              <h4 class="lang-name">{{ row.name }}</h4>
+              @if (row.name_ta) {
+                <div class="lang-name-ta">{{ row.name_ta }}</div>
+              }
+              <div class="lang-meta">
+                <span class="lang-code">{{ row.code }}</span>
+                @if (row.is_default === 1) {
+                  <span class="badge-default">
+                    <mat-icon>verified</mat-icon>
+                    {{ 'settings.currentDefault' | translate }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="lang-card__footer">
+              <button
+                mat-stroked-button
+                type="button"
+                class="quick-apply-btn"
+                (click)="$event.stopPropagation(); saveDefaultLanguage(row)"
+                [disabled]="saving()"
+              >
+                <mat-icon>check_circle</mat-icon>
+                {{ row.is_default === 1 ? ('settings.alreadyDefault' | translate) : ('settings.setAsDefault' | translate) }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="main-card-footer">
+        <button
+          mat-flat-button
+          color="primary"
+          class="save-btn"
+          type="button"
+          (click)="saveDefaultLanguage()"
+          [disabled]="saving()"
+        >
+          @if (saving()) {
+            <mat-progress-spinner mode="indeterminate" diameter="18" />
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          <span>{{ 'settings.saveAndSetDefault' | translate }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Global Input Typing Preference Card -->
+    <div class="surface-card lang-settings__typing-card">
+      <div class="card-section-title">
+        <div class="title-icon typing-icon"><mat-icon>keyboard</mat-icon></div>
+        <div>
+          <h3>{{ 'settings.defaultTypingPreference' | translate }}</h3>
+          <p>{{ 'settings.defaultTypingPreferenceDesc' | translate }}</p>
+        </div>
+      </div>
+
+      <div class="typing-options-grid">
+        <div
+          class="typing-option-card"
+          [class.active]="languageService.isTamilTextInput()"
+          (click)="setTypingMode('ta')"
+        >
+          <div class="option-icon"><mat-icon>keyboard</mat-icon></div>
+          <div class="option-info">
+            <h4>{{ 'settings.tamilBaminiTyping' | translate }}</h4>
+            <p>{{ 'settings.tamilBaminiTypingDesc' | translate }}</p>
+          </div>
+          <div class="option-status">
+            @if (languageService.isTamilTextInput()) {
+              <span class="status-active"><mat-icon>check</mat-icon> {{ 'settings.active' | translate }}</span>
+            } @else {
+              <span class="status-select">{{ 'settings.select' | translate }}</span>
+            }
+          </div>
+        </div>
+
+        <div
+          class="typing-option-card"
+          [class.active]="!languageService.isTamilTextInput()"
+          (click)="setTypingMode('en')"
+        >
+          <div class="option-icon en-icon"><mat-icon>title</mat-icon></div>
+          <div class="option-info">
+            <h4>{{ 'settings.englishDirectTyping' | translate }}</h4>
+            <p>{{ 'settings.englishDirectTypingDesc' | translate }}</p>
+          </div>
+          <div class="option-status">
+            @if (!languageService.isTamilTextInput()) {
+              <span class="status-active"><mat-icon>check</mat-icon> {{ 'settings.active' | translate }}</span>
+            } @else {
+              <span class="status-select">{{ 'settings.select' | translate }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

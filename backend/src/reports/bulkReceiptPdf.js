@@ -154,7 +154,9 @@ async function generateBulkReceiptPdf(intentions, church, currencySymbol = '₹'
 
 function intentionText(row, lang) {
   if (row.intention_is_custom) return row.custom_intention || '-';
-  return localizedName(row.intention_master_name, row.intention_master_name_ta, lang) || row.custom_intention || '-';
+  const base = localizedName(row.intention_master_name, row.intention_master_name_ta, lang);
+  if (base && row.custom_intention) return `${base} - ${row.custom_intention}`;
+  return base || row.custom_intention || '-';
 }
 function formatTime24(date) {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;

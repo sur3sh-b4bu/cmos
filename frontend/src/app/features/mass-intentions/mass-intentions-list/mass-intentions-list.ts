@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, TemplateRef, ViewChild, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -11,7 +11,6 @@ import { debounceTime, firstValueFrom } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table';
 import { DataTableColumn, DataTableSort } from '../../../shared/components/data-table/data-table.model';
-import { DateRangeFilterComponent, DateRange } from '../../../shared/components/date-range-filter/date-range-filter';
 import { FilterBarComponent } from '../../../shared/components/filter-bar/filter-bar';
 import { FilterFieldDef } from '../../../shared/components/filter-bar/filter-bar.model';
 import { ServerTransfer } from '../../../core/services/excel-transfer.service';
@@ -42,7 +41,6 @@ import { ReceivePaymentDialogComponent } from '../receive-payment-dialog/receive
     MatMenuModule,
     MatTooltipModule,
     DataTableComponent,
-    DateRangeFilterComponent,
     FilterBarComponent,
     TranslatePipe,
   ],
@@ -54,15 +52,18 @@ export class MassIntentionsListComponent implements OnInit {
   private notification = inject(NotificationService);
   private fileDownload = inject(FileDownloadService);
   private dialog = inject(MatDialog);
-  private currencyService = inject(CurrencyService);
+  currencyService = inject(CurrencyService);
   private translate = inject(TranslateService);
   private masterLookup = inject(MasterLookupService);
   private realtime = inject(RealtimeService);
   private destroyRef = inject(DestroyRef);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
   authService = inject(AuthService);
   languageService = inject(LanguageService);
 
   @ViewChild('intentionTpl', { static: true }) intentionTpl!: TemplateRef<unknown>;
+  @ViewChild('offeringTpl', { static: true }) offeringTpl!: TemplateRef<unknown>;
   @ViewChild('actionsTpl', { static: true }) actionsTpl!: TemplateRef<unknown>;
 
   cellTemplates: Record<string, TemplateRef<unknown>> = {};
@@ -75,29 +76,18 @@ export class MassIntentionsListComponent implements OnInit {
   search = signal('');
   sort = signal<DataTableSort>({ active: 'prayer_date', direction: 'desc' });
 
-  /** Filters by Mass Date (prayer_date), same field/component as Reports >
-   * Mass Intentions -- see that page's own onRangeChange comment: the
-   * filter emits its default preset ('This Month') on init, which is what
-   * triggers this list's first fetch (see ngOnInit below), same pattern. */
-  range = signal<DateRange>({ from: '', to: '' });
-
-  /** Structured filters (Mass, Payment Method, Payment Status) rendered by
-   * coms-filter-bar alongside the always-on Mass Date range above -- see
-   * buildFilterFields() below. Combines via AND with each other, the date
-   * range, and the free-text search box (see massIntentionRepository.js's
-   * list()), so staff can narrow to e.g. one Mass AND Unpaid at once instead
-   * of only ever matching a single search term. */
+  /** Structured filters (Entered Date range, Mass Date range, Mass, Payment Method, Payment Status)
+   * rendered by coms-filter-bar -- see buildFilterFields() below. Combines via AND
+   * with each other and the free-text search box. */
   filterFields = signal<FilterFieldDef[]>([]);
   /** Currently active structured filters, already flattened to the query-
    * param shape the backend expects -- merged straight into fetch()'s
    * params below (see FilterBarComponent's own `filtersChange`). */
   filters = signal<Record<string, string>>({});
 
-  /** Import / Export / template are done by the API (see massIntentionTransferService.js). Export follows the date range, search box and filters on screen. */
+  /** Import / Export / template are done by the API (see massIntentionTransferService.js). Export follows the search box and filters on screen. */
   serverTransfer: ServerTransfer = this.massIntentionService.transferConfig(() => ({
     search: this.search() || undefined,
-    prayerDateFrom: this.range().from || undefined,
-    prayerDateTo: this.range().to || undefined,
     ...this.filters(),
   }));
 
@@ -136,17 +126,22 @@ export class MassIntentionsListComponent implements OnInit {
     this.currencyService.load();
     this.cellTemplates = {
       intention: this.intentionTpl,
+      offering_amount: this.offeringTpl,
       actions: this.actionsTpl,
     };
+
+    const initialPaidOnly = this.route.snapshot.queryParamMap.get('paidOnly');
+    if (initialPaidOnly) {
+      this.filters.set({ paidOnly: initialPaidOnly });
+    }
+
     this.buildFilterFields();
     // Rebuild if the site's language changes while this page is already
     // open (the header's language switcher updates in place, no navigation
     // -- see LanguageService.setLanguage) -- Payment Status's option labels
     // are plain instant()-resolved text, so they need re-translating.
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.buildFilterFields());
-    // No direct fetch() call here -- coms-date-range-filter emits its
-    // default preset ('This Month') on its own init, which reaches
-    // onRangeChange() below and triggers the first fetch, same as Reports.
+    this.fetch();
 
     // Another user of this SAME church (see socketServer.js's church-scoped
     // rooms) just created/updated/deleted/paid a Mass Intention -- refetch
@@ -160,7 +155,7 @@ export class MassIntentionsListComponent implements OnInit {
   }
 
   /** Mass/Payment Method options come from their own masters lookup;
-   * Payment Status is a fixed Paid/Unpaid pair, not a masters table, so it's
+   * Payment Status is a fixed Paid/Unpaid/Refunded set, not a masters table, so it's
    * built with static options straight away. Re-run on every language
    * switch (below) so its "All"/labels stay in the newly-current language
    * -- unlike Certificates' filter fields (all translation keys resolved by
@@ -170,6 +165,8 @@ export class MassIntentionsListComponent implements OnInit {
   private buildFilterFields(): void {
     const t = (key: string) => this.translate.instant(key);
     this.filterFields.set([
+      { key: 'enteredDate', label: 'massIntentions.colEnteredOn', type: 'dateRange' },
+      { key: 'prayerDate', label: 'massIntentions.colMassDate', type: 'dateRange' },
       { key: 'massId', label: 'dashboard.colMass', type: 'select' },
       { key: 'paymentMethodId', label: 'massIntentions.paymentMethod', type: 'select' },
       {
@@ -179,6 +176,7 @@ export class MassIntentionsListComponent implements OnInit {
         options: [
           { value: '1', label: t('massIntentions.paid') },
           { value: '0', label: t('massIntentions.unpaid') },
+          { value: 'refunded', label: t('massIntentions.statusRefunded') },
         ],
       },
     ]);
@@ -199,6 +197,10 @@ export class MassIntentionsListComponent implements OnInit {
   onFiltersChange(filters: Record<string, string>): void {
     this.filters.set(filters);
     this.pageIndex.set(0);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: Object.keys(filters).length ? filters : {},
+    });
     this.fetch();
   }
 
@@ -210,8 +212,6 @@ export class MassIntentionsListComponent implements OnInit {
         page: this.pageIndex() + 1,
         pageSize: this.pageSize(),
         search: this.search() || undefined,
-        prayerDateFrom: this.range().from || undefined,
-        prayerDateTo: this.range().to || undefined,
         sortBy: activeSort.direction ? activeSort.active : undefined,
         sortDir: activeSort.direction || undefined,
         ...this.filters(),
@@ -232,12 +232,6 @@ export class MassIntentionsListComponent implements OnInit {
     this.fetch();
   }
 
-  onRangeChange(range: DateRange): void {
-    this.range.set(range);
-    this.pageIndex.set(0);
-    this.fetch();
-  }
-
   onPageChange(event: { pageIndex: number; pageSize: number }): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
@@ -252,8 +246,11 @@ export class MassIntentionsListComponent implements OnInit {
 
   intentionText(row: MassIntention): string {
     if (row.intention_is_custom) return row.custom_intention || '-';
-    if (!row.intention_master_name) return '-';
-    return localizedName({ name: row.intention_master_name, name_ta: row.intention_master_name_ta }, this.languageService.current());
+    const base = row.intention_master_name
+      ? localizedName({ name: row.intention_master_name, name_ta: row.intention_master_name_ta }, this.languageService.current())
+      : '';
+    if (base && row.custom_intention) return `${base} - ${row.custom_intention}`;
+    return base || row.custom_intention || '-';
   }
 
   massText(row: MassIntention): string {
@@ -293,7 +290,58 @@ export class MassIntentionsListComponent implements OnInit {
     }
   }
 
+  async refundRow(row: MassIntention): Promise<void> {
+    const symbol = this.currencyService.current().symbol;
+    const formattedAmount = `${symbol}${Number(row.offering_amount).toFixed(2)}`;
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: this.translate.instant('common.refundConfirmTitle'),
+        message: this.translate.instant('common.refundConfirmMessage', {
+          name: row.name,
+          receipt: row.receipt_no,
+          amount: formattedAmount,
+        }),
+        confirmLabel: this.translate.instant('common.refund'),
+        danger: true,
+      },
+    });
+    const confirmed = await firstValueFrom(ref.afterClosed());
+    if (!confirmed) return;
+
+    try {
+      await firstValueFrom(this.massIntentionService.refund(row.id));
+      this.notification.success(this.translate.instant('common.refundSuccess', { receipt: row.receipt_no }));
+      this.fetch();
+    } catch (err) {
+      this.notification.error(extractErrorMessage(err));
+    }
+  }
+
+  async unrefundRow(row: MassIntention): Promise<void> {
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: this.translate.instant('common.unrefundConfirmTitle'),
+        message: this.translate.instant('common.unrefundConfirmMessage', {
+          name: row.name,
+          receipt: row.receipt_no,
+        }),
+        confirmLabel: this.translate.instant('common.unrefund'),
+        danger: false,
+      },
+    });
+    const confirmed = await firstValueFrom(ref.afterClosed());
+    if (!confirmed) return;
+
+    try {
+      await firstValueFrom(this.massIntentionService.unrefund(row.id));
+      this.notification.success(this.translate.instant('common.unrefundSuccess', { receipt: row.receipt_no }));
+      this.fetch();
+    } catch (err) {
+      this.notification.error(extractErrorMessage(err));
+    }
+  }
+
   async printReceipt(row: MassIntention): Promise<void> {
-    await this.fileDownload.printPdf(this.massIntentionService.getReceiptUrl(row.id, this.languageService.current()));
+    await this.fileDownload.printHtml(this.massIntentionService.getReceiptPrintUrl(row.id, this.languageService.current()));
   }
 }

@@ -219,12 +219,12 @@
 // =============================================================================
 .dashboard__stats-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px;
   width: 100%;
 
-  @media (max-width: 1560px) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  @media (max-width: 1300px) {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 
   @media (max-width: 860px) {
@@ -248,13 +248,13 @@
   background: #ffffff;
   border-radius: 14px;
   border: 1px solid #f1f5f9;
-  padding: 14px 16px 10px 16px;
+  padding: 12px 14px 10px 14px;
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 135px;
+  min-height: 128px;
   height: 100%;
   box-sizing: border-box;
   box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
@@ -316,23 +316,23 @@
   justify-content: space-between;
   position: relative;
   z-index: 1;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .stat-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 9px;
+  gap: 5px;
+  padding: 2.5px 7.5px;
   border-radius: 9999px;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 
   &__dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
   }
 
@@ -402,17 +402,17 @@
 }
 
 .stat-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
 
   mat-icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
   }
 
   &--blue {
@@ -459,11 +459,11 @@
 .stat-card__main {
   position: relative;
   z-index: 1;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .stat-card__value {
-  font-size: 24px;
+  font-size: 21px;
   font-weight: 800;
   color: #0f172a;
   line-height: 1.15;
@@ -471,7 +471,7 @@
 }
 
 .stat-card__label {
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #64748b;
   white-space: nowrap;

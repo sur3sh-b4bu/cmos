@@ -13,7 +13,7 @@ const PAYMENT_JOIN = `
 `;
 
 async function massIntentionsReport({ churchId, branchId, dateFrom, dateTo, massId, paidOnly }) {
-  const conditions = ['pi.church_id = ?', 'pi.is_deleted = 0'];
+  const conditions = ['pi.church_id = ?', 'pi.is_deleted = 0', 'COALESCE(pi.is_refunded, 0) = 0'];
   const params = [churchId];
   // branchId is the requester's EFFECTIVE branch (see utils/effectiveScope.js)
   // -- null means "don't restrict by branch"; a branch-agnostic row
@@ -70,6 +70,7 @@ async function collectionsReport({ churchId, branchId, dateFrom, dateTo, method 
   const conditions = [
     "pi.church_id = ?",
     "pi.is_deleted = 0",
+    "COALESCE(pi.is_refunded, 0) = 0",
     "pt.status = 'success'",
   ];
   const params = [churchId];
@@ -99,7 +100,7 @@ async function collectionsReport({ churchId, branchId, dateFrom, dateTo, method 
     `SELECT pt.payment_date AS date, COALESCE(SUM(pt.amount),0) AS total, COUNT(*) AS count
      ${fromPayments} ${where}
      GROUP BY pt.payment_date
-     ORDER BY pt.payment_date ASC`,
+     ORDER BY pt.payment_date DESC`,
     params
   );
 
@@ -151,7 +152,13 @@ async function collectionsReport({ churchId, branchId, dateFrom, dateTo, method 
  */
 async function collectionsRangeDetail({ churchId, branchId, dateFrom, dateTo, userId, dateBasis = 'payment' }) {
   const dateColumn = dateBasis === 'entered' ? 'DATE(pi.created_at)' : 'pt.payment_date';
-  const conditions = ["pi.church_id = ?", 'pi.is_deleted = 0', "pt.status = 'success'", `${dateColumn} BETWEEN ? AND ?`];
+  const conditions = [
+    "pi.church_id = ?",
+    'pi.is_deleted = 0',
+    'COALESCE(pi.is_refunded, 0) = 0',
+    "pt.status = 'success'",
+    `${dateColumn} BETWEEN ? AND ?`,
+  ];
   const params = [churchId, dateFrom, dateTo];
   if (branchId) {
     conditions.push('(pi.branch_id = ? OR pi.branch_id IS NULL)');
@@ -169,7 +176,7 @@ async function collectionsRangeDetail({ churchId, branchId, dateFrom, dateTo, us
      JOIN masses m ON m.id = pi.mass_id
      LEFT JOIN users u ON u.id = pt.created_by
      WHERE ${conditions.join(' AND ')}
-     ORDER BY ${dateColumn} ASC, pi.booked_by ASC`,
+     ORDER BY ${dateColumn} DESC, pi.id DESC`,
     params
   );
   const mapped = rows.map((r) => ({ ...r, amount: Number(r.amount) }));
@@ -187,6 +194,7 @@ async function contributionCollectionsReport({ churchId, branchId, dateFrom, dat
   const conditions = [
     'd.church_id = ?',
     'd.is_deleted = 0',
+    'COALESCE(d.is_refunded, 0) = 0',
     "pt.status = 'success'",
   ];
   const params = [churchId];
@@ -216,7 +224,7 @@ async function contributionCollectionsReport({ churchId, branchId, dateFrom, dat
     `SELECT pt.payment_date AS date, COALESCE(SUM(pt.amount),0) AS total, COUNT(*) AS count
      ${fromPayments} ${where}
      GROUP BY pt.payment_date
-     ORDER BY pt.payment_date ASC`,
+     ORDER BY pt.payment_date DESC`,
     params
   );
 
@@ -246,7 +254,13 @@ async function contributionCollectionsReport({ churchId, branchId, dateFrom, dat
  * including its own `userId`/billed_by handling for the same "mine" vs
  * "all users" print split. */
 async function contributionCollectionsRangeDetail({ churchId, branchId, dateFrom, dateTo, userId }) {
-  const conditions = ['d.church_id = ?', 'd.is_deleted = 0', "pt.status = 'success'", 'pt.payment_date BETWEEN ? AND ?'];
+  const conditions = [
+    'd.church_id = ?',
+    'd.is_deleted = 0',
+    'COALESCE(d.is_refunded, 0) = 0',
+    "pt.status = 'success'",
+    'pt.payment_date BETWEEN ? AND ?',
+  ];
   const params = [churchId, dateFrom, dateTo];
   if (branchId) {
     conditions.push('(d.branch_id = ? OR d.branch_id IS NULL)');
@@ -264,7 +278,7 @@ async function contributionCollectionsRangeDetail({ churchId, branchId, dateFrom
      LEFT JOIN contribution_types dt ON dt.id = d.contribution_type_id
      LEFT JOIN users u ON u.id = pt.created_by
      WHERE ${conditions.join(' AND ')}
-     ORDER BY pt.payment_date ASC, d.name ASC`,
+     ORDER BY pt.payment_date DESC, d.id DESC`,
     params
   );
   const mapped = rows.map((r) => ({ ...r, amount: Number(r.amount) }));

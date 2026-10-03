@@ -143,10 +143,10 @@ async function run() {
     { name: 'Accounts', code: 'ACCOUNTS' },
     { name: 'Sacristy', code: 'SACRISTY' },
   ]);
-  await insertIgnore(conn, 'languages', ['name', 'code'], [
-    { name: 'English', code: 'EN' },
-    { name: 'Hindi', code: 'HI' },
-    { name: 'Tamil', code: 'TA' },
+  await insertIgnore(conn, 'languages', ['name', 'code', 'is_default'], [
+    { name: 'English', code: 'EN', is_default: 0 },
+    { name: 'Hindi', code: 'HI', is_default: 0 },
+    { name: 'Tamil', code: 'TA', is_default: 1 },
   ]);
   await insertIgnore(conn, 'currencies', ['name', 'code', 'symbol'], [
     { name: 'Indian Rupee', code: 'INR', symbol: '₹' },

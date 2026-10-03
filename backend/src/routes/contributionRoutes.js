@@ -20,6 +20,8 @@ router.post('/import/preview', authorize('contributions.create'), uploadExcel, c
 router.get('/:id', authorize('contributions.view'), controller.getById);
 router.post('/', authorize('contributions.create'), validate({ body: createSchema }), controller.create);
 router.put('/:id', authorize('contributions.update'), validate({ body: updateSchema }), controller.update);
+router.post('/:id/refund', authorize('contributions.update'), controller.refund);
+router.post('/:id/unrefund', authorize('contributions.update'), controller.unrefund);
 router.delete('/:id', authorize('contributions.delete'), controller.remove);
 
 router.get('/:id/receipt', authorize('contributions.print', 'receipts.print'), controller.printReceipt);

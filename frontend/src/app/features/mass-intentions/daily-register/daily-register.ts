@@ -7,6 +7,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MassIntentionService } from '../mass-intention.service';
 import { MassIntention } from '../mass-intention.model';
@@ -38,6 +39,7 @@ interface MassGroup {
     MatDatepickerModule,
     MatButtonModule,
     MatIconModule,
+    MatTooltipModule,
     MatProgressSpinnerModule,
     CurrencyInrPipe,
     TranslatePipe,
@@ -57,6 +59,8 @@ export class DailyRegisterComponent implements OnInit {
   loading = signal(false);
   printing = signal(false);
   printingReasonsOnly = signal(false);
+  printingGroupMassId = signal<number | null>(null);
+  printingGroupReasonsMassId = signal<number | null>(null);
   entries = signal<MassIntention[]>([]);
 
   groups = computed<MassGroup[]>(() => {
@@ -106,8 +110,11 @@ export class DailyRegisterComponent implements OnInit {
 
   intentionText(row: MassIntention): string {
     if (row.intention_is_custom) return row.custom_intention || '-';
-    if (!row.intention_master_name) return '-';
-    return localizedName({ name: row.intention_master_name, name_ta: row.intention_master_name_ta }, this.languageService.current());
+    const base = row.intention_master_name
+      ? localizedName({ name: row.intention_master_name, name_ta: row.intention_master_name_ta }, this.languageService.current())
+      : '';
+    if (base && row.custom_intention) return `${base} - ${row.custom_intention}`;
+    return base || row.custom_intention || '-';
   }
 
   massLabel(group: MassGroup): string {
@@ -136,6 +143,32 @@ export class DailyRegisterComponent implements OnInit {
       );
     } finally {
       this.printingReasonsOnly.set(false);
+    }
+  }
+
+  /** Print a single Mass's intention reasons only */
+  async printGroupReasonsOnly(group: MassGroup): Promise<void> {
+    if (this.printingGroupReasonsMassId()) return;
+    this.printingGroupReasonsMassId.set(group.massId);
+    try {
+      await this.fileDownload.printPdf(
+        this.massIntentionService.getRegisterReasonsOnlyPrintUrl(this.dateParam, this.languageService.current(), group.massId)
+      );
+    } finally {
+      this.printingGroupReasonsMassId.set(null);
+    }
+  }
+
+  /** Print a single Mass's full register table */
+  async printGroup(group: MassGroup): Promise<void> {
+    if (this.printingGroupMassId()) return;
+    this.printingGroupMassId.set(group.massId);
+    try {
+      await this.fileDownload.printPdf(
+        this.massIntentionService.getRegisterPrintUrl(this.dateParam, false, this.languageService.current(), false, group.massId)
+      );
+    } finally {
+      this.printingGroupMassId.set(null);
     }
   }
 }

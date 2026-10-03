@@ -143,13 +143,11 @@
                   <input
                     matInput
                     [matDatepicker]="picker"
-                    [matDatepickerFilter]="dateFilter"
-                    [min]="minPrayerDate"
                     formControlName="prayerDate"
                     required
                   />
                   <mat-datepicker-toggle matIconSuffix [for]="picker" />
-                  <mat-datepicker #picker [dateClass]="dateClass" />
+                  <mat-datepicker #picker [calendarHeaderComponent]="todayHeader" [dateClass]="dateClass" />
                 </mat-form-field>
               </td>
               <td>
@@ -191,13 +189,13 @@
                     }
                   </mat-select>
                 </mat-form-field>
-                @if (rowIsCustomIntention(row)) {
+                @if (rowHasSelectedIntention(row)) {
                   <mat-form-field appearance="outline" class="bulk-form__cell-field">
                     <input
                       matInput
                       formControlName="customIntention"
-                      [placeholder]="'massIntentions.describeIntention' | translate"
-                      required
+                      [placeholder]="(rowIsCustomIntention(row) ? 'massIntentions.describeIntention' : 'massIntentions.additionalIntentionDetails') | translate"
+                      [required]="rowIsCustomIntention(row)"
                       [class.bamini-font]="baminiSignal(row, 'customIntention')()"
                       (blur)="convertBaminiOnBlur(row, 'customIntention')"
                     />
@@ -293,13 +291,11 @@
                         <input
                           matInput
                           [matDatepicker]="editPicker"
-                          [matDatepickerFilter]="dateFilter"
-                          [min]="minPrayerDate"
                           formControlName="prayerDate"
                           required
                         />
                         <mat-datepicker-toggle matIconSuffix [for]="editPicker" />
-                        <mat-datepicker #editPicker [dateClass]="dateClass" />
+                        <mat-datepicker #editPicker [calendarHeaderComponent]="todayHeader" [dateClass]="dateClass" />
                       </mat-form-field>
                     </td>
                     <td>
@@ -341,13 +337,13 @@
                           }
                         </mat-select>
                       </mat-form-field>
-                      @if (rowIsCustomIntention(editRowForm)) {
+                      @if (rowHasSelectedIntention(editRowForm)) {
                         <mat-form-field appearance="outline" class="bulk-form__cell-field">
                           <input
                             matInput
                             formControlName="customIntention"
-                            [placeholder]="'massIntentions.describeIntention' | translate"
-                            required
+                            [placeholder]="(rowIsCustomIntention(editRowForm) ? 'massIntentions.describeIntention' : 'massIntentions.additionalIntentionDetails') | translate"
+                            [required]="rowIsCustomIntention(editRowForm)"
                             [class.bamini-font]="baminiSignal(editRowForm, 'customIntention')()"
                             (blur)="convertBaminiOnBlur(editRowForm, 'customIntention')"
                           />
@@ -423,13 +419,11 @@
                 <input
                   matInput
                   [matDatepicker]="addPicker"
-                  [matDatepickerFilter]="dateFilter"
-                  [min]="minPrayerDate"
                   formControlName="prayerDate"
                   required
                 />
                 <mat-datepicker-toggle matIconSuffix [for]="addPicker" />
-                <mat-datepicker #addPicker [dateClass]="dateClass" />
+                <mat-datepicker #addPicker [calendarHeaderComponent]="todayHeader" [dateClass]="dateClass" />
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'common.name' | translate }}</mat-label>
@@ -468,13 +462,13 @@
                   }
                 </mat-select>
               </mat-form-field>
-              @if (rowIsCustomIntention(addRowForm)) {
+              @if (rowHasSelectedIntention(addRowForm)) {
                 <mat-form-field appearance="outline">
-                  <mat-label>{{ 'massIntentions.describeIntention' | translate }}</mat-label>
+                  <mat-label>{{ (rowIsCustomIntention(addRowForm) ? 'massIntentions.describeIntention' : 'massIntentions.additionalIntentionDetails') | translate }}</mat-label>
                   <input
                     matInput
                     formControlName="customIntention"
-                    required
+                    [required]="rowIsCustomIntention(addRowForm)"
                     [class.bamini-font]="baminiSignal(addRowForm, 'customIntention')()"
                     (blur)="convertBaminiOnBlur(addRowForm, 'customIntention')"
                   />

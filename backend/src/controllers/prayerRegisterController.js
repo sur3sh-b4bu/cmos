@@ -9,10 +9,12 @@ const preview = asyncHandler(async (req, res) => {
 const print = asyncHandler(async (req, res) => {
   const namesOnly = req.query.namesOnly === true || req.query.namesOnly === 'true';
   const reasonsOnly = req.query.reasonsOnly === true || req.query.reasonsOnly === 'true' || req.query.mode === 'reasons';
-  const buffer = await service.buildDailyRegisterPdf(req.query.date, req, { namesOnly, reasonsOnly });
+  const massId = req.query.massId ? Number(req.query.massId) : null;
+  const buffer = await service.buildDailyRegisterPdf(req.query.date, req, { namesOnly, reasonsOnly, massId });
   res.set('Content-Type', 'application/pdf');
   const suffix = reasonsOnly ? '-Reasons' : namesOnly ? '-Names' : '';
-  res.set('Content-Disposition', `inline; filename="Daily-Prayer-Register${suffix}-${req.query.date}.pdf"`);
+  const massSuffix = massId ? `-Mass-${massId}` : '';
+  res.set('Content-Disposition', `inline; filename="Daily-Prayer-Register${suffix}${massSuffix}-${req.query.date}.pdf"`);
   res.send(buffer);
 });
 

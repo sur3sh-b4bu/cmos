@@ -266,10 +266,12 @@ export class ReportsComponent implements OnInit {
   ];
 
   collectionsByDayChart = computed<BarChartPoint[]>(() =>
-    (this.collectionsData()?.byDay ?? []).map((d) => ({
-      label: new Date(d.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-      value: d.total,
-    }))
+    [...(this.collectionsData()?.byDay ?? [])]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((d) => ({
+        label: new Date(d.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+        value: d.total,
+      }))
   );
 
   paymentMethodChart = computed<BarChartPoint[]>(() =>
@@ -277,10 +279,12 @@ export class ReportsComponent implements OnInit {
   );
 
   contributionCollectionsByDayChart = computed<BarChartPoint[]>(() =>
-    (this.contributionCollectionsData()?.byDay ?? []).map((d) => ({
-      label: new Date(d.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-      value: d.total,
-    }))
+    [...(this.contributionCollectionsData()?.byDay ?? [])]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((d) => ({
+        label: new Date(d.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+        value: d.total,
+      }))
   );
 
   contributionPaymentMethodChart = computed<BarChartPoint[]>(() =>

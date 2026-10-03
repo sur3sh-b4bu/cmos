@@ -30,6 +30,16 @@ const remove = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Mass intention deleted' });
 });
 
+const refund = asyncHandler(async (req, res) => {
+  const row = await service.refund(req.params.id, req.body, req);
+  res.json({ success: true, data: row, message: 'Mass intention refunded' });
+});
+
+const unrefund = asyncHandler(async (req, res) => {
+  const row = await service.unrefund(req.params.id, req);
+  res.json({ success: true, data: row, message: 'Mass intention refund cancelled' });
+});
+
 const printReceipt = asyncHandler(async (req, res) => {
   const { buffer, receiptNo } = await service.buildReceiptPdf(req.params.id, req);
   res.set('Content-Type', 'application/pdf');
@@ -104,6 +114,8 @@ module.exports = {
   create,
   update,
   remove,
+  refund,
+  unrefund,
   printReceipt,
   printReceiptHtml,
   printBulkReceipt,

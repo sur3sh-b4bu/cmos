@@ -109,16 +109,11 @@
           <input
             matInput
             [matDatepicker]="picker"
-            [matDatepickerFilter]="dateFilter"
-            [min]="minPrayerDate"
             formControlName="prayerDate"
             required
           />
           <mat-datepicker-toggle matIconSuffix [for]="picker" />
-          <mat-datepicker #picker [dateClass]="dateClass" />
-          @if (form.controls.prayerDate.hasError('pastOrToday')) {
-            <mat-error>{{ 'massIntentions.futureDateOnly' | translate }}</mat-error>
-          }
+          <mat-datepicker #picker [calendarHeaderComponent]="todayHeader" [dateClass]="dateClass" />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -181,14 +176,14 @@
           }
         </mat-form-field>
 
-        @if (selectedIntentionIsCustom) {
+        @if (showCustomIntentionInput) {
           <mat-form-field appearance="outline" class="pi-form__span-2">
-            <mat-label>{{ 'massIntentions.describeIntention' | translate }}</mat-label>
+            <mat-label>{{ (selectedIntentionIsCustom ? 'massIntentions.describeIntention' : 'massIntentions.additionalIntentionDetails') | translate }}</mat-label>
             <textarea
               matInput
               rows="3"
               formControlName="customIntention"
-              required
+              [required]="selectedIntentionIsCustom"
               [class.bamini-font]="customIntentionBamini()"
               (blur)="convertBaminiOnBlur('customIntention', customIntentionBamini)"
             ></textarea>

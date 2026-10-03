@@ -18,6 +18,7 @@ import { FileDownloadService } from '../../../core/services/file-download.servic
 import { LanguageService } from '../../../core/services/language.service';
 import { extractErrorMessage } from '../../../core/utils/http-error.util';
 import { formatDateDMY, parseDateOnly } from '../../../core/utils/date-format.util';
+import { localizedName } from '../../../core/utils/localized-name.util';
 import { DatepickerTodayHeaderComponent } from '../../../shared/components/datepicker-today-header/datepicker-today-header';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import {
@@ -149,7 +150,12 @@ export class BulkBatchDetailDialogComponent {
   }
 
   intentionText(rec: MassIntention): string {
-    return rec.intention_is_custom ? rec.custom_intention || '-' : rec.intention_master_name || rec.custom_intention || '-';
+    if (rec.intention_is_custom) return rec.custom_intention || '-';
+    const base = rec.intention_master_name
+      ? localizedName({ name: rec.intention_master_name, name_ta: rec.intention_master_name_ta }, this.languageService.current())
+      : '';
+    if (base && rec.custom_intention) return `${base} - ${rec.custom_intention}`;
+    return base || rec.custom_intention || '-';
   }
 
   close(): void {
@@ -163,28 +169,15 @@ export class BulkBatchDetailDialogComponent {
   editRowForm: FormGroup = this.buildRow();
   private editOriginalDate: string | null = null;
 
-  get tomorrowDate(): Date {
+  get todayDate(): Date {
     const d = new Date();
-    d.setDate(d.getDate() + 1);
     d.setHours(0, 0, 0, 0);
     return d;
   }
 
-  get minPrayerDate(): Date | null {
-    return this.editingId() ? null : this.tomorrowDate;
-  }
-
-  dateFilter = (date: Date | null): boolean => {
-    if (!date) return false;
-    if (this.editingId()) return true;
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d.getTime() >= this.tomorrowDate.getTime();
-  };
-
   private buildRow(): FormGroup {
     return this.fb.group({
-      prayerDate: this.fb.control<Date>(this.tomorrowDate, Validators.required),
+      prayerDate: this.fb.control<Date>(this.todayDate, Validators.required),
       name: this.fb.control('', [Validators.required, Validators.maxLength(150)]),
       massId: this.fb.control<number | null>(null, Validators.required),
       offeringAmount: this.fb.control<number>(0, [Validators.required, Validators.min(0.01)]),

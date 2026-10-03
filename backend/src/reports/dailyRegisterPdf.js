@@ -24,24 +24,25 @@ async function generateDailyRegisterPdf({ prayerDate, church, entries, generated
   // 2. namesOnly: names + intentions only, without exposing offering amounts or receipt numbers
   // 3. full register: all columns
   const widths = reasonsOnly ? [28, '*'] : namesOnly ? [28, '25%', '*'] : [28, '18%', '*', 68, 60];
-  const headerCells = reasonsOnly
-    ? [
-        { text: '#', style: 'tableHeader', alignment: 'center' },
-        { text: t(lang, 'massIntention'), style: 'tableHeader' },
-      ]
-    : namesOnly
-    ? [
-        { text: '#', style: 'tableHeader' },
-        { text: t(lang, 'name'), style: 'tableHeader' },
-        { text: t(lang, 'massIntention'), style: 'tableHeader' },
-      ]
-    : [
-        { text: '#', style: 'tableHeader' },
-        { text: t(lang, 'name'), style: 'tableHeader' },
-        { text: t(lang, 'massIntention'), style: 'tableHeader' },
-        { text: t(lang, 'offering'), style: 'tableHeader', alignment: 'right' },
-        { text: t(lang, 'receiptNo'), style: 'tableHeader' },
-      ];
+  const createHeaderCells = () =>
+    reasonsOnly
+      ? [
+          { text: '#', style: 'tableHeader', alignment: 'center' },
+          { text: t(lang, 'massIntention'), style: 'tableHeader' },
+        ]
+      : namesOnly
+      ? [
+          { text: '#', style: 'tableHeader', alignment: 'center' },
+          { text: t(lang, 'name'), style: 'tableHeader' },
+          { text: t(lang, 'massIntention'), style: 'tableHeader' },
+        ]
+      : [
+          { text: '#', style: 'tableHeader', alignment: 'center' },
+          { text: t(lang, 'name'), style: 'tableHeader' },
+          { text: t(lang, 'massIntention'), style: 'tableHeader' },
+          { text: t(lang, 'offering'), style: 'tableHeader', alignment: 'right' },
+          { text: t(lang, 'receiptNo'), style: 'tableHeader', alignment: 'center' },
+        ];
 
   const body = [];
   groups.forEach((group, i) => {
@@ -61,7 +62,7 @@ async function generateDailyRegisterPdf({ prayerDate, church, entries, generated
         dontBreakRows: true,
         widths,
         body: [
-          headerCells,
+          createHeaderCells(),
           ...group.rows.map((row, idx) =>
             reasonsOnly
               ? [
@@ -154,9 +155,17 @@ function groupByMass(entries, lang) {
         rows: [],
       });
     }
+    const baseIntention = e.intention_is_custom
+      ? ''
+      : localizedName(e.intention_master_name, e.intention_master_name_ta, lang);
+    const intentionText = e.intention_is_custom
+      ? e.custom_intention || '-'
+      : baseIntention && e.custom_intention
+      ? `${baseIntention} - ${e.custom_intention}`
+      : baseIntention || e.custom_intention || '-';
     map.get(e.mass_id).rows.push({
       name: e.name,
-      intentionText: e.custom_intention || localizedName(e.intention_master_name, e.intention_master_name_ta, lang) || '-',
+      intentionText,
       offeringAmount: Number(e.offering_amount),
       receiptNo: e.receipt_no,
     });

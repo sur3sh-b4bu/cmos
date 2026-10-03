@@ -263,8 +263,34 @@ function buildExactMarriageDocument(record, church, ink, template = null) {
   return {
     pageSize: 'A4',
     pageOrientation: 'portrait',
-    pageMargins: [42, 44, 42, 30],
+    pageMargins: [42, 42, 42, 85],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
+    footer: (currentPage, pageCount) => ({
+      margin: [42, 0, 42, 20],
+      stack: [
+        {
+          columns: [
+            {
+              width: '*',
+              text: [
+                { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
+              ],
+            },
+            { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR },
+            { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR },
+          ],
+        },
+        {
+          text: `Certificate No.: ${record.certificate_no || '-'}`,
+          font: 'Times',
+          fontSize: 8,
+          color: THEME_COLOR,
+          opacity: 0.6,
+          margin: [0, 8, 0, 0],
+        },
+      ],
+    }),
     content: [
       // Title: Underlined, Bold, Centered
       {
@@ -339,23 +365,6 @@ function buildExactMarriageDocument(record, church, ink, template = null) {
       buildWitnessesRow(lbl('witnesses', 'Witnesses')),
       // 12. Minister of the Ceremony
       singleDottedRow(lbl('minister', 'Minister of the Ceremony'), record.priest_display_name || ''),
-
-      // Footer: Date : .........   Seal   Parish Priest
-      {
-        columns: [
-          {
-            width: '*',
-            text: [
-              { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
-              { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
-            ],
-          },
-          { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR },
-          { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR },
-        ],
-        margin: [0, dynamicFooterTop, 0, 0],
-      },
-      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8, color: THEME_COLOR, opacity: 0.6, margin: [0, 16, 0, 0] },
     ],
   };
 }
@@ -416,8 +425,34 @@ function buildExactBaptismDocument(record, church, ink, template = null) {
   return {
     pageSize: 'A4',
     pageOrientation: 'portrait',
-    pageMargins: [44, 46, 44, 32],
+    pageMargins: [44, 44, 44, 85],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
+    footer: (currentPage, pageCount) => ({
+      margin: [44, 0, 44, 20],
+      stack: [
+        {
+          columns: [
+            {
+              width: '*',
+              text: [
+                { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
+              ],
+            },
+            { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR },
+            { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR },
+          ],
+        },
+        {
+          text: `Certificate No.: ${record.certificate_no || '-'}`,
+          font: 'Times',
+          fontSize: 8,
+          color: THEME_COLOR,
+          opacity: 0.6,
+          margin: [0, 8, 0, 0],
+        },
+      ],
+    }),
     content: [
       // Pill box header: [ EXTRACT FROM THE REGISTER OF BAPTISM ]
       {
@@ -548,23 +583,6 @@ function buildExactBaptismDocument(record, church, ink, template = null) {
       singleSolidRow(lbl('priest', 'Priest who Baptised'), record.priest_display_name || ''),
       // 10. Remarks
       singleSolidRow(lbl('remarks', 'Remarks'), record.remarks || ''),
-
-      // Footer: Date : ____________________   Seal   Catholic Priest
-      {
-        columns: [
-          {
-            width: '*',
-            text: [
-              { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
-              { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
-            ],
-          },
-          { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR },
-          { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR },
-        ],
-        margin: [0, FOOTER_TOP, 0, 0],
-      },
-      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8.5, color: THEME_COLOR, opacity: 0.6, margin: [0, 16, 0, 0] },
     ],
   };
 }
@@ -584,9 +602,8 @@ function buildExactDeathDocument(record, church, ink, template = null) {
   const DATA_COLOR = '#000000';
   const LABEL_WIDTH = 160;
   const LINE_WIDTH = 350;
-  const ROW_GAP = 24.5;
+  const ROW_GAP = 22;
   const FONT_SIZE = 12;
-  const FOOTER_TOP = 75;
 
   const churchLocation = [church?.name, church?.city].filter(Boolean).join(', ');
   const labels = template?.field_labels || {};
@@ -601,7 +618,7 @@ function buildExactDeathDocument(record, church, ink, template = null) {
   const placeLabel = lbl('place_label', 'Place :');
   const dateLabel = lbl('date_label', 'Date  :');
 
-  const SUBROW_GAP = 10;
+  const SUBROW_GAP = 9;
   const deathValues = [
     record.deceased_name,
     record.age,
@@ -619,8 +636,7 @@ function buildExactDeathDocument(record, church, ink, template = null) {
     record.priest_display_name,
   ];
   const deathExtraLines = deathValues.reduce((acc, val) => acc + Math.max(0, splitIntoLines(val).length - 1), 0);
-  const dynamicDeathRowGap = deathExtraLines > 0 ? Math.max(16, ROW_GAP - deathExtraLines * 2.5) : ROW_GAP;
-  const dynamicDeathFooterTop = deathExtraLines > 0 ? Math.max(25, FOOTER_TOP - deathExtraLines * 8) : FOOTER_TOP;
+  const dynamicDeathRowGap = deathExtraLines > 0 ? Math.max(15, ROW_GAP - deathExtraLines * 2.5) : ROW_GAP;
 
   const deathRow = (label, valText) => {
     const lines = splitIntoLines(valText);
@@ -666,8 +682,45 @@ function buildExactDeathDocument(record, church, ink, template = null) {
   return {
     pageSize: 'A4',
     pageOrientation: 'portrait',
-    pageMargins: [42, 42, 42, 28],
+    pageMargins: [42, 38, 42, 88],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
+    footer: (currentPage, pageCount) => ({
+      margin: [42, 0, 42, 18],
+      stack: [
+        {
+          columns: [
+            {
+              width: '*',
+              stack: [
+                {
+                  text: [
+                    { text: `${placeLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                    { text: church?.city ? String(church.city).toUpperCase() : '', font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
+                  ],
+                  margin: [0, 0, 0, 2],
+                },
+                {
+                  text: [
+                    { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                    { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
+                  ],
+                },
+              ],
+            },
+            { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR, margin: [0, 4, 0, 0] },
+            { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR, margin: [0, 4, 0, 0] },
+          ],
+        },
+        {
+          text: `Certificate No.: ${record.certificate_no || '-'}`,
+          font: 'Times',
+          fontSize: 8,
+          color: THEME_COLOR,
+          opacity: 0.6,
+          margin: [0, 6, 0, 0],
+        },
+      ],
+    }),
     content: [
       // 2-line Title (or dynamic lines from template)
       {
@@ -734,34 +787,6 @@ function buildExactDeathDocument(record, church, ink, template = null) {
       deathRow(lbl('burial_date', 'Date of Burial'), formatCertDate(record.burial_date)),
       deathRow(lbl('cemetery', 'Place of Burial'), record.cemetery),
       deathRow(lbl('minister', 'Minister'), record.priest_display_name || ''),
-
-      // Footer: Place & Date on left, Seal in center, CATHOLIC PRIEST on right
-      {
-        columns: [
-          {
-            width: '*',
-            stack: [
-              {
-                text: [
-                  { text: `${placeLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
-                  { text: church?.city ? String(church.city).toUpperCase() : '', font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
-                ],
-                margin: [0, 0, 0, 4],
-              },
-              {
-                text: [
-                  { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
-                  { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
-                ],
-              },
-            ],
-          },
-          { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR, margin: [0, 10, 0, 0] },
-          { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR, margin: [0, 10, 0, 0] },
-        ],
-        margin: [0, dynamicDeathFooterTop, 0, 0],
-      },
-      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8, color: THEME_COLOR, opacity: 0.6, margin: [0, 14, 0, 0] },
     ],
   };
 }
@@ -780,10 +805,9 @@ function buildExactConfirmationDocument(record, church, ink, template = null) {
   const DATA_COLOR = '#000000';
   const LABEL_WIDTH = 190;
   const LINE_WIDTH = 320;
-  const ROW_GAP = 34;
+  const ROW_GAP = 36;
   const SUBROW_GAP = 12;
   const FONT_SIZE = 13;
-  const FOOTER_TOP = 88;
 
   const churchLocation = [church?.name, church?.city].filter(Boolean).join(', ');
   const labels = template?.field_labels || {};
@@ -809,8 +833,7 @@ function buildExactConfirmationDocument(record, church, ink, template = null) {
     record.bishop_name,
   ];
   const totalExtraLines = rowsData.reduce((acc, val) => acc + Math.max(0, splitIntoLines(val).length - 1), 0);
-  const dynamicRowGap = totalExtraLines > 0 ? Math.max(18, ROW_GAP - totalExtraLines * 4) : ROW_GAP;
-  const dynamicFooterTop = totalExtraLines > 0 ? Math.max(30, FOOTER_TOP - totalExtraLines * 12) : FOOTER_TOP;
+  const dynamicRowGap = totalExtraLines > 0 ? Math.max(22, ROW_GAP - totalExtraLines * 3.5) : ROW_GAP;
 
   const confirmationRow = (label, valText) => {
     const lines = splitIntoLines(valText);
@@ -856,8 +879,34 @@ function buildExactConfirmationDocument(record, church, ink, template = null) {
   return {
     pageSize: 'A4',
     pageOrientation: 'portrait',
-    pageMargins: [42, 46, 42, 32],
+    pageMargins: [42, 44, 42, 85],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
+    footer: (currentPage, pageCount) => ({
+      margin: [42, 0, 42, 20],
+      stack: [
+        {
+          columns: [
+            {
+              width: '*',
+              text: [
+                { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
+                { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
+              ],
+            },
+            { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR },
+            { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR },
+          ],
+        },
+        {
+          text: `Certificate No.: ${record.certificate_no || '-'}`,
+          font: 'Times',
+          fontSize: 8,
+          color: THEME_COLOR,
+          opacity: 0.6,
+          margin: [0, 8, 0, 0],
+        },
+      ],
+    }),
     content: [
       // Title: Extract from Confirmation Register (Title Case)
       {
@@ -918,23 +967,6 @@ function buildExactConfirmationDocument(record, church, ink, template = null) {
       confirmationRow(lbl('place_of_confirmation', 'Place of Confirmation'), record.place_of_confirmation || church?.name || ''),
       confirmationRow(lbl('date_of_confirmation', 'Date of Confirmation'), formatCertDate(record.date_of_confirmation)),
       confirmationRow(lbl('bishop', 'Bishop who confirmed'), record.bishop_name || ''),
-
-      // Footer: Date on left, SEAL in center, Parish Priest on right
-      {
-        columns: [
-          {
-            width: '*',
-            text: [
-              { text: `${dateLabel}  `, font: 'Times', bold: true, fontSize: FONT_SIZE, color: THEME_COLOR },
-              { text: formatCertDate(new Date()), font: 'Times', bold: true, fontSize: FONT_SIZE, color: DATA_COLOR },
-            ],
-          },
-          { width: '*', text: sealText, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'center', color: THEME_COLOR },
-          { width: '*', text: signatoryTitle, font: 'Times', bold: true, fontSize: FONT_SIZE, alignment: 'right', color: THEME_COLOR },
-        ],
-        margin: [0, dynamicFooterTop, 0, 0],
-      },
-      { text: `Certificate No.: ${record.certificate_no}`, font: 'Times', fontSize: 8, color: THEME_COLOR, opacity: 0.6, margin: [0, 16, 0, 0] },
     ],
   };
 }

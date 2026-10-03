@@ -21,6 +21,11 @@ export interface MassIntentionQuery {
   prayerDate?: string;
   prayerDateFrom?: string;
   prayerDateTo?: string;
+  enteredDate?: string;
+  enteredDateFrom?: string;
+  enteredDateTo?: string;
+  createdAtFrom?: string;
+  createdAtTo?: string;
   /** Structured filter-bar values (see mass-intentions-list.ts's
    * filterFields) -- always sent, and read server-side, as plain
    * query-string values rather than a number/boolean. paidOnly is '1' | '0';
@@ -89,6 +94,18 @@ export class MassIntentionService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
+  refund(id: number, payload?: { reason?: string; amount?: number }): Observable<MassIntention> {
+    return this.http
+      .post<ApiResponse<MassIntention>>(`${this.baseUrl}/${id}/refund`, payload || {})
+      .pipe(map((res) => res.data));
+  }
+
+  unrefund(id: number): Observable<MassIntention> {
+    return this.http
+      .post<ApiResponse<MassIntention>>(`${this.baseUrl}/${id}/unrefund`, {})
+      .pipe(map((res) => res.data));
+  }
+
   receivePayment(id: number, payload: ReceivePaymentRequest): Observable<MassIntention> {
     return this.http
       .post<ApiResponse<MassIntention>>(`${this.baseUrl}/${id}/payment/receive`, payload)
@@ -135,13 +152,14 @@ export class MassIntentionService {
       .pipe(map((res) => res.data));
   }
 
-  getRegisterPrintUrl(date: string, namesOnly = false, lang: AppLang = 'en', reasonsOnly = false): string {
+  getRegisterPrintUrl(date: string, namesOnly = false, lang: AppLang = 'en', reasonsOnly = false, massId?: number | null): string {
     const extra = reasonsOnly ? '&reasonsOnly=true' : namesOnly ? '&namesOnly=true' : '';
-    return `${this.baseUrl}/register/print?date=${date}${extra}${lang === 'ta' ? '&lang=ta' : ''}`;
+    const massParam = massId ? `&massId=${massId}` : '';
+    return `${this.baseUrl}/register/print?date=${date}${extra}${massParam}${lang === 'ta' ? '&lang=ta' : ''}`;
   }
 
-  getRegisterReasonsOnlyPrintUrl(date: string, lang: AppLang = 'en'): string {
-    return this.getRegisterPrintUrl(date, false, lang, true);
+  getRegisterReasonsOnlyPrintUrl(date: string, lang: AppLang = 'en', massId?: number | null): string {
+    return this.getRegisterPrintUrl(date, false, lang, true, massId);
   }
 
   getDashboardStats(): Observable<DashboardStats> {

@@ -353,7 +353,6 @@ export class DataTableComponent<T = Record<string, unknown>> implements OnInit, 
         </tbody>
       `;
 
-      const isLandscape = cols.length > 5;
       const html = `
         <!DOCTYPE html>
         <html>
@@ -362,73 +361,78 @@ export class DataTableComponent<T = Record<string, unknown>> implements OnInit, 
           <title>${title}</title>
           <style>
             @page {
-              size: ${isLandscape ? 'landscape' : 'portrait'};
-              margin: 12mm 10mm;
+              size: A4 portrait;
+              margin: 10mm 8mm;
             }
             body {
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
               color: #1e293b;
               margin: 0;
-              padding: 10px;
-              font-size: 12px;
-              line-height: 1.4;
+              padding: 0;
+              font-size: 10px;
+              line-height: 1.35;
             }
             .print-header {
               text-align: center;
-              margin-bottom: 16px;
+              margin-bottom: 12px;
               border-bottom: 2px solid #072a63;
-              padding-bottom: 10px;
+              padding-bottom: 8px;
             }
             .church-title {
-              font-size: 18px;
+              font-size: 16px;
               font-weight: 700;
               color: #072a63;
-              letter-spacing: 0.5px;
+              letter-spacing: 0.4px;
             }
             .church-sub {
-              font-size: 12px;
+              font-size: 11px;
               color: #64748b;
               margin-top: 2px;
             }
             .report-title {
-              font-size: 14px;
+              font-size: 13px;
               font-weight: 600;
               color: #334155;
-              margin-top: 8px;
+              margin-top: 6px;
               letter-spacing: 0.3px;
             }
             .report-meta {
               display: flex;
               justify-content: space-between;
-              margin-top: 8px;
-              font-size: 11px;
+              margin-top: 6px;
+              font-size: 10px;
               color: #64748b;
             }
             table {
               width: 100%;
               border-collapse: collapse;
               margin-top: 6px;
+              table-layout: auto;
             }
             th {
               background-color: #f1f5f9;
               color: #072a63;
               font-weight: 700;
-              font-size: 11px;
-              padding: 8px 6px;
+              font-size: 9.5px;
+              padding: 6px 4px;
               border: 1px solid #cbd5e1;
               text-transform: uppercase;
-              letter-spacing: 0.3px;
+              letter-spacing: 0.2px;
             }
             td {
-              padding: 6px;
+              padding: 5px 4px;
               border: 1px solid #e2e8f0;
-              font-size: 11.5px;
+              font-size: 9.5px;
               word-break: break-word;
             }
             tr:nth-child(even) {
               background-color: #f8fafc;
             }
             @media print {
+              @page {
+                size: A4 portrait;
+                margin: 10mm 8mm;
+              }
               thead { display: table-header-group; }
               tr { page-break-inside: avoid; }
             }

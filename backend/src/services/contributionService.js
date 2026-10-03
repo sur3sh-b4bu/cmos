@@ -152,6 +152,38 @@ async function remove(id, req) {
   emitToChurch(req.user.churchId, 'contributions:changed', { action: 'deleted', id });
 }
 
+async function refund(id, payload = {}, req) {
+  const existing = await contributionRepository.getById(id, scopeFor(req));
+  if (!existing) throw ApiError.notFound('Contribution not found');
+  const updated = await contributionRepository.refund(id, payload, req.user.id);
+  await auditService.fromRequest(req, {
+    action: 'REFUND',
+    module: 'contributions',
+    entityType: 'contributions',
+    entityId: id,
+    oldValues: existing,
+    newValues: updated,
+  });
+  emitToChurch(req.user.churchId, 'contributions:changed', { action: 'refunded', id });
+  return updated;
+}
+
+async function unrefund(id, req) {
+  const existing = await contributionRepository.getById(id, scopeFor(req));
+  if (!existing) throw ApiError.notFound('Contribution not found');
+  const updated = await contributionRepository.unrefund(id, req.user.id);
+  await auditService.fromRequest(req, {
+    action: 'UNREFUND',
+    module: 'contributions',
+    entityType: 'contributions',
+    entityId: id,
+    oldValues: existing,
+    newValues: updated,
+  });
+  emitToChurch(req.user.churchId, 'contributions:changed', { action: 'unrefunded', id });
+  return updated;
+}
+
 /**
  * Step 3 of the payment workflow: the receipt only becomes generatable once
  * a successful payment exists (see contributionRepository's `is_paid`, derived
@@ -223,6 +255,8 @@ module.exports = {
   create,
   update,
   remove,
+  refund,
+  unrefund,
   buildReceiptPdf,
   buildReceiptHtml,
   list: (query, req) => contributionRepository.list({ ...query, ...scopeFor(req) }),

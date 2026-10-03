@@ -93,6 +93,12 @@
         }
         <span>{{ 'language.tamil' | translate }}</span>
       </button>
+      <button mat-menu-item (click)="setLanguage('hi')">
+        @if (languageService.current() === 'hi') {
+          <mat-icon>check</mat-icon>
+        }
+        <span>{{ 'language.hindi' | translate }}</span>
+      </button>
     </mat-menu>
 
     <button mat-icon-button class="app-header__icon-btn" [matTooltip]="'header.notificationsTooltip' | translate" [matMenuTriggerFor]="notificationsMenu">

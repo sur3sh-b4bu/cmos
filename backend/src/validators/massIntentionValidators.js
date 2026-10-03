@@ -36,6 +36,7 @@ const registerDateQuery = z.object({
   namesOnly: z.coerce.boolean().optional(),
   // Third print button: mass reasons only
   reasonsOnly: z.coerce.boolean().optional(),
+  massId: z.coerce.number().int().positive().optional(),
   mode: z.string().optional(),
   // Print language -- see massIntentionService.buildDailyRegisterPdf's
   // `req.query?.lang` read. Zod objects silently STRIP any key not listed

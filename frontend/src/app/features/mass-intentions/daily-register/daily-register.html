@@ -75,6 +75,40 @@
             <span class="register__group-count">
               {{ group.entries.length }} {{ (group.entries.length === 1 ? 'nav.massIntentions' : 'nav.massIntentions') | translate }}
             </span>
+            <div class="register__group-actions no-print">
+              <button
+                mat-stroked-button
+                color="accent"
+                type="button"
+                class="register__group-btn"
+                [disabled]="printingGroupReasonsMassId() === group.massId"
+                (click)="printGroupReasonsOnly(group)"
+                [matTooltip]="'dailyRegister.printMassReasonsOnly' | translate"
+              >
+                @if (printingGroupReasonsMassId() === group.massId) {
+                  <mat-progress-spinner diameter="14" mode="indeterminate" />
+                } @else {
+                  <mat-icon>format_list_bulleted</mat-icon>
+                }
+                <span>{{ 'dailyRegister.printMassReasonsOnly' | translate }}</span>
+              </button>
+              <button
+                mat-stroked-button
+                color="primary"
+                type="button"
+                class="register__group-btn"
+                [disabled]="printingGroupMassId() === group.massId"
+                (click)="printGroup(group)"
+                [matTooltip]="'dailyRegister.printMass' | translate"
+              >
+                @if (printingGroupMassId() === group.massId) {
+                  <mat-progress-spinner diameter="14" mode="indeterminate" />
+                } @else {
+                  <mat-icon>print</mat-icon>
+                }
+                <span>{{ 'dailyRegister.printMass' | translate }}</span>
+              </button>
+            </div>
           </div>
         </div>
 

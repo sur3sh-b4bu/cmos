@@ -41,15 +41,43 @@ function buildListQuery({
   prayerDate,
   prayerDateFrom,
   prayerDateTo,
+  enteredDate,
+  enteredDateFrom,
+  enteredDateTo,
+  createdAtFrom,
+  createdAtTo,
+  createdFrom,
+  createdTo,
   massId,
   paymentMethodId,
   paidOnly,
+  isRefunded,
+  refundStatus,
   churchId,
   branchId,
   bulkBatchId,
 }) {
   const conditions = ['pi.is_deleted = 0'];
   const params = [];
+
+  if (paidOnly === 'refunded' || isRefunded === '1' || isRefunded === 1 || isRefunded === true || refundStatus === '1') {
+    conditions.push('pi.is_refunded = 1');
+  } else if (
+    paidOnly === '1' ||
+    paidOnly === '0' ||
+    paidOnly === 1 ||
+    paidOnly === 0 ||
+    paidOnly === true ||
+    paidOnly === false ||
+    paidOnly === 'true' ||
+    paidOnly === 'false' ||
+    isRefunded === '0' ||
+    isRefunded === 0 ||
+    isRefunded === false ||
+    refundStatus === '0'
+  ) {
+    conditions.push('pi.is_refunded = 0');
+  }
 
   if (churchId) {
     conditions.push('pi.church_id = ?');
@@ -96,6 +124,22 @@ function buildListQuery({
     conditions.push('pi.prayer_date <= ?');
     params.push(prayerDateTo);
   }
+
+  const fromCreated = enteredDateFrom || createdAtFrom || createdFrom;
+  if (fromCreated) {
+    conditions.push('pi.created_at >= CONCAT(?, " 00:00:00")');
+    params.push(fromCreated);
+  }
+  const toCreated = enteredDateTo || createdAtTo || createdTo;
+  if (toCreated) {
+    conditions.push('pi.created_at <= CONCAT(?, " 23:59:59")');
+    params.push(toCreated);
+  }
+  if (enteredDate) {
+    conditions.push('DATE(pi.created_at) = ?');
+    params.push(enteredDate);
+  }
+
   if (massId) {
     conditions.push('pi.mass_id = ?');
     params.push(massId);
@@ -112,7 +156,7 @@ function buildListQuery({
   // strings), so the truthiness check below is explicit rather than a bare
   // `paidOnly ? 1 : 0` -- the string 'false' is itself truthy in JS, which
   // would otherwise silently flip "show only Unpaid" into "show only Paid".
-  const paidOnlyRequested = paidOnly !== undefined && paidOnly !== '';
+  const paidOnlyRequested = paidOnly !== undefined && paidOnly !== '' && paidOnly !== 'refunded';
   const isPaidValue = paidOnly === true || paidOnly === 'true' || paidOnly === '1' || paidOnly === 1;
   const having = paidOnlyRequested ? `HAVING is_paid = ${isPaidValue ? 1 : 0}` : '';
   return { where, having, params };
@@ -152,7 +196,7 @@ async function list({ page = 1, pageSize = 25, sortBy, sortDir, ...query }) {
   );
   const countQuery = having
     ? `SELECT COUNT(*) AS total FROM (
-        SELECT pi.id, (pay.id IS NOT NULL OR pi.is_paid = 1) AS is_paid
+        SELECT pi.id, (pay.id IS NOT NULL) AS is_paid
         FROM prayer_intentions pi
         JOIN masses m ON m.id = pi.mass_id
         LEFT JOIN prayer_intention_master pim ON pim.id = pi.prayer_intention_master_id
@@ -379,13 +423,50 @@ async function softDelete(id, userId) {
   );
 }
 
+async function refund(id, { reason, amount } = {}, userId) {
+  const row = await getById(id);
+  if (!row) return null;
+  const refundAmount = amount !== undefined && amount !== null ? Number(amount) : Number(row.offering_amount);
+  await pool.query(
+    `UPDATE prayer_intentions
+     SET is_refunded = 1,
+         refunded_at = CURRENT_TIMESTAMP,
+         refunded_by = ?,
+         refund_reason = ?,
+         refund_amount = ?,
+         updated_by = ?
+     WHERE id = ?`,
+    [userId, reason || 'Refund issued by church office', refundAmount, userId, id]
+  );
+  return getById(id);
+}
+
+async function unrefund(id, userId) {
+  await pool.query(
+    `UPDATE prayer_intentions
+     SET is_refunded = 0,
+         refunded_at = NULL,
+         refunded_by = NULL,
+         refund_reason = NULL,
+         refund_amount = NULL,
+         updated_by = ?
+     WHERE id = ?`,
+    [userId, id]
+  );
+  return getById(id);
+}
+
 /** Rows for the Daily Prayer Register, grouped by mass in the application layer. */
-async function getRegisterData(prayerDate, churchId, branchId) {
-  const conditions = ['pi.prayer_date = ?', 'pi.church_id = ?', 'pi.is_deleted = 0'];
+async function getRegisterData(prayerDate, churchId, branchId, massId) {
+  const conditions = ['pi.prayer_date = ?', 'pi.church_id = ?', 'pi.is_deleted = 0', 'COALESCE(pi.is_refunded, 0) = 0'];
   const params = [prayerDate, churchId];
   if (branchId) {
     conditions.push('(pi.branch_id = ? OR pi.branch_id IS NULL)');
     params.push(branchId);
+  }
+  if (massId) {
+    conditions.push('pi.mass_id = ?');
+    params.push(massId);
   }
   const [rows] = await pool.query(
     `${BASE_SELECT}
@@ -414,11 +495,11 @@ async function getDashboardStats(churchId, branchId) {
   const branchParam = branchId ? [branchId] : [];
 
   const [[todayCount]] = await pool.query(
-    `SELECT COUNT(*) AS c FROM prayer_intentions pi WHERE prayer_date = ? AND church_id = ? AND is_deleted = 0${branchClause}`,
+    `SELECT COUNT(*) AS c FROM prayer_intentions pi WHERE prayer_date = ? AND church_id = ? AND is_deleted = 0 AND COALESCE(pi.is_refunded, 0) = 0${branchClause}`,
     [today, churchId, ...branchParam]
   );
   const [[tomorrowCount]] = await pool.query(
-    `SELECT COUNT(*) AS c FROM prayer_intentions pi WHERE prayer_date = ? AND church_id = ? AND is_deleted = 0${branchClause}`,
+    `SELECT COUNT(*) AS c FROM prayer_intentions pi WHERE prayer_date = ? AND church_id = ? AND is_deleted = 0 AND COALESCE(pi.is_refunded, 0) = 0${branchClause}`,
     [tomorrow, churchId, ...branchParam]
   );
   // "Collections" is money actually received, dated by when the payment was
@@ -428,12 +509,12 @@ async function getDashboardStats(churchId, branchId) {
     `SELECT COALESCE(SUM(pt.amount), 0) AS total
      FROM payment_transactions pt
      JOIN prayer_intentions pi ON pi.id = pt.prayer_intention_id
-     WHERE pt.status = 'success' AND pt.payment_date = ? AND pi.church_id = ? AND pi.is_deleted = 0${branchClause}`,
+     WHERE pt.status = 'success' AND pt.payment_date = ? AND pi.church_id = ? AND pi.is_deleted = 0 AND COALESCE(pi.is_refunded, 0) = 0${branchClause}`,
     [today, churchId, ...branchParam]
   );
   const [[pendingCount]] = await pool.query(
     `SELECT COUNT(*) AS c FROM prayer_intentions pi
-     WHERE pi.church_id = ? AND pi.is_deleted = 0${branchClause}
+     WHERE pi.church_id = ? AND pi.is_deleted = 0 AND COALESCE(pi.is_refunded, 0) = 0${branchClause}
        AND NOT EXISTS (
          SELECT 1 FROM payment_transactions pt WHERE pt.prayer_intention_id = pi.id AND pt.status = 'success'
        )`,
@@ -441,7 +522,7 @@ async function getDashboardStats(churchId, branchId) {
   );
   const [upcoming] = await pool.query(
     `${BASE_SELECT}
-     WHERE pi.prayer_date >= ? AND pi.church_id = ? AND pi.is_deleted = 0${branchClause}
+     WHERE pi.prayer_date >= ? AND pi.church_id = ? AND pi.is_deleted = 0 AND COALESCE(pi.is_refunded, 0) = 0${branchClause}
      ORDER BY pi.prayer_date ASC, m.sort_order ASC LIMIT 5`,
     [today, churchId, ...branchParam]
   );
@@ -449,7 +530,7 @@ async function getDashboardStats(churchId, branchId) {
     `SELECT COALESCE(SUM(pt.amount), 0) AS total
      FROM payment_transactions pt
      JOIN prayer_intentions pi ON pi.id = pt.prayer_intention_id
-     WHERE pt.status = 'success' AND pi.church_id = ? AND pi.is_deleted = 0${branchClause}
+     WHERE pt.status = 'success' AND pi.church_id = ? AND pi.is_deleted = 0 AND COALESCE(pi.is_refunded, 0) = 0${branchClause}
        AND YEAR(pt.payment_date) = YEAR(CURDATE()) AND MONTH(pt.payment_date) = MONTH(CURDATE())`,
     [churchId, ...branchParam]
   );
@@ -458,7 +539,7 @@ async function getDashboardStats(churchId, branchId) {
     `SELECT pt.payment_date AS date, COALESCE(SUM(pt.amount), 0) AS total
      FROM payment_transactions pt
      JOIN prayer_intentions pi ON pi.id = pt.prayer_intention_id
-     WHERE pt.status = 'success' AND pi.church_id = ? AND pi.is_deleted = 0${branchClause}
+     WHERE pt.status = 'success' AND pi.church_id = ? AND pi.is_deleted = 0 AND COALESCE(pi.is_refunded, 0) = 0${branchClause}
        AND pt.payment_date BETWEEN DATE_SUB(?, INTERVAL 6 DAY) AND ?
      GROUP BY pt.payment_date`,
     [churchId, ...branchParam, today, today]
@@ -472,18 +553,58 @@ async function getDashboardStats(churchId, branchId) {
     collectionsTrend.push({ date: iso, total: trendByDate.get(iso) ?? 0 });
   }
 
-  // Masses themselves aren't branch-restricted here (a Mass's own
-  // branch_id is which branch it's offered at, not a filter on who may
-  // view it -- see genericMasterRepository's addBranchScope for that side)
-  // -- only the prayer_intentions being counted per Mass are.
   const [intentionsByMass] = await pool.query(
     `SELECT m.name AS massName, COUNT(pi.id) AS count
      FROM masses m
-     LEFT JOIN prayer_intentions pi ON pi.mass_id = m.id AND pi.is_deleted = 0 AND pi.church_id = ?${branchClause}
+     LEFT JOIN prayer_intentions pi ON pi.mass_id = m.id AND pi.is_deleted = 0 AND COALESCE(pi.is_refunded, 0) = 0 AND pi.church_id = ?${branchClause}
      WHERE m.church_id = ? AND m.is_deleted = 0
      GROUP BY m.id, m.name, m.sort_order
      ORDER BY m.sort_order ASC`,
     [churchId, ...branchParam, churchId]
+  );
+
+  // Today's & Monthly Contributions
+  const [[todayCont]] = await pool.query(
+    `SELECT COALESCE(SUM(d.contribution_amount), 0) AS total
+     FROM contributions d
+     WHERE d.created_at >= CONCAT(?, ' 00:00:00') AND d.created_at <= CONCAT(?, ' 23:59:59')
+       AND d.church_id = ? AND d.is_deleted = 0 AND COALESCE(d.is_refunded, 0) = 0${branchClause ? branchClause.replace(/pi\./g, 'd.') : ''}`,
+    [today, today, churchId, ...branchParam]
+  );
+  const [[monthlyCont]] = await pool.query(
+    `SELECT COALESCE(SUM(d.contribution_amount), 0) AS total
+     FROM contributions d
+     WHERE YEAR(d.created_at) = YEAR(CURDATE()) AND MONTH(d.created_at) = MONTH(CURDATE())
+       AND d.church_id = ? AND d.is_deleted = 0 AND COALESCE(d.is_refunded, 0) = 0${branchClause ? branchClause.replace(/pi\./g, 'd.') : ''}`,
+    [churchId, ...branchParam]
+  );
+
+  // Today's & Period Refunds across prayer_intentions and contributions
+  const [[todayPiRefunds]] = await pool.query(
+    `SELECT COALESCE(SUM(refund_amount), 0) AS total, COUNT(*) AS count
+     FROM prayer_intentions pi
+     WHERE pi.is_refunded = 1 AND DATE(pi.refunded_at) = ? AND pi.church_id = ? AND pi.is_deleted = 0${branchClause}`,
+    [today, churchId, ...branchParam]
+  );
+  const [[todayContRefunds]] = await pool.query(
+    `SELECT COALESCE(SUM(d.refund_amount), 0) AS total, COUNT(*) AS count
+     FROM contributions d
+     WHERE d.is_refunded = 1 AND DATE(d.refunded_at) = ? AND d.church_id = ? AND d.is_deleted = 0${branchClause ? branchClause.replace(/pi\./g, 'd.') : ''}`,
+    [today, churchId, ...branchParam]
+  );
+  const [[monthlyPiRefunds]] = await pool.query(
+    `SELECT COALESCE(SUM(refund_amount), 0) AS total, COUNT(*) AS count
+     FROM prayer_intentions pi
+     WHERE pi.is_refunded = 1 AND YEAR(pi.refunded_at) = YEAR(CURDATE()) AND MONTH(pi.refunded_at) = MONTH(CURDATE())
+       AND pi.church_id = ? AND pi.is_deleted = 0${branchClause}`,
+    [churchId, ...branchParam]
+  );
+  const [[monthlyContRefunds]] = await pool.query(
+    `SELECT COALESCE(SUM(d.refund_amount), 0) AS total, COUNT(*) AS count
+     FROM contributions d
+     WHERE d.is_refunded = 1 AND YEAR(d.refunded_at) = YEAR(CURDATE()) AND MONTH(d.refunded_at) = MONTH(CURDATE())
+       AND d.church_id = ? AND d.is_deleted = 0${branchClause ? branchClause.replace(/pi\./g, 'd.') : ''}`,
+    [churchId, ...branchParam]
   );
 
   return {
@@ -492,6 +613,12 @@ async function getDashboardStats(churchId, branchId) {
     todayCollections: Number(todayCollections.total),
     pendingCount: pendingCount.c,
     monthlyCollections: Number(monthlyCollections.total),
+    todayContributions: Number(todayCont.total),
+    monthlyContributions: Number(monthlyCont.total),
+    todayRefunds: Number(todayPiRefunds.total) + Number(todayContRefunds.total),
+    monthlyRefunds: Number(monthlyPiRefunds.total) + Number(monthlyContRefunds.total),
+    todayRefundCount: Number(todayPiRefunds.count) + Number(todayContRefunds.count),
+    monthlyRefundCount: Number(monthlyPiRefunds.count) + Number(monthlyContRefunds.count),
     upcoming,
     collectionsTrend,
     intentionsByMass: intentionsByMass.map((r) => ({ massName: r.massName, count: Number(r.count) })),
@@ -510,6 +637,8 @@ module.exports = {
   create,
   update,
   softDelete,
+  refund,
+  unrefund,
   getRegisterData,
   getDashboardStats,
 };

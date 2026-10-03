@@ -1,0 +1,444 @@
+<div class="kb-guide">
+  <!-- Header with navigation & Language Toggle -->
+  <div class="kb-guide__header">
+    <div class="kb-guide__title-area">
+      <div class="kb-guide__breadcrumb">
+        <a routerLink="/settings" class="lang-settings__back-link">
+          <mat-icon>arrow_back</mat-icon>
+          <span>{{ 'nav.settings' | translate }}</span>
+        </a>
+        <span class="kb-guide__slash">/</span>
+        <span class="kb-guide__current">{{ 'settings.keyboardGuide' | translate }}</span>
+      </div>
+      <h1>
+        <mat-icon class="header-icon">keyboard</mat-icon>
+        {{ guideLang() === 'hi' ? ('settings.hindiKeyboardGuide' | translate) : ('settings.keyboardGuide' | translate) }}
+      </h1>
+      <p class="text-muted">
+        {{ guideLang() === 'hi' ? ('settings.hindiKeyboardGuideSubtitle' | translate) : ('settings.keyboardGuideSubtitle' | translate) }}
+      </p>
+    </div>
+
+    <!-- Language Selector Toggle & Search Input -->
+    <div class="kb-guide__header-controls">
+      <div class="lang-switch-toggle">
+        <mat-button-toggle-group [value]="guideLang()" (change)="setGuideLang($event.value)" aria-label="Keyboard Guide Language">
+          <mat-button-toggle value="ta">
+            <span class="toggle-flag">🇮🇳</span>
+            <span>தமிழ் (Tamil - Bamini)</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="hi">
+            <span class="toggle-flag">🇮🇳</span>
+            <span>हिन्दी (Hindi - Phonetic)</span>
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <div class="kb-guide__search">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-icon matPrefix>search</mat-icon>
+          <mat-label>{{ 'settings.searchKeysOrLetters' | translate }}</mat-label>
+          <input
+            matInput
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+            [placeholder]="'settings.searchPlaceholder' | translate"
+          />
+          @if (searchQuery()) {
+            <button matSuffix mat-icon-button type="button" (click)="searchQuery.set('')" [matTooltip]="'common.clear' | translate">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Typing Practice Sandbox -->
+  <div class="kb-guide__sandbox surface-card">
+    <div class="kb-guide__sandbox-header">
+      <div class="sandbox-title">
+        <mat-icon>touch_app</mat-icon>
+        <div>
+          <h3>{{ 'settings.liveTypingSandbox' | translate }} ({{ guideLang() === 'hi' ? 'Hindi Devanagari' : 'Tamil Unicode' }})</h3>
+          <p>{{ guideLang() === 'hi' ? ('settings.liveTypingHindiDesc' | translate) : ('settings.liveTypingDesc' | translate) }}</p>
+        </div>
+      </div>
+      <div class="sandbox-actions">
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="clearPractice()"
+          [disabled]="!practiceInput()"
+        >
+          <mat-icon>backspace</mat-icon>
+          {{ 'common.clear' | translate }}
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="copyConverted()"
+          [disabled]="!convertedText()"
+        >
+          <mat-icon>{{ copied() ? 'check' : 'content_copy' }}</mat-icon>
+          {{ copied() ? ('common.copied' | translate) : ('common.copy' | translate) }}
+        </button>
+      </div>
+    </div>
+
+    <div class="kb-guide__sandbox-grid">
+      <!-- Input: English Keyboard Keys -->
+      <div class="sandbox-box input-box">
+        <label>
+          <span class="label-badge eng-badge">English QWERTY Input</span>
+          <span class="label-hint">
+            {{ guideLang() === 'hi' ? 'Type English phonetic words (e.g. namaste, yeshu, prarthana)' : ('settings.typeEnglishKeysHere' | translate) }}
+          </span>
+        </label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            class="practice-field"
+            [ngModel]="practiceInput()"
+            (ngModelChange)="practiceInput.set($event)"
+            [placeholder]="guideLang() === 'hi' ? 'e.g. namaste or prarthana or yeshu or dhanyavad' : 'e.g. khpahs; or me;Njhdpahh; or jkpo;'"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+      </div>
+
+      <!-- Output: Result Preview -->
+      <div class="sandbox-box output-box">
+        <label>
+          <span class="label-badge tamil-badge">{{ guideLang() === 'hi' ? 'Hindi Output (हिन्दी)' : 'Tamil Output (தமிழ்)' }}</span>
+          <span class="label-hint">{{ 'settings.tamilResultPreview' | translate }}</span>
+        </label>
+        <div class="output-wrapper">
+          <div class="converted-display" [class.empty]="!convertedText()">
+            {{ convertedText() || (guideLang() === 'hi' ? 'आपका रूपान्तरित हिन्दी पाठ यहाँ दिखाई देगा...' : ('settings.typingResultPlaceholder' | translate)) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Sample Words Pill Buttons -->
+    <div class="kb-guide__quick-samples">
+      <span class="samples-label">{{ 'settings.quickSamples' | translate }}:</span>
+      <div class="samples-list">
+        @for (sample of sampleWords(); track sample.bamini) {
+          <button
+            type="button"
+            class="sample-pill"
+            (click)="insertSample(sample)"
+            [matTooltip]="sample.meaning + ' (Input: ' + sample.bamini + ')'"
+          >
+            <span class="sample-tamil">{{ sample.tamil }}</span>
+            <span class="sample-bamini">({{ sample.bamini }})</span>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Visual Keyboard -->
+  <div class="kb-guide__visual-keyboard surface-card">
+    <div class="keyboard-top-bar">
+      <div class="keyboard-legend">
+        <h4>{{ 'settings.visualKeyboardLayout' | translate }} ({{ guideLang() === 'hi' ? 'Hindi QWERTY' : 'Tamil Bamini' }})</h4>
+        <div class="legend-items">
+          <span class="legend-badge legend-vowel"><i class="dot"></i> {{ guideLang() === 'hi' ? 'Vowels / स्वर' : ('settings.vowels' | translate) }}</span>
+          <span class="legend-badge legend-consonant"><i class="dot"></i> {{ guideLang() === 'hi' ? 'Consonants / व्यंजन' : ('settings.consonants' | translate) }}</span>
+          <span class="legend-badge legend-modifier"><i class="dot"></i> {{ guideLang() === 'hi' ? 'Matras / मात्राएं' : ('settings.modifiers' | translate) }}</span>
+          @if (guideLang() === 'ta') {
+            <span class="legend-badge legend-special"><i class="dot"></i> {{ 'settings.specialUForms' | translate }}</span>
+            <span class="legend-badge legend-grantha"><i class="dot"></i> {{ 'settings.grantha' | translate }}</span>
+          }
+        </div>
+      </div>
+      <div class="shift-toggle-area">
+        <button
+          mat-flat-button
+          [color]="shiftMode() ? 'accent' : 'primary'"
+          type="button"
+          (click)="toggleShift()"
+          class="shift-btn"
+        >
+          <mat-icon>keyboard_capslock</mat-icon>
+          <span>Shift {{ shiftMode() ? 'ON' : 'OFF' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Visual Keyboard Layout Grid -->
+    <div class="keyboard-chassis">
+      @for (row of keyboardRows(); track $index) {
+        <div class="keyboard-row">
+          @for (k of row; track k.key) {
+            <div
+              class="key-cap"
+              [class.key-vowel]="(shiftMode() ? k.categoryShift : k.categoryNormal) === 'vowel'"
+              [class.key-consonant]="(shiftMode() ? k.categoryShift : k.categoryNormal) === 'consonant'"
+              [class.key-modifier]="(shiftMode() ? k.categoryShift : k.categoryNormal) === 'modifier'"
+              [class.key-special]="(shiftMode() ? k.categoryShift : k.categoryNormal) === 'special'"
+              [class.key-grantha]="(shiftMode() ? k.categoryShift : k.categoryNormal) === 'grantha'"
+              (click)="insertKey(shiftMode() ? k.shiftKey : k.key)"
+              [matTooltip]="(shiftMode() ? k.shiftKey : k.key) + ' → ' + (shiftMode() ? k.tamilShift : k.tamilNormal)"
+            >
+              <span class="key-eng">{{ shiftMode() ? k.shiftKey : k.key }}</span>
+              <span class="key-tamil">{{ shiftMode() ? k.tamilShift : k.tamilNormal }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Reference Guide Tabs -->
+  <div class="kb-guide__tabs-section surface-card">
+    <mat-tab-group animationDuration="200ms" class="guide-tabs">
+      <!-- TAB 1: VOWELS -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">spellcheck</mat-icon>
+          <span>{{ guideLang() === 'hi' ? 'स्वर (Vowels)' : ('settings.vowelsTab' | translate) }}</span>
+          <span class="tab-count">({{ filteredVowels().length }})</span>
+        </ng-template>
+        <div class="tab-content">
+          <div class="rule-box info-box">
+            <mat-icon>info</mat-icon>
+            <div>
+              <strong>{{ guideLang() === 'hi' ? 'Hindi Vowel Typing Rules (स्वर नियम)' : ('settings.vowelsRuleTitle' | translate) }}:</strong>
+              <span>
+                {{ guideLang() === 'hi' ? 'Type English letters (a, aa/A, i, ee/I, u, oo/U, ri, e, ai, o, au, am/an, ah). When a vowel starts a word, it becomes an independent Devanagari letter.' : ('settings.vowelsRuleDesc' | translate) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="keys-grid">
+            @for (item of filteredVowels(); track item.eng) {
+              <div class="key-card vowel-card" (click)="insertKey(item.eng.split(' ')[0])">
+                <div class="key-card__tamil">{{ item.tamil }}</div>
+                <div class="key-card__eng">
+                  <span class="key-badge">{{ item.eng }}</span>
+                </div>
+                @if (item.example) {
+                  <div class="key-card__example">
+                    <span class="ex-eng">{{ item.example }}</span>
+                    <span class="arrow">→</span>
+                    <span class="ex-tam">{{ item.exampleTamil }}</span>
+                  </div>
+                }
+                @if (item.note) {
+                  <div class="key-card__note">{{ item.note }}</div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 2: CONSONANTS -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">view_comfy</mat-icon>
+          <span>{{ guideLang() === 'hi' ? 'व्यंजन (Consonants)' : ('settings.consonantsTab' | translate) }}</span>
+          <span class="tab-count">({{ filteredConsonants().length }})</span>
+        </ng-template>
+        <div class="tab-content">
+          <div class="rule-box warning-box">
+            <mat-icon>tips_and_updates</mat-icon>
+            <div>
+              <strong>{{ guideLang() === 'hi' ? 'Hindi Consonant Rules (व्यंजन नियम)' : ('settings.pulliRuleTitle' | translate) }}:</strong>
+              <span>
+                {{ guideLang() === 'hi' ? 'Consonants have an inherent "a" sound (e.g. k -> क, g -> ग). To make a half-letter / joint consonant (हलंत), type consecutive consonants (e.g. "pra" -> प्र, "namaste" -> नमस्ते).' : ('settings.pulliRuleDesc' | translate) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="keys-grid">
+            @for (item of filteredConsonants(); track item.eng) {
+              <div class="key-card consonant-card" (click)="insertKey(item.eng.split(' ')[0])">
+                <div class="key-card__tamil">{{ item.tamil }}</div>
+                <div class="key-card__eng">
+                  <span class="key-badge">{{ item.eng }}</span>
+                </div>
+                @if (item.example) {
+                  <div class="key-card__example">
+                    <span class="ex-eng">{{ item.example }}</span>
+                    <span class="arrow">→</span>
+                    <span class="ex-tam">{{ item.exampleTamil }}</span>
+                  </div>
+                }
+                @if (item.note) {
+                  <div class="key-card__note highlight-pulli">{{ item.note }}</div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 3: MODIFIERS / MATRAS -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">extension</mat-icon>
+          <span>{{ guideLang() === 'hi' ? 'मात्राएं (Matras)' : ('settings.modifiersTab' | translate) }}</span>
+          <span class="tab-count">({{ filteredModifiers().length }})</span>
+        </ng-template>
+        <div class="tab-content">
+          <div class="rule-box tip-box">
+            <mat-icon>lightbulb</mat-icon>
+            <div>
+              <strong>{{ guideLang() === 'hi' ? 'Matra Rules (मात्रा जोड़ने का नियम)' : ('settings.prefixKeyRuleTitle' | translate) }}:</strong>
+              <span>
+                {{ guideLang() === 'hi' ? 'When vowels are typed after a consonant, they automatically turn into Matras (e.g. "ka" -> क, "kaa/kA" -> का, "ki" -> कि, "kee/kI" -> की, "ku" -> कु, "koo/kU" -> कू, "ke" -> के, "kai" -> कै, "ko" -> को, "kau" -> कौ).' : ('settings.prefixKeyRuleDesc' | translate) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="modifiers-table-wrapper">
+            <table class="guide-table">
+              <thead>
+                <tr>
+                  <th>{{ guideLang() === 'hi' ? 'मात्रा (Matra Sign)' : ('settings.modifierSign' | translate) }}</th>
+                  <th>{{ 'settings.englishKey' | translate }}</th>
+                  <th>{{ guideLang() === 'hi' ? 'वर्णन (Description)' : ('settings.positionRule' | translate) }}</th>
+                  <th>{{ 'settings.examples' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of filteredModifiers(); track item.eng) {
+                  <tr>
+                    <td class="sign-cell">{{ item.tamil }}</td>
+                    <td class="key-cell"><span class="key-badge">{{ item.eng }}</span></td>
+                    <td class="desc-cell">{{ item.note || item.category }}</td>
+                    <td class="example-cell">
+                      @if (item.example) {
+                        <code>{{ item.example }}</code> <span class="arrow">→</span> <strong>{{ item.exampleTamil }}</strong>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 4: TAMIL SPECIAL U/UU (Shown when Tamil selected) -->
+      @if (guideLang() === 'ta') {
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">auto_fix_high</mat-icon>
+            <span>{{ 'settings.specialUTab' | translate }}</span>
+            <span class="tab-count">({{ filteredSpecialUForms().length }})</span>
+          </ng-template>
+          <div class="tab-content">
+            <div class="rule-box info-box">
+              <mat-icon>info</mat-icon>
+              <div>
+                <strong>{{ 'settings.specialURuleTitle' | translate }}:</strong>
+                <span> {{ 'settings.specialURuleDesc' | translate }}</span>
+              </div>
+            </div>
+
+            <div class="keys-grid special-grid">
+              @for (item of filteredSpecialUForms(); track item.eng) {
+                <div class="key-card special-card" (click)="insertKey(item.eng.split(' ')[0])">
+                  <div class="key-card__tamil">{{ item.tamil }}</div>
+                  <div class="key-card__eng">
+                    <span class="key-badge special-badge">{{ item.eng }}</span>
+                  </div>
+                  @if (item.example) {
+                    <div class="key-card__example">
+                      <span class="ex-eng">{{ item.example }}</span>
+                      <span class="arrow">→</span>
+                      <span class="ex-tam">{{ item.exampleTamil }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- TAB 5: GRANTHA LETTERS -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">translate</mat-icon>
+            <span>{{ 'settings.granthaTab' | translate }}</span>
+            <span class="tab-count">({{ filteredGrantha().length }})</span>
+          </ng-template>
+          <div class="tab-content">
+            <div class="rule-box info-box">
+              <mat-icon>info</mat-icon>
+              <div>
+                <strong>{{ 'settings.granthaRuleTitle' | translate }}:</strong>
+                <span> {{ 'settings.granthaRuleDesc' | translate }}</span>
+              </div>
+            </div>
+
+            <div class="keys-grid">
+              @for (item of filteredGrantha(); track item.eng) {
+                <div class="key-card grantha-card" (click)="insertKey(item.eng.split(' ')[0])">
+                  <div class="key-card__tamil">{{ item.tamil }}</div>
+                  <div class="key-card__eng">
+                    <span class="key-badge">{{ item.eng }}</span>
+                  </div>
+                  @if (item.note) {
+                    <div class="key-card__note">{{ item.note }}</div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </mat-tab>
+      }
+
+      <!-- TAB 6: COMMON WORDS CHEAT SHEET -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">menu_book</mat-icon>
+          <span>{{ guideLang() === 'hi' ? 'महत्वपूर्ण शब्द (Common Words)' : ('settings.commonWordsTab' | translate) }}</span>
+          <span class="tab-count">({{ sampleWords().length }})</span>
+        </ng-template>
+        <div class="tab-content">
+          <div class="modifiers-table-wrapper">
+            <table class="guide-table">
+              <thead>
+                <tr>
+                  <th>{{ guideLang() === 'hi' ? 'हिन्दी शब्द (Hindi Word)' : ('settings.tamilWord' | translate) }}</th>
+                  <th>{{ guideLang() === 'hi' ? 'English Phonetic Keystrokes' : ('settings.baminiKeystrokes' | translate) }}</th>
+                  <th>{{ 'settings.wordMeaning' | translate }}</th>
+                  <th>{{ 'common.action' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (sample of sampleWords(); track sample.bamini) {
+                  <tr>
+                    <td class="sign-cell"><strong>{{ sample.tamil }}</strong></td>
+                    <td class="key-cell"><code class="word-code">{{ sample.bamini }}</code></td>
+                    <td class="desc-cell">{{ sample.meaning }}</td>
+                    <td class="example-cell">
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        class="try-btn"
+                        (click)="insertSample(sample)"
+                      >
+                        <mat-icon>edit</mat-icon>
+                        {{ 'settings.tryInSandbox' | translate }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

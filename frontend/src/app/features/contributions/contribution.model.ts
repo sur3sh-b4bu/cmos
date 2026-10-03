@@ -19,6 +19,10 @@ export interface Contribution {
   payment_reference_number: string | null;
   payment_date: string | null;
   payment_remarks: string | null;
+  is_refunded: 0 | 1;
+  refunded_at: string | null;
+  refund_reason: string | null;
+  refund_amount: string | number | null;
   created_by_name: string | null;
   created_at: string;
 }

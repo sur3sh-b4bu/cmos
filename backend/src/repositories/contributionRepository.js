@@ -34,9 +34,28 @@ const BASE_SELECT = `
 
 /** WHERE/HAVING shared by list() and listAll(), so an Excel export honours
  * exactly the same scope, search and filters as the screen. */
-function buildListQuery({ search, paidOnly, churchId, branchId }) {
+function buildListQuery({ search, paidOnly, isRefunded, refundStatus, churchId, branchId }) {
   const conditions = ['d.is_deleted = 0'];
   const params = [];
+
+  if (paidOnly === 'refunded' || isRefunded === '1' || isRefunded === 1 || isRefunded === true || refundStatus === '1') {
+    conditions.push('d.is_refunded = 1');
+  } else if (
+    paidOnly === '1' ||
+    paidOnly === '0' ||
+    paidOnly === 1 ||
+    paidOnly === 0 ||
+    paidOnly === true ||
+    paidOnly === false ||
+    paidOnly === 'true' ||
+    paidOnly === 'false' ||
+    isRefunded === '0' ||
+    isRefunded === 0 ||
+    isRefunded === false ||
+    refundStatus === '0'
+  ) {
+    conditions.push('d.is_refunded = 0');
+  }
 
   if (churchId) {
     conditions.push('d.church_id = ?');
@@ -58,7 +77,9 @@ function buildListQuery({ search, paidOnly, churchId, branchId }) {
   const where = `WHERE ${conditions.join(' AND ')}`;
   // paidOnly needs the payment join in scope, so it's applied as a HAVING
   // clause against the joined alias rather than folded into `where` above.
-  const having = paidOnly !== undefined ? `HAVING is_paid = ${paidOnly ? 1 : 0}` : '';
+  const paidOnlyRequested = paidOnly !== undefined && paidOnly !== '' && paidOnly !== 'refunded';
+  const isPaidValue = paidOnly === true || paidOnly === 'true' || paidOnly === '1' || paidOnly === 1;
+  const having = paidOnlyRequested ? `HAVING is_paid = ${isPaidValue ? 1 : 0}` : '';
   return { where, having, params };
 }
 
@@ -175,6 +196,39 @@ async function softDelete(id, userId) {
   );
 }
 
+async function refund(id, { reason, amount } = {}, userId) {
+  const row = await getById(id, {});
+  if (!row) return null;
+  const refundAmount = amount !== undefined && amount !== null ? Number(amount) : Number(row.contribution_amount);
+  await pool.query(
+    `UPDATE contributions
+     SET is_refunded = 1,
+         refunded_at = CURRENT_TIMESTAMP,
+         refunded_by = ?,
+         refund_reason = ?,
+         refund_amount = ?,
+         updated_by = ?
+     WHERE id = ?`,
+    [userId, reason || 'Refund issued by church office', refundAmount, userId, id]
+  );
+  return getById(id, {});
+}
+
+async function unrefund(id, userId) {
+  await pool.query(
+    `UPDATE contributions
+     SET is_refunded = 0,
+         refunded_at = NULL,
+         refunded_by = NULL,
+         refund_reason = NULL,
+         refund_amount = NULL,
+         updated_by = ?
+     WHERE id = ?`,
+    [userId, id]
+  );
+  return getById(id, {});
+}
+
 /** Dashboard's Contributions stat card -- same "money actually received, dated
  * by payment_date" definition as massIntentionRepository.getDashboardStats'
  * own todayCollections/monthlyCollections, just sourced from
@@ -197,10 +251,10 @@ async function getDashboardTotals(churchId, branchId) {
      FROM contribution_payment_transactions pt
      JOIN contributions d ON d.id = pt.contribution_id
      WHERE pt.status = 'success' AND d.church_id = ? AND d.is_deleted = 0${branchClause}
-       AND YEAR(pt.payment_date) = YEAR(CURDATE()) AND MONTH(pt.payment_date) = MONTH(CURDATE())`,
+        AND YEAR(pt.payment_date) = YEAR(CURDATE()) AND MONTH(pt.payment_date) = MONTH(CURDATE())`,
     [churchId, ...branchParam]
   );
   return { todayContributions: Number(todayRow.total), monthlyContributions: Number(monthlyRow.total) };
 }
 
-module.exports = { list, listAll, getById, create, update, softDelete, getDashboardTotals };
+module.exports = { list, listAll, getById, create, update, softDelete, refund, unrefund, getDashboardTotals };

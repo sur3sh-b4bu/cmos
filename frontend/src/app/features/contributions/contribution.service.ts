@@ -11,7 +11,9 @@ export interface ContributionQuery {
   page?: number;
   pageSize?: number;
   search?: string;
-  paidOnly?: boolean;
+  paidOnly?: boolean | string;
+  isRefunded?: boolean | string;
+  refundStatus?: string;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
 }
@@ -62,6 +64,18 @@ export class ContributionService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
+  refund(id: number, payload?: { reason?: string; amount?: number }): Observable<Contribution> {
+    return this.http
+      .post<ApiResponse<Contribution>>(`${this.baseUrl}/${id}/refund`, payload || {})
+      .pipe(map((res) => res.data));
+  }
+
+  unrefund(id: number): Observable<Contribution> {
+    return this.http
+      .post<ApiResponse<Contribution>>(`${this.baseUrl}/${id}/unrefund`, {})
+      .pipe(map((res) => res.data));
   }
 
   receivePayment(id: number, payload: ReceiveContributionPaymentRequest): Observable<Contribution> {

@@ -20,7 +20,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
     provideAnimationsAsync(),
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideTranslateService({ lang: 'en', fallbackLang: 'en', loader: StaticTranslateLoader }),
+    provideTranslateService({ lang: 'ta', fallbackLang: 'ta', loader: StaticTranslateLoader }),
     { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
     // App-wide DD-MM-YYYY date format. Registered once at root so every
     // mat-datepicker is consistent; feature components must NOT also import

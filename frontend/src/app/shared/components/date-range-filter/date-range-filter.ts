@@ -71,6 +71,13 @@ export class DateRangeFilterComponent implements OnInit {
 
   ngOnInit(): void {
     this.applyPreset('month');
+    this.translate.onLangChange.subscribe(() => {
+      if (this.activePreset() === 'custom') {
+        this.applyCustom();
+      } else {
+        this.applyPreset(this.activePreset());
+      }
+    });
   }
 
   private toIso(date: Date): string {

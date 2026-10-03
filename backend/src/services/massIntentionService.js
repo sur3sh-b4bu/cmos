@@ -46,13 +46,15 @@ async function resolveIntentionText(payload) {
     const master = await lookupRepository.getPrayerIntentionMasterById(prayerIntentionMasterId);
     if (!master) throw ApiError.badRequest('Selected mass intention is invalid');
     if (master.is_custom) {
-      if (!payload.customIntention) {
+      if (!payload.customIntention || !payload.customIntention.trim()) {
         throw ApiError.badRequest('Please describe the mass intention (required when "Others" is selected)');
       }
       customIntention = payload.customIntention.trim();
+    } else if (payload.customIntention && payload.customIntention.trim()) {
+      customIntention = payload.customIntention.trim();
     }
   } else {
-    if (!payload.customIntention) {
+    if (!payload.customIntention || !payload.customIntention.trim()) {
       throw ApiError.badRequest('Select a mass intention or describe a custom one');
     }
     customIntention = payload.customIntention.trim();
@@ -235,6 +237,38 @@ async function remove(id, req) {
   emitToChurch(req.user.churchId, 'mass-intentions:changed', { action: 'deleted', id });
 }
 
+async function refund(id, payload = {}, req) {
+  const existing = await massIntentionRepository.getById(id, scopeFor(req));
+  if (!existing) throw ApiError.notFound('Mass intention not found');
+  const updated = await massIntentionRepository.refund(id, payload, req.user.id);
+  await auditService.fromRequest(req, {
+    action: 'REFUND',
+    module: 'mass_intentions',
+    entityType: 'mass_intentions',
+    entityId: id,
+    oldValues: existing,
+    newValues: updated,
+  });
+  emitToChurch(req.user.churchId, 'mass-intentions:changed', { action: 'refunded', id });
+  return updated;
+}
+
+async function unrefund(id, req) {
+  const existing = await massIntentionRepository.getById(id, scopeFor(req));
+  if (!existing) throw ApiError.notFound('Mass intention not found');
+  const updated = await massIntentionRepository.unrefund(id, req.user.id);
+  await auditService.fromRequest(req, {
+    action: 'UNREFUND',
+    module: 'mass_intentions',
+    entityType: 'mass_intentions',
+    entityId: id,
+    oldValues: existing,
+    newValues: updated,
+  });
+  emitToChurch(req.user.churchId, 'mass-intentions:changed', { action: 'unrefunded', id });
+  return updated;
+}
+
 /**
  * Step 3 of the payment workflow: the receipt only becomes generatable once
  * a successful payment exists (see massIntentionRepository's `is_paid`,
@@ -345,8 +379,8 @@ async function buildBulkReceiptPdf({ ids, batchId }, req) {
   return buffer;
 }
 
-async function buildDailyRegisterPdf(prayerDate, req, { namesOnly = false, reasonsOnly = false } = {}) {
-  const entries = await massIntentionRepository.getRegisterData(prayerDate, req.user.churchId, effectiveBranchId(req));
+async function buildDailyRegisterPdf(prayerDate, req, { namesOnly = false, reasonsOnly = false, massId = null } = {}) {
+  const entries = await massIntentionRepository.getRegisterData(prayerDate, req.user.churchId, effectiveBranchId(req), massId);
   const church = await lookupRepository.getChurchById(req.user.churchId);
   const currency = await lookupRepository.getDefaultCurrency();
   const lang = req.query?.lang === 'ta' ? 'ta' : 'en';
@@ -364,7 +398,7 @@ async function buildDailyRegisterPdf(prayerDate, req, { namesOnly = false, reaso
     action: 'PRINT_REGISTER',
     module: 'prayer_register',
     entityType: 'prayer_register',
-    newValues: { prayerDate, count: entries.length, namesOnly, reasonsOnly },
+    newValues: { prayerDate, count: entries.length, namesOnly, reasonsOnly, massId },
   });
   return buffer;
 }
@@ -402,6 +436,8 @@ module.exports = {
   create,
   update,
   remove,
+  refund,
+  unrefund,
   buildReceiptPdf,
   buildReceiptHtml,
   buildBulkReceiptPdf,

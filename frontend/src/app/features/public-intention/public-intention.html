@@ -2,7 +2,7 @@
   <div class="pub__lang-switch">
     <button mat-stroked-button type="button" [matMenuTriggerFor]="languageMenu">
       <mat-icon>translate</mat-icon>
-      {{ (languageService.current() === 'ta' ? 'language.tamil' : 'language.english') | translate }}
+      {{ (languageService.current() === 'ta' ? 'language.tamil' : languageService.current() === 'hi' ? 'language.hindi' : 'language.english') | translate }}
     </button>
     <mat-menu #languageMenu="matMenu">
       <button mat-menu-item (click)="setLanguage('en')">
@@ -16,6 +16,12 @@
           <mat-icon>check</mat-icon>
         }
         <span>{{ 'language.tamil' | translate }}</span>
+      </button>
+      <button mat-menu-item (click)="setLanguage('hi')">
+        @if (languageService.current() === 'hi') {
+          <mat-icon>check</mat-icon>
+        }
+        <span>{{ 'language.hindi' | translate }}</span>
       </button>
     </mat-menu>
   </div>

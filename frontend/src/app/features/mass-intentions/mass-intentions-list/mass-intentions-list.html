@@ -20,7 +20,6 @@
       <p class="text-muted">{{ 'massIntentions.subtitle' | translate }}</p>
     </div>
     <div class="pi-list__header-right">
-      <coms-date-range-filter (rangeChange)="onRangeChange($event)" />
       <div class="pi-list__actions">
         <a mat-stroked-button routerLink="/mass-intentions/register">
           <mat-icon>menu_book</mat-icon>
@@ -40,7 +39,7 @@
     </div>
   </div>
 
-  <coms-filter-bar [fields]="filterFields()" (filtersChange)="onFiltersChange($event)" />
+  <coms-filter-bar [fields]="filterFields()" [initialValues]="filters()" (filtersChange)="onFiltersChange($event)" />
 
   <coms-data-table
     tableId="mass-intentions"
@@ -72,16 +71,54 @@
   {{ intentionText(row) }}
 </ng-template>
 
+<ng-template #offeringTpl let-row>
+  <div class="offering-cell">
+    <span [class.offering-refunded]="row.is_refunded">
+      {{ currencyService.current().symbol }}{{ (+row.offering_amount).toFixed(2) }}
+    </span>
+    @if (row.is_refunded) {
+      <span class="status-chip status-chip--refunded" [matTooltip]="row.refund_reason ? ('common.refundReason' | translate) + ': ' + row.refund_reason : ('common.refunded' | translate)">
+        <mat-icon>currency_exchange</mat-icon>
+        {{ 'common.refunded' | translate }}
+      </span>
+    } @else if (!row.is_paid) {
+      <span class="status-chip status-chip--unpaid">
+        {{ 'massIntentions.unpaid' | translate }}
+      </span>
+    }
+  </div>
+</ng-template>
+
 <ng-template #actionsTpl let-row>
-  @if (!row.is_paid && authService.hasPermission('mass_intentions.update')) {
+  @if (!row.is_paid && !row.is_refunded && authService.hasPermission('mass_intentions.update')) {
     <button mat-icon-button [matTooltip]="'massIntentions.receivePayment' | translate" (click)="receivePayment(row); $event.stopPropagation()">
       <mat-icon>payments</mat-icon>
     </button>
   }
+  @if (row.is_paid && !row.is_refunded && authService.hasPermission('mass_intentions.update')) {
+    <button
+      mat-icon-button
+      class="action-btn--refund"
+      [matTooltip]="'common.refund' | translate"
+      (click)="refundRow(row); $event.stopPropagation()"
+    >
+      <mat-icon>currency_exchange</mat-icon>
+    </button>
+  }
+  @if (row.is_refunded && authService.hasPermission('mass_intentions.update')) {
+    <button
+      mat-icon-button
+      class="action-btn--unrefund"
+      [matTooltip]="'common.unrefund' | translate"
+      (click)="unrefundRow(row); $event.stopPropagation()"
+    >
+      <mat-icon>restore</mat-icon>
+    </button>
+  }
   <button
     mat-icon-button
-    [matTooltip]="(row.is_paid ? 'massIntentions.printReceipt' : 'massIntentions.receiptUnavailable') | translate"
-    [disabled]="!row.is_paid"
+    class="action-btn--print"
+    [matTooltip]="'massIntentions.printReceipt' | translate"
     (click)="printReceipt(row); $event.stopPropagation()"
   >
     <mat-icon>print</mat-icon>
@@ -90,6 +127,22 @@
     <mat-icon>more_vert</mat-icon>
   </button>
   <mat-menu #rowMenu="matMenu">
+    <button mat-menu-item (click)="printReceipt(row)">
+      <mat-icon>print</mat-icon>
+      <span>{{ 'massIntentions.printReceipt' | translate }}</span>
+    </button>
+    @if (row.is_paid && !row.is_refunded && authService.hasPermission('mass_intentions.update')) {
+      <button mat-menu-item (click)="refundRow(row)">
+        <mat-icon>currency_exchange</mat-icon>
+        <span>{{ 'common.refund' | translate }}</span>
+      </button>
+    }
+    @if (row.is_refunded && authService.hasPermission('mass_intentions.update')) {
+      <button mat-menu-item (click)="unrefundRow(row)">
+        <mat-icon>restore</mat-icon>
+        <span>{{ 'common.unrefund' | translate }}</span>
+      </button>
+    }
     @if (authService.hasPermission('mass_intentions.update')) {
       <a mat-menu-item [routerLink]="['/mass-intentions', row.id, 'edit']">
         <mat-icon>edit</mat-icon>

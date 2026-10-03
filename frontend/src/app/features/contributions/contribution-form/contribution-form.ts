@@ -310,6 +310,6 @@ export class ContributionFormComponent implements OnInit {
   async printReceipt(): Promise<void> {
     const contribution = this.savedContribution();
     if (!contribution) return;
-    await this.fileDownload.printPdf(this.contributionService.getReceiptUrl(contribution.id, this.languageService.current()));
+    await this.fileDownload.printHtml(this.contributionService.getReceiptPrintUrl(contribution.id, this.languageService.current()));
   }
 }

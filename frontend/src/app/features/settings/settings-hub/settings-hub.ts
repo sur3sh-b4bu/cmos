@@ -38,12 +38,15 @@ export class SettingsHubComponent {
     { labelKey: 'settings.receiptSettings', descriptionKey: 'settings.receiptSettingsDesc', icon: 'receipt_long', route: '/masters/receipt_series', permissions: ['masters.view'] },
     { labelKey: 'settings.printSettings', descriptionKey: 'settings.printSettingsDesc', icon: 'print', route: '/masters/print_templates', permissions: ['masters.view'] },
     { labelKey: 'settings.certificateTemplates', descriptionKey: 'settings.certificateTemplatesDesc', icon: 'workspace_premium', route: '/settings/certificate-templates', permissions: ['masters.view', 'certificates.view'] },
+    { labelKey: 'settings.languageSettings', descriptionKey: 'settings.languageSettingsDesc', icon: 'translate', route: '/settings/language', permissions: [] },
+    { labelKey: 'settings.keyboardGuide', descriptionKey: 'settings.keyboardGuideDesc', icon: 'keyboard', route: '/settings/keyboard-guide', permissions: [] },
   ];
 
   visibleCards(): SettingsCard[] {
     return this.cards.filter((c) => {
       if (c.masterAdminOnly) return this.authService.isMasterAdmin();
       if (c.adminOnly) return this.authService.currentUser()?.roleCode === 'ADMIN';
+      if (!c.permissions || c.permissions.length === 0) return true;
       return this.authService.hasAnyPermission(c.permissions);
     });
   }

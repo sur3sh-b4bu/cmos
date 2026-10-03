@@ -30,6 +30,16 @@ const remove = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Contribution deleted' });
 });
 
+const refund = asyncHandler(async (req, res) => {
+  const row = await service.refund(req.params.id, req.body, req);
+  res.json({ success: true, data: row, message: 'Contribution refunded' });
+});
+
+const unrefund = asyncHandler(async (req, res) => {
+  const row = await service.unrefund(req.params.id, req);
+  res.json({ success: true, data: row, message: 'Contribution refund cancelled' });
+});
+
 const printReceipt = asyncHandler(async (req, res) => {
   const { buffer, receiptNo } = await service.buildReceiptPdf(req.params.id, req);
   res.set('Content-Type', 'application/pdf');
@@ -67,4 +77,4 @@ const importPreview = asyncHandler(async (req, res) => {
   res.json({ success: true, data: preview });
 });
 
-module.exports = { list, getById, create, update, remove, printReceipt, printReceiptHtml, exportExcel, importTemplate, importExcel, importPreview };
+module.exports = { list, getById, create, update, remove, refund, unrefund, printReceipt, printReceiptHtml, exportExcel, importTemplate, importExcel, importPreview };

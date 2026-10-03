@@ -298,6 +298,22 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'keyboard-guide',
+            data: { breadcrumb: 'settings.keyboardGuide' },
+            loadComponent: () =>
+              import('./features/settings/keyboard-guide/keyboard-guide').then(
+                (m) => m.KeyboardGuideComponent
+              ),
+          },
+          {
+            path: 'language',
+            data: { breadcrumb: 'settings.languageSettings' },
+            loadComponent: () =>
+              import('./features/settings/language-settings/language-settings').then(
+                (m) => m.LanguageSettingsComponent
+              ),
+          },
+          {
             path: 'change-church-branch',
             canActivate: [masterAdminGuard],
             data: { breadcrumb: 'settings.changeChurchBranch' },

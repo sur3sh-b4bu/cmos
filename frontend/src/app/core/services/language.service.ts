@@ -8,7 +8,11 @@ const TEXT_INPUT_KEY = 'coms_text_input_mode';
 const DEFAULT_LANG: AppLang = 'ta';
 
 /** Masters -> Languages row codes this app actually has translations for. */
-const CODE_TO_LANG: Record<string, AppLang> = { en: 'en', eng: 'en', english: 'en', ta: 'ta', tam: 'ta', tamil: 'ta' };
+const CODE_TO_LANG: Record<string, AppLang> = {
+  en: 'en', eng: 'en', english: 'en',
+  ta: 'ta', tam: 'ta', tamil: 'ta',
+  hi: 'hi', hin: 'hi', hindi: 'hi',
+};
 
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
@@ -26,6 +30,9 @@ export class LanguageService {
 
   /** Whether the UI interface language is currently Tamil. */
   readonly isTamil = computed(() => this.current() === 'ta');
+
+  /** Whether the UI interface language is currently Hindi. */
+  readonly isHindi = computed(() => this.current() === 'hi');
 
   /** Toggle text input typing mode between Tamil and English. */
   toggleTextInputMode(): void {
@@ -90,7 +97,8 @@ export class LanguageService {
 
   private readStored(): AppLang {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'en' ? 'en' : 'ta';
+    if (stored === 'en' || stored === 'ta' || stored === 'hi') return stored;
+    return 'ta';
   }
 
   private readStoredTextInput(): 'ta' | 'en' {

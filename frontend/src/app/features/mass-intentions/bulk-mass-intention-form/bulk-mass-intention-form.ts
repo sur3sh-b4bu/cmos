@@ -132,30 +132,11 @@ export class BulkMassIntentionFormComponent implements OnInit {
   formatDateDMY = formatDateDMY;
   readonly defaultRestrictedDateReason = DEFAULT_RESTRICTED_DATE_REASON;
 
-  get tomorrowDate(): Date {
+  get todayDate(): Date {
     const d = new Date();
-    d.setDate(d.getDate() + 1);
     d.setHours(0, 0, 0, 0);
     return d;
   }
-
-  get minPrayerDate(): Date {
-    return this.tomorrowDate;
-  }
-
-  dateFilter = (date: Date | null): boolean => {
-    if (!date) return false;
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d.getTime() >= this.tomorrowDate.getTime();
-  };
-
-  futureDateValidator = (control: AbstractControl): ValidationErrors | null => {
-    if (!control.value) return null;
-    const d = new Date(control.value);
-    d.setHours(0, 0, 0, 0);
-    return d.getTime() >= this.tomorrowDate.getTime() ? null : { pastOrToday: true };
-  };
 
   masses = signal<MassOption[]>([]);
   intentionOptions = signal<IntentionMasterOption[]>([]);
@@ -187,7 +168,7 @@ export class BulkMassIntentionFormComponent implements OnInit {
 
   private buildRow(): FormGroup {
     const group = this.fb.group({
-      prayerDate: this.fb.control<Date>(this.tomorrowDate, [Validators.required, this.futureDateValidator]),
+      prayerDate: this.fb.control<Date>(this.todayDate, Validators.required),
       name: this.fb.control('', [Validators.required, Validators.maxLength(150)]),
       massId: this.fb.control<number | null>(null, Validators.required),
       offeringAmount: this.fb.control<number>(0, [Validators.required, Validators.min(0)]),
@@ -302,6 +283,10 @@ export class BulkMassIntentionFormComponent implements OnInit {
   rowIsCustomIntention(row: FormGroup): boolean {
     const id = row.controls['prayerIntentionMasterId'].value;
     return this.intentionOptions().find((o) => o.id === id)?.is_custom === 1;
+  }
+
+  rowHasSelectedIntention(row: FormGroup): boolean {
+    return !!row.controls['prayerIntentionMasterId']?.value || this.rowIsCustomIntention(row);
   }
 
   /** Dropdown option labels -- Tamil when the site's language is Tamil and

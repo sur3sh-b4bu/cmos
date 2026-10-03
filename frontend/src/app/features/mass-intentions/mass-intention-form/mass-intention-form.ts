@@ -209,38 +209,17 @@ export class MassIntentionFormComponent implements OnInit {
   /** calendarHeaderComponent needs a class reference, not a template var. */
   readonly todayHeader = DatepickerTodayHeaderComponent;
 
-  get tomorrowDate(): Date {
+  get todayDate(): Date {
     const d = new Date();
-    d.setDate(d.getDate() + 1);
     d.setHours(0, 0, 0, 0);
     return d;
   }
-
-  get minPrayerDate(): Date | null {
-    return this.editId() ? null : this.tomorrowDate;
-  }
-
-  dateFilter = (date: Date | null): boolean => {
-    if (!date) return false;
-    if (this.editId()) return true;
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d.getTime() >= this.tomorrowDate.getTime();
-  };
-
-  futureDateValidator = (control: AbstractControl): ValidationErrors | null => {
-    if (this.editId()) return null;
-    if (!control.value) return null;
-    const d = new Date(control.value);
-    d.setHours(0, 0, 0, 0);
-    return d.getTime() >= this.tomorrowDate.getTime() ? null : { pastOrToday: true };
-  };
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(150)]],
     bookedBy: [''],
     phone: ['', phoneValidator],
-    prayerDate: [this.tomorrowDate, [Validators.required, this.futureDateValidator]],
+    prayerDate: [this.todayDate, Validators.required],
     massId: [null as number | null, Validators.required],
     prayerIntentionMasterId: [null as number | null],
     customIntention: [''],
@@ -252,6 +231,10 @@ export class MassIntentionFormComponent implements OnInit {
   get selectedIntentionIsCustom(): boolean {
     const id = this.form.controls.prayerIntentionMasterId.value;
     return this.intentionOptions().find((o) => o.id === id)?.is_custom === 1;
+  }
+
+  get showCustomIntentionInput(): boolean {
+    return !!this.form.controls.prayerIntentionMasterId.value || this.selectedIntentionIsCustom;
   }
 
   /** Dropdown option label for a Mass Intention preset -- Tamil (name_ta)
@@ -292,8 +275,12 @@ export class MassIntentionFormComponent implements OnInit {
   get paymentPurposeText(): string {
     const id = this.form.controls.prayerIntentionMasterId.value;
     const opt = this.intentionOptions().find((o) => o.id === id);
-    const text = opt && !opt.is_custom ? this.intentionLabel(opt) : this.form.controls.customIntention.value;
-    return text || this.translate.instant('massIntentions.defaultPurposeText');
+    const custom = this.form.controls.customIntention.value?.trim();
+    if (opt && !opt.is_custom) {
+      const base = this.intentionLabel(opt);
+      return custom ? `${base} - ${custom}` : base;
+    }
+    return custom || this.translate.instant('massIntentions.defaultPurposeText');
   }
 
   /** The record the payment panel should act against. Only set in edit mode
@@ -471,10 +458,7 @@ export class MassIntentionFormComponent implements OnInit {
         massId: null,
         offeringAmount: 0,
         // Dates don't survive JSON round-tripping -- everything else does.
-        prayerDate:
-          draft.prayerDate && new Date(draft.prayerDate) >= this.tomorrowDate
-            ? new Date(draft.prayerDate)
-            : this.tomorrowDate,
+        prayerDate: draft.prayerDate ? new Date(draft.prayerDate) : this.todayDate,
       });
       this.suppressMassAutoFill = false;
       this.notification.info(this.translate.instant('massIntentions.draftRestored'));
@@ -615,7 +599,7 @@ export class MassIntentionFormComponent implements OnInit {
           name: '',
           bookedBy: '',
           phone: '',
-          prayerDate: this.tomorrowDate,
+          prayerDate: this.todayDate,
           massId: null,
           prayerIntentionMasterId: others ? others.id : null,
           customIntention: '',
@@ -623,7 +607,7 @@ export class MassIntentionFormComponent implements OnInit {
           paymentMethodId: null,
           remarks: '',
         });
-        this.selectedPrayerDate.set(this.tomorrowDate);
+        this.selectedPrayerDate.set(this.todayDate);
         this.suppressMassAutoFill = false;
       }
     } catch (err: any) {
@@ -671,6 +655,6 @@ export class MassIntentionFormComponent implements OnInit {
   async printReceipt(): Promise<void> {
     const intention = this.savedIntention();
     if (!intention) return;
-    await this.fileDownload.printPdf(this.massIntentionService.getReceiptUrl(intention.id, this.languageService.current()));
+    await this.fileDownload.printHtml(this.massIntentionService.getReceiptPrintUrl(intention.id, this.languageService.current()));
   }
 }

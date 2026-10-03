@@ -50,6 +50,8 @@ export class TodayIntentionsDialogComponent {
   loading = signal(true);
   printing = signal(false);
   printingReasonsOnly = signal(false);
+  printingGroupMassId = signal<number | null>(null);
+  printingGroupReasonsMassId = signal<number | null>(null);
   entries = signal<MassIntention[]>([]);
 
   readonly formattedDate = formatDateDMY(this.data.date);
@@ -79,12 +81,19 @@ export class TodayIntentionsDialogComponent {
 
   intentionText(row: MassIntention): string {
     if (row.intention_is_custom) return row.custom_intention || '-';
-    if (!row.intention_master_name) return '-';
-    return localizedName({ name: row.intention_master_name, name_ta: row.intention_master_name_ta }, this.languageService.current());
+    const base = row.intention_master_name
+      ? localizedName({ name: row.intention_master_name, name_ta: row.intention_master_name_ta }, this.languageService.current())
+      : '';
+    if (base && row.custom_intention) return `${base} - ${row.custom_intention}`;
+    return base || row.custom_intention || '-';
   }
 
   massLabel(group: MassGroup): string {
     return localizedName({ name: group.massName, name_ta: group.massNameTa }, this.languageService.current());
+  }
+
+  groupOffering(group: MassGroup): number {
+    return group.entries.reduce((sum, e) => sum + Number(e.offering_amount || 0), 0);
   }
 
   async print(): Promise<void> {
@@ -106,6 +115,32 @@ export class TodayIntentionsDialogComponent {
       );
     } finally {
       this.printingReasonsOnly.set(false);
+    }
+  }
+
+  /** Print a single Mass's intention reasons only (e.g. for the priest to read at altar/pulpit for this Mass) */
+  async printGroupReasonsOnly(group: MassGroup): Promise<void> {
+    if (this.printingGroupReasonsMassId()) return;
+    this.printingGroupReasonsMassId.set(group.massId);
+    try {
+      await this.fileDownload.printPdf(
+        this.massIntentionService.getRegisterReasonsOnlyPrintUrl(this.data.date, this.languageService.current(), group.massId)
+      );
+    } finally {
+      this.printingGroupReasonsMassId.set(null);
+    }
+  }
+
+  /** Print a single Mass's full register table */
+  async printGroup(group: MassGroup): Promise<void> {
+    if (this.printingGroupMassId()) return;
+    this.printingGroupMassId.set(group.massId);
+    try {
+      await this.fileDownload.printPdf(
+        this.massIntentionService.getRegisterPrintUrl(this.data.date, false, this.languageService.current(), false, group.massId)
+      );
+    } finally {
+      this.printingGroupMassId.set(null);
     }
   }
 }

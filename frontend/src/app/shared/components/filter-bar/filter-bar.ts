@@ -47,6 +47,7 @@ interface RangeValue {
 })
 export class FilterBarComponent implements OnChanges {
   @Input({ required: true }) fields: FilterFieldDef[] = [];
+  @Input() initialValues?: Record<string, string>;
   /** The combined AND-filters, flattened to exactly the query-param shape
    * the backend expects (see certificateRepository.js's
    * buildStructuredFilters): a 'select' field emits its raw value under its
@@ -66,6 +67,9 @@ export class FilterBarComponent implements OnChanges {
   menuSearch = signal<Record<string, string>>({});
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['initialValues'] && this.initialValues) {
+      this.selected.set({ ...this.initialValues });
+    }
     if (!changes['fields']) return;
     const prevFields = changes['fields'].previousValue as FilterFieldDef[] | undefined;
     const prevKeys = prevFields?.map((f) => f.key).join('|');

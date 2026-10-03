@@ -39,13 +39,11 @@
                     <input
                       matInput
                       [matDatepicker]="editPicker"
-                      [matDatepickerFilter]="dateFilter"
-                      [min]="minPrayerDate"
                       formControlName="prayerDate"
                       required
                     />
                     <mat-datepicker-toggle matIconSuffix [for]="editPicker" />
-                    <mat-datepicker #editPicker [dateClass]="dateClass" />
+                    <mat-datepicker #editPicker [calendarHeaderComponent]="todayHeader" [dateClass]="dateClass" />
                   </mat-form-field>
                 </td>
                 <td>

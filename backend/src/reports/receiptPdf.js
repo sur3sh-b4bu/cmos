@@ -102,11 +102,14 @@ function buildQrPayload(intention, church, mode, lang) {
   const [h = '0', m = '0'] = String(intention.mass_time || '00:00:00').split(':');
   const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), Number(h), Number(m), 0);
 
+  const baseIntention = intention.intention_is_custom
+    ? ''
+    : localizedName(intention.intention_master_name, intention.intention_master_name_ta, lang);
   const text = intention.intention_is_custom
-    ? intention.custom_intention
-    : localizedName(intention.intention_master_name, intention.intention_master_name_ta, lang) ||
-      intention.custom_intention ||
-      t(lang, 'massIntention');
+    ? intention.custom_intention || t(lang, 'massIntention')
+    : baseIntention && intention.custom_intention
+    ? `${baseIntention} - ${intention.custom_intention}`
+    : baseIntention || intention.custom_intention || t(lang, 'massIntention');
   const massName = localizedName(intention.mass_name, intention.mass_name_ta, lang);
 
   return buildCompactEvent({
@@ -194,9 +197,14 @@ async function generateReceiptPdf(intention, church, thankYouMessage, qrMode = '
 
   const qrDataUrl = await QRCode.toDataURL(qrText, { ...qrOptions, width: 480 });
 
+  const baseIntention = intention.intention_is_custom
+    ? ''
+    : localizedName(intention.intention_master_name, intention.intention_master_name_ta, lang);
   const intentionText = intention.intention_is_custom
-    ? intention.custom_intention
-    : localizedName(intention.intention_master_name, intention.intention_master_name_ta, lang) || intention.custom_intention || '-';
+    ? intention.custom_intention || '-'
+    : baseIntention && intention.custom_intention
+    ? `${baseIntention} - ${intention.custom_intention}`
+    : baseIntention || intention.custom_intention || '-';
   const massName = localizedName(intention.mass_name, intention.mass_name_ta, lang);
   const logoDataUrl = getChurchLogoDataUrl(church);
 

@@ -219,6 +219,34 @@
           <mat-icon>arrow_forward</mat-icon>
         </div>
       </div>
+
+      <!-- Card 6: Refunded Amount -->
+      <div
+        class="stat-card stat-card--clickable stat-card--rose"
+        role="button"
+        tabindex="0"
+        (click)="openRefunds()"
+        (keydown.enter)="openRefunds()"
+      >
+        <div class="stat-card__watermark"></div>
+        <div class="stat-card__top">
+          <span class="stat-badge stat-badge--rose">
+            <span class="stat-badge__dot"></span>
+            {{ 'dashboard.today' | translate }}
+          </span>
+          <div class="stat-icon stat-icon--rose">
+            <mat-icon>currency_exchange</mat-icon>
+          </div>
+        </div>
+        <div class="stat-card__main">
+          <div class="stat-card__value">{{ (s.todayRefunds || 0) | currencyInr: 0 }}</div>
+          <div class="stat-card__label">{{ 'dashboard.refundedAmount' | translate }}</div>
+        </div>
+        <div class="stat-card__footer stat-card__footer--rose">
+          <span>{{ 'dashboard.clickToViewDetails' | translate }}</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+      </div>
     </div>
 
     <!-- Middle Row: Charts -->

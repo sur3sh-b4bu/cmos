@@ -29,6 +29,8 @@
     </div>
   </div>
 
+  <coms-filter-bar [fields]="filterFields()" [initialValues]="filters()" (filtersChange)="onFiltersChange($event)" />
+
   <coms-data-table
     tableId="contributions"
     exportFileName="contributions"
@@ -54,16 +56,54 @@
   {{ contributionTypeText(row) }}
 </ng-template>
 
+<ng-template #amountTpl let-row>
+  <div class="offering-cell">
+    <span [class.offering-refunded]="row.is_refunded">
+      {{ currencyService.current().symbol }}{{ (+row.contribution_amount).toFixed(2) }}
+    </span>
+    @if (row.is_refunded) {
+      <span class="status-chip status-chip--refunded" [matTooltip]="row.refund_reason ? ('common.refundReason' | translate) + ': ' + row.refund_reason : ('common.refunded' | translate)">
+        <mat-icon>currency_exchange</mat-icon>
+        {{ 'common.refunded' | translate }}
+      </span>
+    } @else if (!row.is_paid) {
+      <span class="status-chip status-chip--unpaid">
+        {{ 'massIntentions.unpaid' | translate }}
+      </span>
+    }
+  </div>
+</ng-template>
+
 <ng-template #actionsTpl let-row>
-  @if (!row.is_paid && authService.hasPermission('contributions.update')) {
+  @if (!row.is_paid && !row.is_refunded && authService.hasPermission('contributions.update')) {
     <button mat-icon-button [matTooltip]="'massIntentions.receivePayment' | translate" (click)="receivePayment(row); $event.stopPropagation()">
       <mat-icon>payments</mat-icon>
     </button>
   }
+  @if (row.is_paid && !row.is_refunded && authService.hasPermission('contributions.update')) {
+    <button
+      mat-icon-button
+      class="action-btn--refund"
+      [matTooltip]="'common.refund' | translate"
+      (click)="refundRow(row); $event.stopPropagation()"
+    >
+      <mat-icon>currency_exchange</mat-icon>
+    </button>
+  }
+  @if (row.is_refunded && authService.hasPermission('contributions.update')) {
+    <button
+      mat-icon-button
+      class="action-btn--unrefund"
+      [matTooltip]="'common.unrefund' | translate"
+      (click)="unrefundRow(row); $event.stopPropagation()"
+    >
+      <mat-icon>restore</mat-icon>
+    </button>
+  }
   <button
     mat-icon-button
-    [matTooltip]="(row.is_paid ? 'contributions.printReceipt' : 'massIntentions.receiptUnavailable') | translate"
-    [disabled]="!row.is_paid"
+    class="action-btn--print"
+    [matTooltip]="'contributions.printReceipt' | translate"
     (click)="printReceipt(row); $event.stopPropagation()"
   >
     <mat-icon>print</mat-icon>
@@ -72,6 +112,22 @@
     <mat-icon>more_vert</mat-icon>
   </button>
   <mat-menu #rowMenu="matMenu">
+    <button mat-menu-item (click)="printReceipt(row)">
+      <mat-icon>print</mat-icon>
+      <span>{{ 'contributions.printReceipt' | translate }}</span>
+    </button>
+    @if (row.is_paid && !row.is_refunded && authService.hasPermission('contributions.update')) {
+      <button mat-menu-item (click)="refundRow(row)">
+        <mat-icon>currency_exchange</mat-icon>
+        <span>{{ 'common.refund' | translate }}</span>
+      </button>
+    }
+    @if (row.is_refunded && authService.hasPermission('contributions.update')) {
+      <button mat-menu-item (click)="unrefundRow(row)">
+        <mat-icon>restore</mat-icon>
+        <span>{{ 'common.unrefund' | translate }}</span>
+      </button>
+    }
     @if (authService.hasPermission('contributions.update')) {
       <a mat-menu-item [routerLink]="['/contributions', row.id, 'edit']">
         <mat-icon>edit</mat-icon>

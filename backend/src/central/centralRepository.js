@@ -23,14 +23,14 @@ const SOURCES = {
     branch: 'pi.branch_id',
     date: 'pi.prayer_date',
     created: 'pi.created_at',
-    where: ['pi.is_deleted = 0'],
+    where: ['pi.is_deleted = 0', 'COALESCE(pi.is_refunded, 0) = 0'],
   },
   offerings: {
     from: 'payment_transactions pt STRAIGHT_JOIN prayer_intentions pi ON pi.id = pt.prayer_intention_id',
     church: 'pi.church_id',
     branch: 'pi.branch_id',
     date: 'pt.payment_date',
-    where: ['pi.is_deleted = 0', "pt.status = 'success'"],
+    where: ['pi.is_deleted = 0', 'COALESCE(pi.is_refunded, 0) = 0', "pt.status = 'success'"],
     amount: 'pt.amount',
   },
   contributions: {
@@ -38,7 +38,7 @@ const SOURCES = {
     church: 'd.church_id',
     branch: 'd.branch_id',
     date: 'cpt.payment_date',
-    where: ['d.is_deleted = 0', "cpt.status = 'success'"],
+    where: ['d.is_deleted = 0', 'COALESCE(d.is_refunded, 0) = 0', "cpt.status = 'success'"],
     amount: 'cpt.amount',
   },
   baptism: {

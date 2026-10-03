@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime } from 'rxjs';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -41,6 +41,7 @@ import { TodayIntentionsDialogComponent } from './today-intentions-dialog/today-
 })
 export class DashboardComponent implements OnInit {
   authService = inject(AuthService);
+  private router = inject(Router);
   private massIntentionService = inject(MassIntentionService);
   private reportService = inject(ReportService);
   private masterLookup = inject(MasterLookupService);
@@ -222,7 +223,7 @@ export class DashboardComponent implements OnInit {
   openTodayIntentions(): void {
     this.dialog.open(TodayIntentionsDialogComponent, {
       data: { date: this.toIso(new Date()) },
-      width: '820px',
+      width: '1080px',
       maxWidth: '95vw',
     });
   }
@@ -233,7 +234,7 @@ export class DashboardComponent implements OnInit {
     tomorrow.setDate(tomorrow.getDate() + 1);
     this.dialog.open(TodayIntentionsDialogComponent, {
       data: { date: this.toIso(tomorrow) },
-      width: '820px',
+      width: '1080px',
       maxWidth: '95vw',
     });
   }
@@ -273,5 +274,10 @@ export class DashboardComponent implements OnInit {
       width: '1100px',
       maxWidth: '95vw',
     });
+  }
+
+  /** Navigates to mass intentions filtered by refunded status */
+  openRefunds(): void {
+    this.router.navigate(['/mass-intentions'], { queryParams: { paidOnly: 'refunded' } });
   }
 }

@@ -1,0 +1,253 @@
+<div class="expense-heads-container">
+  <!-- Header -->
+  <div class="page-header glass-card">
+    <div class="page-header__left">
+      <button mat-icon-button routerLink="/settings" class="btn-back">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div>
+        <h1>{{ 'settings.expenseHeads' | translate }}</h1>
+        <p class="text-muted">{{ 'settings.expenseHeadsSubtitle' | translate }}</p>
+      </div>
+    </div>
+
+    <div class="page-header__actions">
+      <button mat-flat-button color="primary" (click)="openCreateModal(activeTab() === 0 ? 'receipt' : 'payment')">
+        <mat-icon>add</mat-icon>
+        <span>{{ 'expenses.addAccountHead' | translate }}</span>
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>{{ 'common.loading' | translate }}</p>
+    </div>
+  } @else {
+    <!-- Tabs: Receipts vs Payments -->
+    <mat-tab-group
+      class="heads-tabs"
+      animationDuration="200ms"
+      [selectedIndex]="activeTab()"
+      (selectedIndexChange)="activeTab.set($event)"
+    >
+      <!-- TAB 1: RECEIPT HEADS -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon text-success">arrow_downward</mat-icon>
+          <span>{{ 'expenses.receiptsHeader' | translate }} ({{ receiptHeads().length }})</span>
+        </ng-template>
+
+        <div class="heads-table-card glass-card">
+          <table class="heads-table">
+            <thead>
+              <tr>
+                <th class="col-sno">#</th>
+                <th>{{ 'expenses.accountHead' | translate }}</th>
+                <th>{{ 'expenses.tamilName' | translate }}</th>
+                <th>{{ 'expenses.section' | translate }}</th>
+                <th>{{ 'expenses.dataSource' | translate }}</th>
+                <th class="text-center">{{ 'common.actions' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (head of receiptHeads(); track head.id; let i = $index) {
+                <tr>
+                  <td class="col-sno text-muted">{{ i + 1 }}</td>
+                  <td class="text-bold">
+                    {{ head.name }}
+                    @if (head.is_system) {
+                      <span class="system-badge" [matTooltip]="'expenses.standardDioceseHead' | translate">Standard</span>
+                    }
+                  </td>
+                  <td class="text-muted">{{ head.tamil_name || '—' }}</td>
+                  <td>
+                    <span class="section-badge">{{ head.section }}</span>
+                  </td>
+                  <td>
+                    @if (head.auto_source) {
+                      <span class="auto-source-badge">
+                        <mat-icon>sync</mat-icon> {{ head.auto_source }}
+                      </span>
+                    } @else {
+                      <span class="text-muted">Manual / Empty Form</span>
+                    }
+                  </td>
+                  <td class="text-center">
+                    <button mat-icon-button (click)="openEditModal(head)" [matTooltip]="'common.edit' | translate">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    @if (!head.is_system) {
+                      <button mat-icon-button color="warn" (click)="deleteHead(head)" [matTooltip]="'common.delete' | translate">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 2: PAYMENT HEADS -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon text-danger">arrow_upward</mat-icon>
+          <span>{{ 'expenses.paymentsHeader' | translate }} ({{ paymentHeads().length }})</span>
+        </ng-template>
+
+        <div class="heads-table-card glass-card">
+          <table class="heads-table">
+            <thead>
+              <tr>
+                <th class="col-sno">#</th>
+                <th>{{ 'expenses.accountHead' | translate }}</th>
+                <th>{{ 'expenses.tamilName' | translate }}</th>
+                <th>{{ 'expenses.section' | translate }}</th>
+                <th>{{ 'expenses.dataSource' | translate }}</th>
+                <th class="text-center">{{ 'common.actions' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (head of paymentHeads(); track head.id; let i = $index) {
+                <tr>
+                  <td class="col-sno text-muted">{{ i + 1 }}</td>
+                  <td class="text-bold">
+                    {{ head.name }}
+                    @if (head.is_system) {
+                      <span class="system-badge" [matTooltip]="'expenses.standardDioceseHead' | translate">Standard</span>
+                    }
+                  </td>
+                  <td class="text-muted">{{ head.tamil_name || '—' }}</td>
+                  <td>
+                    <span class="section-badge section-badge--pay">{{ head.section }}</span>
+                  </td>
+                  <td>
+                    @if (head.auto_source) {
+                      <span class="auto-source-badge">
+                        <mat-icon>sync</mat-icon> {{ head.auto_source }}
+                      </span>
+                    } @else {
+                      <span class="text-muted">Manual / Empty Form</span>
+                    }
+                  </td>
+                  <td class="text-center">
+                    <button mat-icon-button (click)="openEditModal(head)" [matTooltip]="'common.edit' | translate">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    @if (!head.is_system) {
+                      <button mat-icon-button color="warn" (click)="deleteHead(head)" [matTooltip]="'common.delete' | translate">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>
+
+<!-- Modal: Add / Edit Account Head -->
+@if (showModal()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-dialog glass-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">{{ isEditing() ? ('expenses.editAccountHead' | translate) : ('expenses.addAccountHead' | translate) }}</h3>
+        <button mat-icon-button (click)="closeModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>{{ 'expenses.accountType' | translate }} *</label>
+          <div class="type-radio-group">
+            <label class="radio-label">
+              <input
+                type="radio"
+                name="headType"
+                value="receipt"
+                [checked]="formHead().type === 'receipt'"
+                (change)="formHead().type = 'receipt'"
+              />
+              <span>{{ 'expenses.receiptIncome' | translate }}</span>
+            </label>
+            <label class="radio-label">
+              <input
+                type="radio"
+                name="headType"
+                value="payment"
+                [checked]="formHead().type === 'payment'"
+                (change)="formHead().type = 'payment'"
+              />
+              <span>{{ 'expenses.paymentExpense' | translate }}</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'expenses.section' | translate }} *</label>
+          <select class="form-control" [ngModel]="formHead().section" (ngModelChange)="formHead().section = $event">
+            @if (formHead().type === 'receipt') {
+              @for (sec of receiptSections; track sec) {
+                <option [value]="sec">{{ sec }}</option>
+              }
+            } @else {
+              @for (sec of paymentSections; track sec) {
+                <option [value]="sec">{{ sec }}</option>
+              }
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'expenses.headName' | translate }} (English) *</label>
+          <input
+            type="text"
+            class="form-control"
+            [ngModel]="formHead().name"
+            (ngModelChange)="formHead().name = $event"
+            placeholder="e.g. Special Festival Offering"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'expenses.tamilName' | translate }} (Tamil)</label>
+          <input
+            type="text"
+            class="form-control"
+            [ngModel]="formHead().tamilName"
+            (ngModelChange)="formHead().tamilName = $event"
+            placeholder="e.g. திருவிழா காணிக்கை"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'expenses.dataSource' | translate }} / {{ 'expenses.autoSyncSource' | translate }}</label>
+          <select class="form-control" [ngModel]="formHead().autoSource" (ngModelChange)="formHead().autoSource = $event">
+            @for (src of autoSources; track src.value) {
+              <option [value]="src.value">{{ src.label }}</option>
+            }
+          </select>
+          <small class="form-hint text-muted">
+            Leave as "Manual Entry" if this should remain an empty form cell for staff to enter.
+          </small>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closeModal()">{{ 'common.cancel' | translate }}</button>
+        <button mat-flat-button color="primary" (click)="saveHead()">
+          <mat-icon>check</mat-icon>
+          <span>{{ 'common.save' | translate }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -18,7 +18,10 @@ import { parseDateOnly } from '../../../core/utils/date-format.util';
 import { CertificateService, CertificateType } from '../certificate.service';
 import { CERTIFICATE_CONFIGS, CertificateFormField } from '../certificate-config';
 import { DatepickerTodayHeaderComponent } from '../../../shared/components/datepicker-today-header/datepicker-today-header';
+import { MatDialog } from '@angular/material/dialog';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { CertificateLivePreviewComponent } from '../../../shared/components/certificate-live-preview/certificate-live-preview';
+import { LivePreviewDialogComponent } from '../../../shared/components/live-preview-dialog/live-preview-dialog';
 
 @Component({
   selector: 'coms-certificate-form',
@@ -34,6 +37,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     MatIconModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
+    CertificateLivePreviewComponent,
     TranslatePipe,
   ],
   templateUrl: './certificate-form.html',
@@ -42,6 +46,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 export class CertificateFormComponent implements OnChanges {
   @Input({ required: true }) certType!: CertificateType;
   private translate = inject(TranslateService);
+  private dialog = inject(MatDialog);
 
   // Material's default ErrorStateMatcher shows an error once EITHER the
   // control is touched OR the enclosing FormGroupDirective has ever been
@@ -71,6 +76,28 @@ export class CertificateFormComponent implements OnChanges {
   justSavedCertNo = signal<string | null>(null);
   optionsByMasterKey = signal<Record<string, { id: number; name: string }[]>>({});
   witnessCount = signal<number>(2);
+  showSidePreview = signal<boolean>(false);
+
+  toggleSidePreview(): void {
+    this.showSidePreview.update((v) => !v);
+  }
+
+  openPreviewModal(): void {
+    const certTitle = this.translate.instant(this.config.singularTitle);
+    this.dialog.open(LivePreviewDialogComponent, {
+      width: '840px',
+      maxWidth: '96vw',
+      autoFocus: false,
+      restoreFocus: true,
+      data: {
+        title: `${certTitle} - ${this.translate.instant('common.livePreview')}`,
+        previewType: 'certificate',
+        certType: this.certType,
+        formGroup: this.form,
+        certificateNo: this.justSavedCertNo() || (this.editId() ? `CERT-${this.editId()}` : 'PREVIEW-CERT'),
+      },
+    });
+  }
 
   ngOnChanges(): void {
     this.config = CERTIFICATE_CONFIGS[this.certType];

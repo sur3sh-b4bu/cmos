@@ -6,7 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DateRangeFilterComponent, DateRange } from '../../shared/components/date-range-filter/date-range-filter';
 import { DataTableComponent } from '../../shared/components/data-table/data-table';
-import { DataTableColumn } from '../../shared/components/data-table/data-table.model';
+import { DataTableColumn, DataTableSort } from '../../shared/components/data-table/data-table.model';
 import { BarChartComponent, BarChartPoint } from '../../shared/components/bar-chart/bar-chart';
 import { formatDateDMY } from '../../core/utils/date-format.util';
 import { CurrencyService } from '../../core/services/currency.service';
@@ -74,6 +74,18 @@ export class ReportsComponent implements OnInit {
   contributionCollectionsData = signal<ContributionCollectionsReportData | null>(null);
   certificatesData = signal<CertificateReportData | null>(null);
 
+  prayerSearch = signal('');
+  prayerSort = signal<DataTableSort | undefined>(undefined);
+
+  collectionsSearch = signal('');
+  collectionsSort = signal<DataTableSort | undefined>(undefined);
+
+  contributionCollectionsSearch = signal('');
+  contributionCollectionsSort = signal<DataTableSort | undefined>(undefined);
+
+  certificatesSearch = signal('');
+  certificatesSort = signal<DataTableSort | undefined>(undefined);
+
   // Reports return their full date-range result set in one response (no
   // server-side pagination) -- DataTableComponent still expects page
   // events, so pagination is handled client-side here with a plain slice.
@@ -86,23 +98,90 @@ export class ReportsComponent implements OnInit {
   certificatesPage = signal(0);
   certificatesPageSize = signal(25);
 
+  private filterAndSort<T>(rows: T[], searchTerm: string, columns: DataTableColumn<T>[], sort?: DataTableSort): T[] {
+    let result = rows ?? [];
+    const term = searchTerm.trim().toLowerCase();
+    if (term) {
+      result = result.filter((row: any) => {
+        const objMatch = Object.values(row).some((val) => {
+          if (val === null || val === undefined) return false;
+          return String(val).toLowerCase().includes(term);
+        });
+        if (objMatch) return true;
+        return columns.some((col) => {
+          if (col.accessor) {
+            try {
+              const accVal = col.accessor(row);
+              if (accVal !== null && accVal !== undefined) {
+                return String(accVal).toLowerCase().includes(term);
+              }
+            } catch {
+              // ignore accessor errors
+            }
+          }
+          return false;
+        });
+      });
+    }
+
+    if (sort && sort.active && sort.direction) {
+      const { active, direction } = sort;
+      const isAsc = direction === 'asc';
+      result = [...result].sort((a: any, b: any) => {
+        const valA = a[active];
+        const valB = b[active];
+        if (valA === valB) return 0;
+        if (valA === null || valA === undefined) return 1;
+        if (valB === null || valB === undefined) return -1;
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return isAsc ? valA - valB : valB - valA;
+        }
+        const strA = String(valA).toLowerCase();
+        const strB = String(valB).toLowerCase();
+        return isAsc ? strA.localeCompare(strB) : strB.localeCompare(strA);
+      });
+    }
+
+    return result;
+  }
+
+  filteredPrayerRows = computed(() => {
+    const raw = this.prayerData()?.rows ?? [];
+    return this.filterAndSort(raw, this.prayerSearch(), this.prayerColumns, this.prayerSort());
+  });
+
+  filteredCollectionsRows = computed(() => {
+    const raw = this.collectionsData()?.byDay ?? [];
+    return this.filterAndSort(raw, this.collectionsSearch(), this.collectionColumns, this.collectionsSort());
+  });
+
+  filteredContributionCollectionsRows = computed(() => {
+    const raw = this.contributionCollectionsData()?.byDay ?? [];
+    return this.filterAndSort(raw, this.contributionCollectionsSearch(), this.contributionCollectionColumns, this.contributionCollectionsSort());
+  });
+
+  filteredCertificatesRows = computed(() => {
+    const raw = this.certificatesData()?.rows ?? [];
+    return this.filterAndSort(raw, this.certificatesSearch(), this.certificateColumns, this.certificatesSort());
+  });
+
   prayerRowsPage = computed(() => {
-    const rows = this.prayerData()?.rows ?? [];
+    const rows = this.filteredPrayerRows();
     const start = this.prayerPage() * this.prayerPageSize();
     return rows.slice(start, start + this.prayerPageSize());
   });
   collectionsRowsPage = computed(() => {
-    const rows = this.collectionsData()?.byDay ?? [];
+    const rows = this.filteredCollectionsRows();
     const start = this.collectionsPage() * this.collectionsPageSize();
     return rows.slice(start, start + this.collectionsPageSize());
   });
   contributionCollectionsRowsPage = computed(() => {
-    const rows = this.contributionCollectionsData()?.byDay ?? [];
+    const rows = this.filteredContributionCollectionsRows();
     const start = this.contributionCollectionsPage() * this.contributionCollectionsPageSize();
     return rows.slice(start, start + this.contributionCollectionsPageSize());
   });
   certificatesRowsPage = computed(() => {
-    const rows = this.certificatesData()?.rows ?? [];
+    const rows = this.filteredCertificatesRows();
     const start = this.certificatesPage() * this.certificatesPageSize();
     return rows.slice(start, start + this.certificatesPageSize());
   });
@@ -111,17 +190,52 @@ export class ReportsComponent implements OnInit {
     this.prayerPage.set(e.pageIndex);
     this.prayerPageSize.set(e.pageSize);
   }
+  onPrayerSearch(term: string): void {
+    this.prayerSearch.set(term);
+    this.prayerPage.set(0);
+  }
+  onPrayerSort(sort: DataTableSort): void {
+    this.prayerSort.set(sort);
+    this.prayerPage.set(0);
+  }
+
   onCollectionsPageChange(e: { pageIndex: number; pageSize: number }): void {
     this.collectionsPage.set(e.pageIndex);
     this.collectionsPageSize.set(e.pageSize);
   }
+  onCollectionsSearch(term: string): void {
+    this.collectionsSearch.set(term);
+    this.collectionsPage.set(0);
+  }
+  onCollectionsSort(sort: DataTableSort): void {
+    this.collectionsSort.set(sort);
+    this.collectionsPage.set(0);
+  }
+
   onContributionCollectionsPageChange(e: { pageIndex: number; pageSize: number }): void {
     this.contributionCollectionsPage.set(e.pageIndex);
     this.contributionCollectionsPageSize.set(e.pageSize);
   }
+  onContributionCollectionsSearch(term: string): void {
+    this.contributionCollectionsSearch.set(term);
+    this.contributionCollectionsPage.set(0);
+  }
+  onContributionCollectionsSort(sort: DataTableSort): void {
+    this.contributionCollectionsSort.set(sort);
+    this.contributionCollectionsPage.set(0);
+  }
+
   onCertificatesPageChange(e: { pageIndex: number; pageSize: number }): void {
     this.certificatesPage.set(e.pageIndex);
     this.certificatesPageSize.set(e.pageSize);
+  }
+  onCertificatesSearch(term: string): void {
+    this.certificatesSearch.set(term);
+    this.certificatesPage.set(0);
+  }
+  onCertificatesSort(sort: DataTableSort): void {
+    this.certificatesSort.set(sort);
+    this.certificatesPage.set(0);
   }
 
   async printMassIntentionsReport(): Promise<void> {
@@ -326,9 +440,9 @@ export class ReportsComponent implements OnInit {
   };
 
   // The report already holds its full date-range result set in memory, so
-  // "export all" just returns it -- no extra HTTP round trip needed.
-  asyncPrayerAll = async () => this.prayerData()?.rows ?? [];
-  asyncCollectionsAll = async () => this.collectionsData()?.byDay ?? [];
-  asyncContributionCollectionsAll = async () => this.contributionCollectionsData()?.byDay ?? [];
-  asyncCertificatesAll = async () => this.certificatesData()?.rows ?? [];
+  // "export all" returns the filtered set if search is applied.
+  asyncPrayerAll = async () => this.filteredPrayerRows();
+  asyncCollectionsAll = async () => this.filteredCollectionsRows();
+  asyncContributionCollectionsAll = async () => this.filteredContributionCollectionsRows();
+  asyncCertificatesAll = async () => this.filteredCertificatesRows();
 }

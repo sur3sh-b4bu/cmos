@@ -147,6 +147,12 @@ export const routes: Routes = [
         ],
       },
       {
+        path: 'expenses',
+        canActivate: [churchContextGuard, permissionGuard],
+        data: { breadcrumb: 'nav.expenses', permissions: ['expenses.view'] },
+        loadComponent: () => import('./features/expenses/expenses').then((m) => m.ExpensesComponent),
+      },
+      {
         // Same fix as mass-intentions above: no blanket guard on the
         // grouping node, so 'new'/':id/edit' aren't also silently required to
         // hold <type>_certificates.view on top of their own create/update
@@ -296,6 +302,12 @@ export const routes: Routes = [
               import('./features/settings/certificate-templates/certificate-templates').then(
                 (m) => m.CertificateTemplatesComponent
               ),
+          },
+          {
+            path: 'expense-heads',
+            data: { breadcrumb: 'settings.expenseHeads' },
+            loadComponent: () =>
+              import('./features/settings/expense-heads/expense-heads').then((m) => m.ExpenseHeadsComponent),
           },
           {
             path: 'keyboard-guide',

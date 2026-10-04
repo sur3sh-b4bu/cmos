@@ -3,7 +3,27 @@
     <a routerLink="/contributions" class="pi-form__back">
       <mat-icon>arrow_back</mat-icon>
     </a>
-    <h1>{{ (editId() ? 'contributions.editTitle' : 'contributions.newTitle') | translate }}</h1>
+    <div class="pi-form__title-group">
+      <h1>{{ (editId() ? 'contributions.editTitle' : 'contributions.newTitle') | translate }}</h1>
+    </div>
+
+    <!-- Preview Controls -->
+    <div class="pi-form__header-actions">
+      <button mat-stroked-button type="button" class="pi-form__preview-btn" (click)="openPreviewModal()">
+        <mat-icon>visibility</mat-icon>
+        <span>{{ 'common.previewReceipt' | translate }}</span>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        class="pi-form__side-toggle"
+        [class.active]="showSidePreview()"
+        (click)="toggleSidePreview()"
+        [matTooltip]="'common.toggleSidePreview' | translate"
+      >
+        <mat-icon>{{ showSidePreview() ? 'view_sidebar' : 'splitscreen' }}</mat-icon>
+      </button>
+    </div>
   </div>
 
   @if (loading()) {
@@ -35,125 +55,151 @@
       </div>
     }
 
-    <form class="pi-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
-      <div class="pi-form__grid">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'common.name' | translate }}</mat-label>
-          <input matInput formControlName="name" maxlength="150" required />
-          @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-            <mat-error>{{ 'massIntentions.nameRequired' | translate }}</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'massIntentions.phoneNumber' | translate }}</mat-label>
-          <span matTextPrefix class="phone-country-code">+91&nbsp;</span>
-          <input matInput type="tel" inputmode="numeric" formControlName="phone" maxlength="10" placeholder="9876543210" />
-          @if (form.controls.phone.hasError('phone')) {
-            <mat-error>{{ 'common.phoneInvalid' | translate }}</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'contributions.contributionType' | translate }}</mat-label>
-          <mat-select formControlName="contributionTypeId">
-            @for (opt of contributionTypes(); track opt.id) {
-              <mat-option [value]="opt.id">{{ typeLabel(opt) }}</mat-option>
+    <div class="pi-form__layout" [class.pi-form__layout--split]="showSidePreview()">
+      <form class="pi-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="pi-form__grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'common.name' | translate }}</mat-label>
+            <input matInput formControlName="name" maxlength="150" required />
+            @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+              <mat-error>{{ 'massIntentions.nameRequired' | translate }}</mat-error>
             }
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'contributions.amount' | translate }} ({{ currencyService.current().symbol }})</mat-label>
-          <input matInput type="number" min="0.01" step="0.01" formControlName="contributionAmount" required />
-          @if (form.controls.contributionAmount.hasError('min') && form.controls.contributionAmount.touched) {
-            <mat-error>{{ 'contributions.amountMustBePositive' | translate }}</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'massIntentions.paymentMethod' | translate }}</mat-label>
-          <mat-select formControlName="paymentMethodId" required>
-            @for (pm of paymentMethods(); track pm.id) {
-              <mat-option [value]="pm.id">{{ pm.name }}</mat-option>
-            }
-          </mat-select>
-          @if (form.controls.paymentMethodId.hasError('required') && form.controls.paymentMethodId.touched) {
-            <mat-error>{{ 'massIntentions.paymentMethodRequired' | translate }}</mat-error>
-          }
-        </mat-form-field>
-
-        @if (selectedTypeIsCustom) {
-          <mat-form-field appearance="outline" class="pi-form__span-2">
-            <mat-label>{{ 'contributions.describeType' | translate }}</mat-label>
-            <textarea matInput rows="3" formControlName="customContributionType" required></textarea>
           </mat-form-field>
-        }
 
-        <mat-form-field appearance="outline" class="pi-form__span-2">
-          <mat-label>{{ 'massIntentions.remarks' | translate }}</mat-label>
-          <textarea matInput rows="2" formControlName="remarks"></textarea>
-        </mat-form-field>
-      </div>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'massIntentions.phoneNumber' | translate }}</mat-label>
+            <span matTextPrefix class="phone-country-code">+91&nbsp;</span>
+            <input matInput type="tel" inputmode="numeric" formControlName="phone" maxlength="10" placeholder="9876543210" />
+            @if (form.controls.phone.hasError('phone')) {
+              <mat-error>{{ 'common.phoneInvalid' | translate }}</mat-error>
+            }
+          </mat-form-field>
 
-      <div class="pi-form__payment-row">
-        @if (!editId() || !savedContribution()?.is_paid) {
-          @if (!readyToConfirmPayment) {
-            <div class="pi-form__payment-hint">
-              <mat-icon>info</mat-icon>
-              <span>{{ 'contributions.fillRequiredFieldsHint' | translate }}</span>
-            </div>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'contributions.contributionType' | translate }}</mat-label>
+            <mat-select formControlName="contributionTypeId">
+              @for (opt of contributionTypes(); track opt.id) {
+                <mat-option [value]="opt.id">{{ typeLabel(opt) }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'contributions.amount' | translate }} ({{ currencyService.current().symbol }})</mat-label>
+            <input matInput type="number" min="0.01" step="0.01" formControlName="contributionAmount" required />
+            @if (form.controls.contributionAmount.hasError('min') && form.controls.contributionAmount.touched) {
+              <mat-error>{{ 'contributions.amountMustBePositive' | translate }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'massIntentions.paymentMethod' | translate }}</mat-label>
+            <mat-select formControlName="paymentMethodId" required>
+              @for (pm of paymentMethods(); track pm.id) {
+                <mat-option [value]="pm.id">{{ pm.name }}</mat-option>
+              }
+            </mat-select>
+            @if (form.controls.paymentMethodId.hasError('required') && form.controls.paymentMethodId.touched) {
+              <mat-error>{{ 'massIntentions.paymentMethodRequired' | translate }}</mat-error>
+            }
+          </mat-form-field>
+
+          @if (selectedTypeIsCustom) {
+            <mat-form-field appearance="outline" class="pi-form__span-2">
+              <mat-label>{{ 'contributions.describeType' | translate }}</mat-label>
+              <textarea matInput rows="3" formControlName="customContributionType" required></textarea>
+            </mat-form-field>
           }
-          <!-- Confirming payment here also saves the contribution (see
-               onPaymentConfirmed) -- there's no separate Save button in
-               this flow, same design as mass-intention-form.ts. -->
-          <coms-payment-confirm-panel
-            [method]="selectedPaymentMethod"
-            [amount]="form.controls.contributionAmount.value"
-            [purposeText]="paymentPurposeText"
-            [disabled]="!readyToConfirmPayment"
-            [entityId]="paymentContributionId()"
-            [receivePayment]="receivePaymentFn"
-            (confirmed)="onPaymentConfirmed($event)"
-          />
-          @if (saveFailed()) {
-            <div class="pi-form__save-failed">
-              <mat-icon>error</mat-icon>
-              <span>{{ 'massIntentions.saveFailedHint' | translate }}</span>
-              <button mat-stroked-button type="button" [disabled]="saving()" (click)="submit()">
-                @if (saving()) {
-                  <mat-progress-spinner diameter="16" mode="indeterminate" />
-                } @else {
-                  <mat-icon>refresh</mat-icon>
-                }
-                <span>{{ 'common.retry' | translate }}</span>
+
+          <mat-form-field appearance="outline" class="pi-form__span-2">
+            <mat-label>{{ 'massIntentions.remarks' | translate }}</mat-label>
+            <textarea matInput rows="2" formControlName="remarks"></textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="pi-form__payment-row">
+          @if (!editId() || !savedContribution()?.is_paid) {
+            @if (!readyToConfirmPayment) {
+              <div class="pi-form__payment-hint">
+                <mat-icon>info</mat-icon>
+                <span>{{ 'contributions.fillRequiredFieldsHint' | translate }}</span>
+              </div>
+            }
+            <coms-payment-confirm-panel
+              [method]="selectedPaymentMethod"
+              [amount]="form.controls.contributionAmount.value"
+              [purposeText]="paymentPurposeText"
+              [disabled]="!readyToConfirmPayment"
+              [entityId]="paymentContributionId()"
+              [receivePayment]="receivePaymentFn"
+              (confirmed)="onPaymentConfirmed($event)"
+            />
+            @if (saveFailed()) {
+              <div class="pi-form__save-failed">
+                <mat-icon>error</mat-icon>
+                <span>{{ 'massIntentions.saveFailedHint' | translate }}</span>
+                <button mat-stroked-button type="button" [disabled]="saving()" (click)="submit()">
+                  @if (saving()) {
+                    <mat-progress-spinner diameter="16" mode="indeterminate" />
+                  } @else {
+                    <mat-icon>refresh</mat-icon>
+                  }
+                  <span>{{ 'common.retry' | translate }}</span>
+                </button>
+              </div>
+            }
+          } @else {
+            <button mat-stroked-button type="button" (click)="printReceipt()">
+              <mat-icon>print</mat-icon>
+              {{ 'contributions.printReceipt' | translate }}
+            </button>
+          }
+        </div>
+
+        <div class="pi-form__actions">
+          <button mat-stroked-button type="button" (click)="openPreviewModal()">
+            <mat-icon>visibility</mat-icon>
+            <span>{{ 'common.livePreview' | translate }}</span>
+          </button>
+          <a mat-button routerLink="/contributions">{{ 'common.cancel' | translate }}</a>
+          @if (editId() && savedContribution()?.is_paid) {
+            <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+              @if (saving()) {
+                <mat-progress-spinner diameter="18" mode="indeterminate" />
+              } @else {
+                <span>{{ 'common.saveChanges' | translate }}</span>
+              }
+            </button>
+          }
+        </div>
+      </form>
+
+      <!-- Side-by-Side Live Receipt Preview -->
+      @if (showSidePreview()) {
+        <div class="pi-form__side-preview surface-card">
+          <div class="side-preview-header">
+            <span class="side-preview-title">
+              <mat-icon>receipt_long</mat-icon>
+              {{ 'common.previewReceipt' | translate }}
+            </span>
+            <div class="side-preview-actions">
+              <button mat-icon-button type="button" (click)="openPreviewModal()" matTooltip="Open Full Screen Preview">
+                <mat-icon>fullscreen</mat-icon>
+              </button>
+              <button mat-icon-button type="button" (click)="toggleSidePreview()" matTooltip="Close Side Preview">
+                <mat-icon>close</mat-icon>
               </button>
             </div>
-          }
-        } @else {
-          <button mat-stroked-button type="button" (click)="printReceipt()">
-            <mat-icon>print</mat-icon>
-            {{ 'contributions.printReceipt' | translate }}
-          </button>
-        }
-      </div>
-
-      @if (editId() && savedContribution()?.is_paid) {
-        <div class="pi-form__actions">
-          <a mat-button routerLink="/contributions">{{ 'common.cancel' | translate }}</a>
-          <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
-            @if (saving()) {
-              <mat-progress-spinner diameter="18" mode="indeterminate" />
-            } @else {
-              <span>{{ 'common.saveChanges' | translate }}</span>
-            }
-          </button>
-        </div>
-      } @else {
-        <div class="pi-form__actions">
-          <a mat-button routerLink="/contributions">{{ 'common.cancel' | translate }}</a>
+          </div>
+          <div class="side-preview-body">
+            <coms-receipt-live-preview
+              [receiptType]="'contribution'"
+              [data]="form.value"
+              [receiptNo]="savedContribution()?.receipt_no || (editId() ? 'RCT-' + editId() : 'PREVIEW-001')"
+            />
+          </div>
         </div>
       }
-    </form>
+    </div>
   }
 </div>

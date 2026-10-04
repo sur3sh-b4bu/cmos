@@ -63,6 +63,9 @@ interface PaymentMethodOption {
   code: string;
 }
 
+import { ReceiptLivePreviewComponent } from '../../../shared/components/receipt-live-preview/receipt-live-preview';
+import { LivePreviewDialogComponent } from '../../../shared/components/live-preview-dialog/live-preview-dialog';
+
 @Component({
   selector: 'coms-mass-intention-form',
   standalone: true,
@@ -79,6 +82,7 @@ interface PaymentMethodOption {
     MatProgressSpinnerModule,
     MatTooltipModule,
     PaymentConfirmPanelComponent,
+    ReceiptLivePreviewComponent,
     TranslatePipe,
   ],
   templateUrl: './mass-intention-form.html',
@@ -114,6 +118,28 @@ export class MassIntentionFormComponent implements OnInit {
   paymentMethods = signal<PaymentMethodOption[]>([]);
   restrictedDates = signal<RestrictedDateRow[]>([]);
   selectedPrayerDate = signal<Date | null>(new Date());
+  showSidePreview = signal<boolean>(false);
+
+  toggleSidePreview(): void {
+    this.showSidePreview.update((v) => !v);
+  }
+
+  openPreviewModal(): void {
+    const title = this.translate.instant('common.previewReceipt');
+    this.dialog.open(LivePreviewDialogComponent, {
+      width: '680px',
+      maxWidth: '96vw',
+      autoFocus: false,
+      restoreFocus: true,
+      data: {
+        title: `${title} - ${this.translate.instant('common.livePreview')}`,
+        previewType: 'receipt',
+        receiptType: 'mass-intention',
+        formGroup: this.form,
+        receiptNo: this.savedIntention()?.receipt_no || (this.editId() ? `RCT-${this.editId()}` : 'PREVIEW-001'),
+      },
+    });
+  }
 
   readonly filteredMasses = computed(() => {
     return this.masses();

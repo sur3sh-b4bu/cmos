@@ -3,7 +3,27 @@
     <a routerLink="/mass-intentions" class="pi-form__back">
       <mat-icon>arrow_back</mat-icon>
     </a>
-    <h1>{{ (editId() ? 'massIntentions.editTitle' : 'dashboard.newMassIntention') | translate }}</h1>
+    <div class="pi-form__title-group">
+      <h1>{{ (editId() ? 'massIntentions.editTitle' : 'dashboard.newMassIntention') | translate }}</h1>
+    </div>
+
+    <!-- Preview Controls -->
+    <div class="pi-form__header-actions">
+      <button mat-stroked-button type="button" class="pi-form__preview-btn" (click)="openPreviewModal()">
+        <mat-icon>visibility</mat-icon>
+        <span>{{ 'common.previewReceipt' | translate }}</span>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        class="pi-form__side-toggle"
+        [class.active]="showSidePreview()"
+        (click)="toggleSidePreview()"
+        [matTooltip]="'common.toggleSidePreview' | translate"
+      >
+        <mat-icon>{{ showSidePreview() ? 'view_sidebar' : 'splitscreen' }}</mat-icon>
+      </button>
+    </div>
   </div>
 
   @if (loading()) {
@@ -47,7 +67,8 @@
       </div>
     }
 
-    <form class="pi-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="pi-form__layout" [class.pi-form__layout--split]="showSidePreview()">
+      <form class="pi-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
       <div class="pi-form__grid">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'massIntentions.bookedBy' | translate }}</mat-label>
@@ -250,22 +271,50 @@
         }
       </div>
 
-      @if (editId() && savedIntention()?.is_paid) {
         <div class="pi-form__actions">
-          <a mat-button routerLink="/mass-intentions">{{ 'common.cancel' | translate }}</a>
-          <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
-            @if (saving()) {
-              <mat-progress-spinner diameter="18" mode="indeterminate" />
-            } @else {
-              <span>{{ 'common.saveChanges' | translate }}</span>
-            }
+          <button mat-stroked-button type="button" (click)="openPreviewModal()">
+            <mat-icon>visibility</mat-icon>
+            <span>{{ 'common.livePreview' | translate }}</span>
           </button>
-        </div>
-      } @else {
-        <div class="pi-form__actions">
           <a mat-button routerLink="/mass-intentions">{{ 'common.cancel' | translate }}</a>
+          @if (editId() && savedIntention()?.is_paid) {
+            <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+              @if (saving()) {
+                <mat-progress-spinner diameter="18" mode="indeterminate" />
+              } @else {
+                <span>{{ 'common.saveChanges' | translate }}</span>
+              }
+            </button>
+          }
+        </div>
+      </form>
+
+      <!-- Side-by-Side Live Receipt Preview -->
+      @if (showSidePreview()) {
+        <div class="pi-form__side-preview surface-card">
+          <div class="side-preview-header">
+            <span class="side-preview-title">
+              <mat-icon>receipt_long</mat-icon>
+              {{ 'common.previewReceipt' | translate }}
+            </span>
+            <div class="side-preview-actions">
+              <button mat-icon-button type="button" (click)="openPreviewModal()" matTooltip="Open Full Screen Preview">
+                <mat-icon>fullscreen</mat-icon>
+              </button>
+              <button mat-icon-button type="button" (click)="toggleSidePreview()" matTooltip="Close Side Preview">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+          <div class="side-preview-body">
+            <coms-receipt-live-preview
+              [receiptType]="'mass-intention'"
+              [data]="form.value"
+              [receiptNo]="savedIntention()?.receipt_no || (editId() ? 'RCT-' + editId() : 'PREVIEW-001')"
+            />
+          </div>
         </div>
       }
-    </form>
+    </div>
   }
 </div>

@@ -52,6 +52,11 @@ interface PaymentMethodOption {
  * the draft-restore, the "confirming payment also saves" flow via the shared
  * payment panel, Generate Receipt -- mirrors it exactly.
  */
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
+import { ReceiptLivePreviewComponent } from '../../../shared/components/receipt-live-preview/receipt-live-preview';
+import { LivePreviewDialogComponent } from '../../../shared/components/live-preview-dialog/live-preview-dialog';
+
 @Component({
   selector: 'coms-contribution-form',
   standalone: true,
@@ -64,8 +69,10 @@ interface PaymentMethodOption {
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
+    MatTooltipModule,
     MatProgressSpinnerModule,
     PaymentConfirmPanelComponent,
+    ReceiptLivePreviewComponent,
     TranslatePipe,
   ],
   templateUrl: './contribution-form.html',
@@ -85,12 +92,35 @@ export class ContributionFormComponent implements OnInit {
   private fileDownload = inject(FileDownloadService);
   private translate = inject(TranslateService);
   private languageService = inject(LanguageService);
+  private dialog = inject(MatDialog);
 
   editId = signal<number | null>(null);
   loading = signal(false);
   saving = signal(false);
   contributionTypes = signal<ContributionTypeOption[]>([]);
   paymentMethods = signal<PaymentMethodOption[]>([]);
+  showSidePreview = signal<boolean>(false);
+
+  toggleSidePreview(): void {
+    this.showSidePreview.update((v) => !v);
+  }
+
+  openPreviewModal(): void {
+    const title = this.translate.instant('common.previewReceipt');
+    this.dialog.open(LivePreviewDialogComponent, {
+      width: '680px',
+      maxWidth: '96vw',
+      autoFocus: false,
+      restoreFocus: true,
+      data: {
+        title: `${title} - ${this.translate.instant('common.livePreview')}`,
+        previewType: 'receipt',
+        receiptType: 'contribution',
+        formGroup: this.form,
+        receiptNo: this.savedContribution()?.receipt_no || (this.editId() ? `RCT-${this.editId()}` : 'PREVIEW-001'),
+      },
+    });
+  }
 
   /** The just-saved (or just-loaded, in edit mode) record -- drives the
    * Generate Receipt action below the form. */

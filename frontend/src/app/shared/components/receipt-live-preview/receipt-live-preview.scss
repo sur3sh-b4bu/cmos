@@ -1,0 +1,295 @@
+.receipt-preview-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12px;
+  transform-origin: top center;
+  transition: transform 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.receipt-preview-card {
+  --receipt-theme: #5c0d1e;
+  --receipt-gold: #b08d2b;
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1.5pt solid var(--receipt-theme);
+  position: relative;
+  box-sizing: border-box;
+  font-family: 'Noto Sans Tamil', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  color: #1a1a1a;
+}
+
+.receipt-doc {
+  padding: 18px 22px;
+  font-size: 13px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+.receipt-header {
+  background: transparent;
+  color: #111827;
+  border: 1.5pt solid var(--receipt-theme);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  text-align: center;
+
+  .church-name {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--receipt-theme);
+    letter-spacing: 0.02em;
+    line-height: 1.25;
+  }
+
+  .church-line {
+    font-size: 11px;
+    color: #374151;
+    margin-top: 3px;
+    line-height: 1.3;
+  }
+
+  &--with-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+
+    .church-logo {
+      width: 48px;
+      height: auto;
+      border-radius: 4px;
+      padding: 2px;
+      background: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .church-info {
+      flex: 1;
+    }
+  }
+}
+
+.receipt-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #6e4e12; // deep warm gold
+  text-align: center;
+  margin: 8px 0 3px;
+  letter-spacing: 0.04em;
+}
+
+.billed-by {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 8px;
+  color: #333333;
+}
+
+.dashed-line {
+  border-top: 1px dashed #000000;
+  margin: 8px 0;
+}
+
+.solid-line {
+  border-top: 0.8px solid #000000;
+  margin: 6px 0;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 5px;
+  font-size: 12.5px;
+
+  .label {
+    font-weight: 700;
+    color: #111827;
+    flex-shrink: 0;
+  }
+
+  .value {
+    text-align: right;
+    color: #1f2937;
+    word-break: break-word;
+  }
+
+  .value-bold {
+    font-weight: 700;
+  }
+
+  .receipt-no-highlight {
+    font-weight: 800;
+    color: var(--receipt-theme);
+  }
+
+  &--block {
+    margin-bottom: 6px;
+  }
+
+  &--amount {
+    margin-top: 6px;
+    margin-bottom: 6px;
+    align-items: center;
+
+    .label-large {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--receipt-theme);
+    }
+
+    .value-large {
+      font-size: 17px;
+      font-weight: 900;
+      color: var(--receipt-theme);
+    }
+  }
+
+  &--note {
+    font-size: 11px;
+    color: #4b5563;
+    font-style: italic;
+  }
+}
+
+// Bulk Table
+.bulk-table-wrap {
+  overflow-x: auto;
+  margin: 6px 0;
+}
+
+.bulk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+
+  th {
+    text-align: left;
+    background: #f1f5f9;
+    padding: 4px 6px;
+    font-weight: 700;
+    color: var(--receipt-theme);
+    border-bottom: 1px solid #cbd5e1;
+  }
+
+  td {
+    padding: 4px 6px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .text-right {
+    text-align: right;
+  }
+}
+
+// QR Section
+.qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 10px auto 4px;
+
+  .qr-code-svg {
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08));
+  }
+
+  .scan-caption {
+    font-size: 10px;
+    color: #555555;
+    text-align: center;
+    margin-top: 3px;
+  }
+}
+
+.thank-you {
+  font-size: 11px;
+  font-style: italic;
+  text-align: center;
+  margin: 8px 0 10px;
+  color: #374151;
+  padding: 0 10px;
+  line-height: 1.35;
+}
+
+// Cross ornament
+.cross-ornament {
+  position: relative;
+  width: 36px;
+  height: 24px;
+  margin: 0 auto 10px;
+
+  .cross-v {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 2px;
+    height: 24px;
+    background: var(--receipt-gold);
+    transform: translateX(-50%);
+  }
+
+  .cross-h {
+    position: absolute;
+    left: 50%;
+    top: 7px;
+    width: 18px;
+    height: 2px;
+    background: var(--receipt-gold);
+    transform: translateX(-50%);
+  }
+}
+
+// Note card
+.note-card {
+  border: 1px solid #e3d9b8;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 0 auto 4px;
+  text-align: center;
+  background: #fdfbf7;
+
+  .contact-line {
+    font-size: 10px;
+    color: #4b5563;
+    margin-bottom: 3px;
+  }
+
+  .retain-note {
+    font-size: 10px;
+    font-style: italic;
+    color: #6b7280;
+    font-weight: 500;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .receipt-preview-wrapper {
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .receipt-preview-card {
+    box-shadow: none !important;
+    border: 1.5pt solid #000000 !important;
+    max-width: 100% !important;
+  }
+
+  .receipt-doc {
+    padding: 0 !important;
+  }
+}

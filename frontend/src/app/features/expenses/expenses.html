@@ -1,0 +1,853 @@
+<div class="expenses-container">
+  <!-- Top Navigation / Controls Header -->
+  <header class="expenses-header glass-card">
+    <div class="expenses-header__left">
+      <div class="expenses-header__title-group">
+        <mat-icon class="expenses-header__icon">account_balance_wallet</mat-icon>
+        <div>
+          <h1 class="expenses-header__title">{{ 'expenses.title' | translate }}</h1>
+          <p class="expenses-header__subtitle">{{ 'expenses.subtitle' | translate }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Month & Year Selector -->
+    <div class="expenses-header__controls">
+      <div class="date-navigator">
+        <button mat-icon-button (click)="prevMonth()" [matTooltip]="'common.previousPage' | translate">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+
+        <div class="date-navigator__selectors">
+          <select class="form-select month-select" [ngModel]="currentMonth()" (ngModelChange)="onMonthChange($event)">
+            @for (m of months; track m.value) {
+              <option [value]="m.value">{{ languageService.isTamil() ? m.tamilName : m.name }}</option>
+            }
+          </select>
+
+          <select class="form-select year-select" [ngModel]="currentYear()" (ngModelChange)="onYearChange($event)">
+            @for (y of years; track y) {
+              <option [value]="y">{{ y }}</option>
+            }
+          </select>
+        </div>
+
+        <button mat-icon-button (click)="nextMonth()" [matTooltip]="'common.nextPage' | translate">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="expenses-header__actions">
+        <button
+          mat-stroked-button
+          class="btn-print"
+          (click)="printLedgerPdf()"
+          [disabled]="printing() || loading()"
+        >
+          @if (printing()) {
+            <mat-spinner diameter="18"></mat-spinner>
+          } @else {
+            <mat-icon>print</mat-icon>
+          }
+          <span>{{ 'expenses.printTwoPage' | translate }}</span>
+        </button>
+
+        <button
+          mat-flat-button
+          color="primary"
+          class="btn-save"
+          (click)="saveLedger()"
+          [disabled]="saving() || loading()"
+        >
+          @if (saving()) {
+            <mat-spinner diameter="18"></mat-spinner>
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          <span>{{ 'common.saveChanges' | translate }}</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Auto Sync Summary Pills Bar -->
+  <div class="auto-sync-banner glass-card">
+    <div class="auto-sync-banner__item">
+      <mat-icon class="text-primary">volunteer_activism</mat-icon>
+      <div>
+        <span class="label">{{ 'expenses.autoMassIntentions' | translate }}:</span>
+        <span class="value">{{ formatCurrency(autoAggregates().massIntentionsOffering) }}</span>
+        <span class="count">({{ autoAggregates().massIntentionsCount }} {{ 'expenses.intentionsCount' | translate }})</span>
+      </div>
+    </div>
+
+    <div class="auto-sync-banner__item">
+      <mat-icon class="text-success">account_balance</mat-icon>
+      <div>
+        <span class="label">{{ 'expenses.prevClosingCarried' | translate }}:</span>
+        <span class="value">{{ formatCurrency(prevMonthClosing().cashHand + prevMonthClosing().cashBank + prevMonthClosing().fixedDeposits) }}</span>
+      </div>
+    </div>
+
+    <div class="auto-sync-banner__actions">
+      <button mat-button class="btn-sm" routerLink="/settings/expense-heads">
+        <mat-icon>settings</mat-icon>
+        <span>{{ 'expenses.manageAccountHeads' | translate }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="44"></mat-spinner>
+      <p>{{ 'common.loading' | translate }}</p>
+    </div>
+  } @else {
+    <!-- Main Tabs -->
+    <mat-tab-group
+      class="expenses-tabs"
+      animationDuration="200ms"
+      [selectedIndex]="activeTab()"
+      (selectedIndexChange)="onTabChange($event)"
+    >
+      <!-- TAB 1: FRONT PAGE - PARISH FINANCIAL JOURNAL -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">menu_book</mat-icon>
+          <span>{{ 'expenses.tabFrontJournal' | translate }}</span>
+        </ng-template>
+
+        <div class="journal-wrapper">
+          <!-- Page Title Banner (Matching Photo 1) -->
+          <div class="journal-banner">
+            <div class="journal-banner__title">
+              <h2>{{ 'expenses.parishJournalTitle' | translate }}</h2>
+              <p class="subtitle">{{ getSelectedMonthName() }} {{ currentYear() }}</p>
+            </div>
+            <div class="journal-banner__badge">
+              <span>{{ 'expenses.singleSheetFront' | translate }}</span>
+            </div>
+          </div>
+
+          <!-- Two-Column Ledger Container -->
+          <div class="ledger-grid">
+            <!-- LEFT COLUMN: RECEIPTS -->
+            <div class="ledger-column ledger-column--receipts glass-card">
+              <div class="ledger-column__header">
+                <h3>{{ 'expenses.receiptsHeader' | translate }}</h3>
+                <span class="total-badge">{{ formatCurrency(totalReceipts()) }}</span>
+              </div>
+
+              <div class="ledger-table-container">
+                <table class="ledger-table">
+                  <thead>
+                    <tr>
+                      <th class="col-sno">#</th>
+                      <th class="col-head">{{ 'expenses.accountHead' | translate }}</th>
+                      <th class="col-amount text-right">{{ 'expenses.amountRs' | translate }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of receipts(); track item.id || item.code; let i = $index) {
+                      <tr
+                        class="ledger-row"
+                        [class.ledger-row--auto]="item.is_auto"
+                        [class.ledger-row--section-start]="item.section !== (receipts()[i - 1]?.section)"
+                      >
+                        <td class="col-sno text-muted">{{ i + 1 }}</td>
+                        <td class="col-head">
+                          <div class="head-info">
+                            <span class="head-name">{{ item.name }}</span>
+                            @if (item.tamil_name) {
+                              <span class="head-tamil text-muted">{{ item.tamil_name }}</span>
+                            }
+                            @if (item.is_auto) {
+                              <span class="badge-auto" [matTooltip]="'expenses.autoCalculatedHint' | translate">
+                                <mat-icon>sync</mat-icon> {{ 'expenses.auto' | translate }}
+                              </span>
+                            }
+                          </div>
+                        </td>
+                        <td class="col-amount text-right">
+                          <div class="amount-input-wrap">
+                            <span class="currency-prefix">₹</span>
+                            <input
+                              type="number"
+                              class="amount-input"
+                              [ngModel]="item.amount"
+                              (ngModelChange)="updateItemAmount(item, $event)"
+                              placeholder="0.00"
+                              min="0"
+                              step="any"
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                  <tfoot>
+                    <tr class="ledger-total-row">
+                      <td colspan="2" class="text-bold">{{ 'expenses.totalReceipts' | translate }}</td>
+                      <td class="text-right text-bold total-value">
+                        {{ formatCurrency(totalReceipts()) }}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN: PAYMENTS -->
+            <div class="ledger-column ledger-column--payments glass-card">
+              <div class="ledger-column__header">
+                <h3>{{ 'expenses.paymentsHeader' | translate }}</h3>
+                <span class="total-badge total-badge--payments">{{ formatCurrency(totalPayments()) }}</span>
+              </div>
+
+              <div class="ledger-table-container">
+                <table class="ledger-table">
+                  <thead>
+                    <tr>
+                      <th class="col-sno">#</th>
+                      <th class="col-head">{{ 'expenses.accountHead' | translate }}</th>
+                      <th class="col-amount text-right">{{ 'expenses.amountRs' | translate }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of payments(); track item.id || item.code; let i = $index) {
+                      <tr
+                        class="ledger-row"
+                        [class.ledger-row--auto]="item.is_auto"
+                        [class.ledger-row--section-start]="item.section !== (payments()[i - 1]?.section)"
+                      >
+                        <td class="col-sno text-muted">{{ i + 1 }}</td>
+                        <td class="col-head">
+                          <div class="head-info">
+                            <span class="head-name">{{ item.name }}</span>
+                            @if (item.tamil_name) {
+                              <span class="head-tamil text-muted">{{ item.tamil_name }}</span>
+                            }
+                            @if (item.is_auto) {
+                              <span class="badge-auto badge-auto--pay" [matTooltip]="'expenses.autoCalculatedHint' | translate">
+                                <mat-icon>sync</mat-icon> {{ 'expenses.auto' | translate }}
+                              </span>
+                            }
+                          </div>
+                        </td>
+                        <td class="col-amount text-right">
+                          <div class="amount-input-wrap">
+                            <span class="currency-prefix">₹</span>
+                            <input
+                              type="number"
+                              class="amount-input"
+                              [ngModel]="item.amount"
+                              (ngModelChange)="updateItemAmount(item, $event)"
+                              placeholder="0.00"
+                              min="0"
+                              step="any"
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                  <tfoot>
+                    <tr class="ledger-total-row">
+                      <td colspan="2" class="text-bold">{{ 'expenses.totalPayments' | translate }}</td>
+                      <td class="text-right text-bold total-value">
+                        {{ formatCurrency(totalPayments()) }}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Reconciliation Bar -->
+          <div class="reconciliation-bar glass-card">
+            <div class="reconciliation-item">
+              <span class="label">{{ 'expenses.totalReceipts' | translate }}:</span>
+              <span class="value text-success">{{ formatCurrency(totalReceipts()) }}</span>
+            </div>
+            <div class="reconciliation-item">
+              <span class="label">{{ 'expenses.totalPayments' | translate }}:</span>
+              <span class="value text-danger">{{ formatCurrency(totalPayments()) }}</span>
+            </div>
+            <div class="reconciliation-item">
+              <span class="label">{{ 'expenses.balanceDifference' | translate }}:</span>
+              <span
+                class="value text-bold"
+                [class.text-success]="totalReceipts() >= totalPayments()"
+                [class.text-danger]="totalReceipts() < totalPayments()"
+              >
+                {{ formatCurrency(totalReceipts() - totalPayments()) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 2: BACK PAGE - DIOCESE FINANCIAL REPORT ABSTRACT -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">description</mat-icon>
+          <span>{{ 'expenses.tabBackAbstract' | translate }}</span>
+        </ng-template>
+
+        <div class="abstract-wrapper glass-card">
+          <!-- Official Form Header matching Photo 2 -->
+          <div class="abstract-header">
+            <h2 class="diocese-title">DIOCESE OF TUTICORIN</h2>
+            <h3 class="report-title">FINANCIAL REPORT FOR THE MONTH OF {{ getSelectedMonthName() | uppercase }} {{ currentYear() }}</h3>
+
+            <div class="priest-meta-grid">
+              <div class="meta-field">
+                <label>Name of Priest :</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [ngModel]="abstract().priest_name"
+                  (ngModelChange)="updateAbstractField('priest_name', $event)"
+                  placeholder="e.g. Rev. Fr. Parish Priest"
+                />
+              </div>
+
+              <div class="meta-field">
+                <label>Parish :</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [value]="currentChurchName()"
+                  readonly
+                />
+              </div>
+
+              <div class="meta-field">
+                <label>Designation :</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [ngModel]="abstract().designation"
+                  (ngModelChange)="updateAbstractField('designation', $event)"
+                  placeholder="e.g. Parish Priest"
+                />
+              </div>
+
+              <div class="meta-field">
+                <label>Unit No :</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [ngModel]="abstract().unit_no"
+                  (ngModelChange)="updateAbstractField('unit_no', $event)"
+                  placeholder="e.g. Unit 1"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section I: ABSTRACT (from parish journal) -->
+          <div class="abstract-section">
+            <h4 class="section-heading">I. ABSTRACT (from parish journal)</h4>
+
+            <div class="abstract-table-wrap">
+              <table class="abstract-table">
+                <thead>
+                  <tr>
+                    <th class="th-receipts">RECEIPTS</th>
+                    <th class="text-right col-rs">Rs.</th>
+                    <th class="text-right col-ps">Ps.</th>
+                    <th class="th-payments">PAYMENTS</th>
+                    <th class="text-right col-rs">Rs.</th>
+                    <th class="text-right col-ps">Ps.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="text-bold" colspan="3">Opening Balance</td>
+                    <td class="text-bold" colspan="3">Total Payments during the month</td>
+                  </tr>
+                  <tr>
+                    <td class="indent">1. Cash in hand</td>
+                    <td class="col-input" colspan="2">
+                      <input
+                        type="number"
+                        class="amount-input"
+                        [ngModel]="abstract().opening_cash_hand"
+                        (ngModelChange)="updateAbstractField('opening_cash_hand', $event)"
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td class="indent">- from the parish</td>
+                    <td class="text-right text-muted font-mono" colspan="2">
+                      {{ formatCurrency(abstractTotalPaymentsParish()) }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="indent">2. Cash at Bank</td>
+                    <td class="col-input" colspan="2">
+                      <input
+                        type="number"
+                        class="amount-input"
+                        [ngModel]="abstract().opening_cash_bank"
+                        (ngModelChange)="updateAbstractField('opening_cash_bank', $event)"
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td class="indent">- for a specific project</td>
+                    <td class="col-input" colspan="2">
+                      <input
+                        type="number"
+                        class="amount-input"
+                        [ngModel]="abstract().payments_specific_project"
+                        (ngModelChange)="updateAbstractField('payments_specific_project', $event)"
+                        placeholder="0.00"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="indent">3. Fixed Deposits</td>
+                    <td class="col-input" colspan="2">
+                      <input
+                        type="number"
+                        class="amount-input"
+                        [ngModel]="abstract().opening_fixed_deposits"
+                        (ngModelChange)="updateAbstractField('opening_fixed_deposits', $event)"
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td class="text-bold" colspan="3">Closing Balance</td>
+                  </tr>
+                  <tr>
+                    <td class="text-bold" colspan="3">Total Receipts during the month</td>
+                    <td class="indent">1. Cash in hand</td>
+                    <td class="col-input" colspan="2">
+                      <input
+                        type="number"
+                        class="amount-input"
+                        [ngModel]="abstract().closing_cash_hand"
+                        (ngModelChange)="updateAbstractField('closing_cash_hand', $event)"
+                        placeholder="0.00"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="indent">- from the parish</td>
+                    <td class="text-right text-muted font-mono" colspan="2">
+                      {{ formatCurrency(abstractTotalReceiptsParish()) }}
+                    </td>
+                    <td class="indent">2. Cash at Bank</td>
+                    <td class="col-input" colspan="2">
+                      <input
+                        type="number"
+                        class="amount-input"
+                        [ngModel]="abstract().closing_cash_bank"
+                        (ngModelChange)="updateAbstractField('closing_cash_bank', $event)"
+                        placeholder="0.00"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="indent">- for a specific project</td>
+                    <td class="col-input" colspan="2">
+                      <input
+                        type="number"
+                        class="amount-input"
+                        [ngModel]="abstract().receipts_specific_project"
+                        (ngModelChange)="updateAbstractField('receipts_specific_project', $event)"
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td class="indent">3. Fixed Deposits</td>
+                    <td class="col-input" colspan="2">
+                      <input
+                        type="number"
+                        class="amount-input"
+                        [ngModel]="abstract().closing_fixed_deposits"
+                        (ngModelChange)="updateAbstractField('closing_fixed_deposits', $event)"
+                        placeholder="0.00"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="abstract-total-row">
+                    <td class="text-bold">Total</td>
+                    <td class="text-right text-bold font-mono" colspan="2">{{ formatCurrency(abstractTotalReceipts()) }}</td>
+                    <td class="text-bold">Total</td>
+                    <td class="text-right text-bold font-mono" colspan="2">{{ formatCurrency(abstractTotalPayments()) }}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div class="note-banner">
+              <span class="note-label">Please Note :</span>
+              <span>The Closing Balance of the previous month should be carried over as the opening balance of the current month.</span>
+            </div>
+          </div>
+
+          <!-- Section II & III 2-Column Grid -->
+          <div class="remittance-grid">
+            <!-- Section II: Amount to be remitted to the Procurator -->
+            <div class="remittance-box glass-card">
+              <h4 class="section-heading text-primary">II. Amount to be remitted to the Procurator</h4>
+
+              <div class="remittance-form">
+                <div class="form-row">
+                  <span class="field-label">i)&nbsp;&nbsp;Stole Fees</span>
+                  <div class="input-wrap">
+                    <span class="curr">Rs.</span>
+                    <input
+                      type="number"
+                      class="amount-input"
+                      [ngModel]="abstract().remit_stole_fees"
+                      (ngModelChange)="updateAbstractField('remit_stole_fees', $event)"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <span class="field-label">ii)&nbsp;Mass Intentions remitted to the Diocese</span>
+                  <div class="input-wrap">
+                    <span class="curr">Rs.</span>
+                    <input
+                      type="number"
+                      class="amount-input"
+                      [ngModel]="abstract().remit_mass_intentions"
+                      (ngModelChange)="updateAbstractField('remit_mass_intentions', $event)"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <span class="field-label">iii) Parish Contribution to the Diocese</span>
+                  <div class="input-wrap">
+                    <span class="curr">Rs.</span>
+                    <input
+                      type="number"
+                      class="amount-input"
+                      [ngModel]="abstract().remit_parish_contribution"
+                      (ngModelChange)="updateAbstractField('remit_parish_contribution', $event)"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <span class="field-label">iv) Collection to be given to the Diocese</span>
+                  <div class="input-wrap">
+                    <span class="curr">Rs.</span>
+                    <input
+                      type="number"
+                      class="amount-input"
+                      [ngModel]="abstract().remit_diocesan_collection"
+                      (ngModelChange)="updateAbstractField('remit_diocesan_collection', $event)"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-total-row">
+                  <span>Total Remittance to Diocese:</span>
+                  <span class="total-highlight text-primary">{{ formatCurrency(totalRemittance()) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section III: Amount to be received from the Procurator -->
+            <div class="remittance-box glass-card">
+              <h4 class="section-heading text-success">III. Amount to be received from the Procurator</h4>
+
+              <div class="remittance-form">
+                <div class="form-row">
+                  <span class="field-label">i)&nbsp;&nbsp;Monthly allowance (Congrua)</span>
+                  <div class="input-wrap">
+                    <span class="curr">Rs.</span>
+                    <input
+                      type="number"
+                      class="amount-input"
+                      [ngModel]="abstract().recv_monthly_allowance"
+                      (ngModelChange)="updateAbstractField('recv_monthly_allowance', $event)"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <span class="field-label">ii)&nbsp;Medical allowance (Bills to be attached)</span>
+                  <div class="input-wrap">
+                    <span class="curr">Rs.</span>
+                    <input
+                      type="number"
+                      class="amount-input"
+                      [ngModel]="abstract().recv_medical_allowance"
+                      (ngModelChange)="updateAbstractField('recv_medical_allowance', $event)"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <span class="field-label">iii) Mission Conveyance</span>
+                  <div class="input-wrap">
+                    <span class="curr">Rs.</span>
+                    <input
+                      type="number"
+                      class="amount-input"
+                      [ngModel]="abstract().recv_mission_conveyance"
+                      (ngModelChange)="updateAbstractField('recv_mission_conveyance', $event)"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <span class="field-label">iv) Any Other</span>
+                  <div class="input-wrap">
+                    <span class="curr">Rs.</span>
+                    <input
+                      type="number"
+                      class="amount-input"
+                      [ngModel]="abstract().recv_any_other"
+                      (ngModelChange)="updateAbstractField('recv_any_other', $event)"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-total-row">
+                  <span>Total Receivables from Diocese:</span>
+                  <span class="total-highlight text-success">{{ formatCurrency(totalReceivables()) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Final Balance Summary Pill -->
+          <div class="net-summary-card">
+            <div class="net-summary-card__info">
+              <span class="title">Net Diocese Settlement Amount:</span>
+              <span class="desc">Total Remittance ({{ formatCurrency(totalRemittance()) }}) minus Total Receivables ({{ formatCurrency(totalReceivables()) }})</span>
+            </div>
+            <div
+              class="net-summary-card__amount"
+              [class.text-primary]="netDiocesePayable() >= 0"
+              [class.text-danger]="netDiocesePayable() < 0"
+            >
+              {{ formatCurrency(netDiocesePayable()) }}
+              <span class="subtext">({{ netDiocesePayable() >= 0 ? 'Payable to Procurator' : 'Receivable from Procurator' }})</span>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- TAB 3: DAILY TRANSACTIONS / ITEM AUDIT LOG -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">receipt_long</mat-icon>
+          <span>{{ 'expenses.tabTransactions' | translate }}</span>
+        </ng-template>
+
+        <div class="transactions-wrapper glass-card">
+          <div class="transactions-header">
+            <div>
+              <h3>{{ 'expenses.monthlyTransactionsTitle' | translate }}</h3>
+              <p class="text-muted">{{ 'expenses.monthlyTransactionsSubtitle' | translate }} ({{ getSelectedMonthName() }} {{ currentYear() }})</p>
+            </div>
+
+            <button mat-flat-button color="primary" (click)="openNewTxModal()">
+              <mat-icon>add</mat-icon>
+              <span>{{ 'expenses.newTransaction' | translate }}</span>
+            </button>
+          </div>
+
+          @if (txLoading()) {
+            <div class="loading-state">
+              <mat-spinner diameter="36"></mat-spinner>
+            </div>
+          } @else if (transactions().length === 0) {
+            <div class="empty-state">
+              <mat-icon>inbox</mat-icon>
+              <h4>{{ 'expenses.noTransactionsFound' | translate }}</h4>
+              <p>{{ 'expenses.noTransactionsHint' | translate }}</p>
+              <button mat-stroked-button color="primary" (click)="openNewTxModal()">
+                <mat-icon>add</mat-icon>
+                <span>{{ 'expenses.newTransaction' | translate }}</span>
+              </button>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="tx-table">
+                <thead>
+                  <tr>
+                    <th>{{ 'common.date' | translate }}</th>
+                    <th>{{ 'common.type' | translate }}</th>
+                    <th>{{ 'expenses.accountHead' | translate }}</th>
+                    <th>{{ 'expenses.voucherNo' | translate }}</th>
+                    <th>{{ 'expenses.paidTo' | translate }}</th>
+                    <th>{{ 'common.description' | translate }}</th>
+                    <th class="text-right">{{ 'expenses.amountRs' | translate }}</th>
+                    <th class="text-center">{{ 'common.actions' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (tx of transactions(); track tx.id) {
+                    <tr>
+                      <td class="text-nowrap">{{ tx.entry_date }}</td>
+                      <td>
+                        <span class="type-pill" [class.type-pill--receipt]="tx.type === 'receipt'" [class.type-pill--payment]="tx.type === 'payment'">
+                          {{ tx.type === 'receipt' ? 'Receipt' : 'Payment' }}
+                        </span>
+                      </td>
+                      <td class="text-bold">{{ tx.head_name || tx.account_head_name }}</td>
+                      <td>{{ tx.voucher_no || '—' }}</td>
+                      <td>{{ tx.paid_to || '—' }}</td>
+                      <td class="text-muted">{{ tx.notes || '—' }}</td>
+                      <td class="text-right text-bold" [class.text-success]="tx.type === 'receipt'" [class.text-danger]="tx.type === 'payment'">
+                        {{ tx.type === 'receipt' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
+                      </td>
+                      <td class="text-center">
+                        <button mat-icon-button color="warn" (click)="deleteTransaction(tx.id)" [matTooltip]="'common.delete' | translate">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>
+
+<!-- Modal: New Transaction Entry -->
+@if (showNewTxModal()) {
+  <div class="modal-backdrop" (click)="closeNewTxModal()">
+    <div class="modal-dialog glass-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">{{ 'expenses.newTransaction' | translate }}</h3>
+        <button mat-icon-button (click)="closeNewTxModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>{{ 'common.date' | translate }} *</label>
+          <input
+            type="date"
+            class="form-control"
+            [ngModel]="newTx().entryDate"
+            (ngModelChange)="newTx().entryDate = $event"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'common.type' | translate }} *</label>
+          <div class="type-radio-group">
+            <label class="radio-label">
+              <input
+                type="radio"
+                name="txType"
+                value="payment"
+                [checked]="newTx().type === 'payment'"
+                (change)="newTx().type = 'payment'"
+              />
+              <span>{{ 'expenses.paymentExpense' | translate }}</span>
+            </label>
+            <label class="radio-label">
+              <input
+                type="radio"
+                name="txType"
+                value="receipt"
+                [checked]="newTx().type === 'receipt'"
+                (change)="newTx().type = 'receipt'"
+              />
+              <span>{{ 'expenses.receiptIncome' | translate }}</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'expenses.accountHead' | translate }} *</label>
+          <select
+            class="form-control"
+            [ngModel]="newTx().headId"
+            (ngModelChange)="onTxHeadChange($event)"
+          >
+            <option [ngValue]="null">-- Select Account Head --</option>
+            @for (h of accountHeads(); track h.id) {
+              @if (h.type === newTx().type) {
+                <option [value]="h.id">{{ h.name }} ({{ h.section }})</option>
+              }
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'expenses.amountRs' | translate }} *</label>
+          <input
+            type="number"
+            class="form-control"
+            [ngModel]="newTx().amount"
+            (ngModelChange)="newTx().amount = $event"
+            placeholder="0.00"
+            min="0"
+          />
+        </div>
+
+        <div class="form-row-grid">
+          <div class="form-group">
+            <label>{{ 'expenses.voucherNo' | translate }}</label>
+            <input
+              type="text"
+              class="form-control"
+              [ngModel]="newTx().voucherNo"
+              (ngModelChange)="newTx().voucherNo = $event"
+              placeholder="Voucher / Ref #"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'expenses.paidTo' | translate }}</label>
+            <input
+              type="text"
+              class="form-control"
+              [ngModel]="newTx().paidTo"
+              (ngModelChange)="newTx().paidTo = $event"
+              placeholder="Vendor / Payee Name"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'common.description' | translate }} / {{ 'expenses.notes' | translate }}</label>
+          <textarea
+            class="form-control"
+            rows="2"
+            [ngModel]="newTx().notes"
+            (ngModelChange)="newTx().notes = $event"
+            placeholder="Additional details..."
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closeNewTxModal()">{{ 'common.cancel' | translate }}</button>
+        <button mat-flat-button color="primary" (click)="submitNewTransaction()">
+          <mat-icon>check</mat-icon>
+          <span>{{ 'common.save' | translate }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}

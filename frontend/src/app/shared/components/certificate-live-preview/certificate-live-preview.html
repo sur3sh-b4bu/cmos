@@ -1,0 +1,901 @@
+<div class="cert-preview-wrapper" [style.transform]="zoom !== 1 ? 'scale(' + zoom + ')' : null">
+  <div class="cert-preview-card" id="coms-cert-preview-print-area" [style.--cert-theme]="themeColor">
+    <div class="cert-preview-doc" [ngClass]="'cert-preview-doc--' + certType">
+
+      <!-- ========================================== -->
+      <!-- 1. BAPTISM CERTIFICATE                     -->
+      <!-- ========================================== -->
+      @if (certType === 'baptism') {
+        <div class="cert-baptism-header">
+          <div class="cert-capsule-box">
+            <span>{{ title }}</span>
+          </div>
+        </div>
+
+        <div class="cert-subheader">
+          <div class="cert-subheader__left">
+            <div class="cert-subheader__text">
+              <span class="lbl-theme">{{ subheaderPrefix }} </span>
+              <span class="val-text">{{ churchLocation | uppercase }}</span>
+            </div>
+            <div class="cert-underline underline-solid"></div>
+          </div>
+          <div class="cert-subheader__right">
+            <span class="lbl-theme">{{ dioceseText }}</span>
+          </div>
+        </div>
+
+        <div class="cert-rows">
+          <!-- 1. Place of Baptism -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('place_of_baptism', 'Place of Baptism') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ placeOfBaptism | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Date of Baptism -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('date_of_baptism', 'Date of Baptism') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ formatDate(data.date_of_baptism) }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Child's Christian Name -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('child_name', "Child's Christian Name") }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.child_name || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Date of Birth -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('date_of_birth', 'Date of Birth') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ formatDate(data.date_of_birth) }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Sex -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('gender', 'Sex') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ genderName | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. Parent's Name with curly brace and 2 solid lines -->
+          <div class="cert-row cert-row--brace">
+            <div class="cert-label cert-label--brace">{{ lbl('parents_name', "Parent's Name") }}</div>
+            <div class="cert-brace">&#123;</div>
+            <div class="cert-brace-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="val-text">{{ (data.father_name || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="val-text">{{ (data.mother_name || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Parent's Residence -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('parent_residence', "Parent's Residence") }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.parent_residence || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8. God Parents -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('godparents', 'God Parents') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ godparentsText | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 9. Priest who Baptised -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('priest', 'Priest who Baptised') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ priestName | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 10. Remarks -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('remarks', 'Remarks') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.remarks || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ========================================== -->
+      <!-- 2. MARRIAGE CERTIFICATE                    -->
+      <!-- ========================================== -->
+      @if (certType === 'marriage') {
+        <div class="cert-title-underlined">
+          {{ title }}
+        </div>
+
+        <div class="cert-subheader">
+          <div class="cert-subheader__left">
+            <div class="cert-subheader__text">
+              <span class="lbl-theme">{{ subheaderPrefix }} </span>
+              <span class="val-text">{{ churchLocation | uppercase }}</span>
+            </div>
+            <div class="cert-underline underline-dotted"></div>
+          </div>
+          <div class="cert-subheader__right">
+            <span class="lbl-theme">{{ dioceseText }}</span>
+          </div>
+        </div>
+
+        <div class="cert-rows">
+          <!-- 1. When Married -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('marriage_date', 'When Married') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ formatDate(data.marriage_date) }}</span>
+                </div>
+                <div class="cert-underline underline-dotted"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Where Married -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('where_married', 'Where Married') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ whereMarried | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-dotted"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Name of Parties -->
+          <div class="cert-row cert-row--brace">
+            <div class="cert-label cert-label--brace">{{ lbl('parties_name', 'Name of the Parties') }}</div>
+            <div class="cert-brace">&#123;</div>
+            <div class="cert-brace-lines">
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('groom_sublabel', 'Bridegroom') }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.groom_name || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('bride_sublabel', 'Bride') }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.bride_name || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Age -->
+          <div class="cert-row cert-row--brace">
+            <div class="cert-label cert-label--brace">{{ lbl('age', 'Age') }}</div>
+            <div class="cert-brace">&#123;</div>
+            <div class="cert-brace-lines">
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('groom_age_sublabel', "Bridegroom's") }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.groom_age || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('bride_age_sublabel', "Bride's") }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.bride_age || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Condition -->
+          <div class="cert-row cert-row--brace">
+            <div class="cert-label cert-label--brace">{{ lbl('condition', 'Condition') }}</div>
+            <div class="cert-brace">&#123;</div>
+            <div class="cert-brace-lines">
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('groom_condition_sublabel', "Bridegroom's") }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.groom_condition || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('bride_condition_sublabel', "Bride's") }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.bride_condition || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. Profession -->
+          <div class="cert-row cert-row--brace">
+            <div class="cert-label cert-label--brace">{{ lbl('profession', 'Profession') }}</div>
+            <div class="cert-brace">&#123;</div>
+            <div class="cert-brace-lines">
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('groom_profession_sublabel', "Bridegroom's") }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.groom_profession || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('bride_profession_sublabel', "Bride's") }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.bride_profession || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Residence at the time of Marriage -->
+          <div class="cert-row cert-row--brace">
+            <div class="cert-label cert-label--brace">{{ lbl('residence', 'Residence at the time of Marriage') }}</div>
+            <div class="cert-brace">&#123;</div>
+            <div class="cert-brace-lines">
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('groom_residence_sublabel', "Bridegroom's") }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.groom_residence || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('bride_residence_sublabel', "Bride's") }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.bride_residence || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8. Father's Name & Surname -->
+          <div class="cert-row cert-row--brace">
+            <div class="cert-label cert-label--brace">{{ lbl('father_name', "Father's Name & Surname") }}</div>
+            <div class="cert-brace">&#123;</div>
+            <div class="cert-brace-lines">
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('groom_father_sublabel', "Bridegroom's") }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.groom_father_name || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+              <div class="cert-sub-row">
+                <span class="cert-sub-label">{{ lbl('bride_father_sublabel', "Bride's") }}</span>
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon">:</span>
+                    <span class="val-text">{{ (data.bride_father_name || '') | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 9. Banns -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('banns_or_licence', 'By banns or Licence') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.banns_or_licence || 'BY BANNS') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-dotted"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 10. Impediments -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('impediments_dispensed', 'Can. impediments dispensed') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.impediments_dispensed || 'NIL') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-dotted"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 11. Witnesses -->
+          <div class="cert-row cert-row--witnesses">
+            <div class="cert-label">{{ lbl('witnesses', 'Witnesses') }}</div>
+            <div class="cert-field-lines">
+              @for (w of witnessList; track w.num; let first = $first) {
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon" [style.visibility]="first ? 'visible' : 'hidden'">:</span>
+                    <span class="cert-witness-pfx">{{ w.prefix }}</span>
+                    <span class="val-text">{{ w.name | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-dotted"></div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- 12. Minister -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('minister', 'Minister of the Ceremony') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ priestName | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-dotted"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ========================================== -->
+      <!-- 3. DEATH CERTIFICATE                       -->
+      <!-- ========================================== -->
+      @if (certType === 'death') {
+        <div class="cert-title-stacked">
+          @for (tLine of titleLines; track $index) {
+            <div>{{ tLine }}</div>
+          }
+        </div>
+
+        <div class="cert-subheader">
+          <div class="cert-subheader__left">
+            <div class="cert-subheader__text">
+              <span class="lbl-theme">{{ subheaderPrefix }} </span>
+              <span class="val-text">{{ churchLocation | uppercase }}</span>
+            </div>
+            <div class="cert-underline underline-solid"></div>
+          </div>
+          <div class="cert-subheader__right">
+            <span class="lbl-theme">{{ dioceseText }}</span>
+          </div>
+        </div>
+
+        <div class="cert-rows">
+          <!-- 1. Name -->
+          <div class="cert-row cert-row--multiline">
+            <div class="cert-label">{{ lbl('deceased_name', 'Name') }}</div>
+            <div class="cert-field-lines">
+              @for (line of deceasedNameLines; track $index; let first = $first) {
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon" [style.visibility]="first ? 'visible' : 'hidden'">:</span>
+                    <span class="val-text">{{ line | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-solid"></div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- 2. Age -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('age', 'Age') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.age || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Place -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('place', 'Place') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.place || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Profession -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('profession', 'Profession') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.profession || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Parents -->
+          <div class="cert-row cert-row--multiline">
+            <div class="cert-label">{{ lbl('parents', 'Parents') }}</div>
+            <div class="cert-field-lines">
+              @for (line of parentLines; track $index; let first = $first) {
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon" [style.visibility]="first ? 'visible' : 'hidden'">:</span>
+                    <span class="val-text">{{ line | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-solid"></div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- 6. Date of death -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('date_of_death', 'Date of death') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ formatDate(data.date_of_death) }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Place of death -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('place_of_death', 'Place of death') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.place_of_death || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8. Cause -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('cause', 'Cause') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.cause || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 9. C.Confession -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('confession', 'C.Confession') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.confession_received || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 10. V.Viaticum -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('viaticum', 'V.Viaticum') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.viaticum_received || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 11. A.Anointing -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('anointing', 'A.Anointing') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.anointing_received || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 12. Date of Burial -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('burial_date', 'Date of Burial') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ formatDate(data.burial_date) }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 13. Place of Burial -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('cemetery', 'Place of Burial') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.cemetery || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 14. Minister -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('minister', 'Minister') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ priestName | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ========================================== -->
+      <!-- 4. CONFIRMATION CERTIFICATE                -->
+      <!-- ========================================== -->
+      @if (certType === 'confirmation') {
+        <div class="cert-title-clean">
+          {{ title }}
+        </div>
+
+        <div class="cert-subheader">
+          <div class="cert-subheader__left">
+            <div class="cert-subheader__text">
+              <span class="lbl-theme">{{ subheaderPrefix }} </span>
+              <span class="val-text">{{ churchLocation | uppercase }}</span>
+            </div>
+            <div class="cert-underline underline-solid"></div>
+          </div>
+          <div class="cert-subheader__right">
+            <span class="lbl-theme">{{ dioceseText }}</span>
+          </div>
+        </div>
+
+        <div class="cert-rows">
+          <!-- 1. Name -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('name', 'Name') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.name || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Age -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('age', 'Age') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.age || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Sex -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('gender', 'Sex') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ genderName | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Parents (supports multi-line e.g. Father on line 1, Mother on line 2) -->
+          <div class="cert-row cert-row--multiline">
+            <div class="cert-label">{{ lbl('parents', 'Parents') }}</div>
+            <div class="cert-field-lines">
+              @for (line of parentLines; track $index; let first = $first) {
+                <div class="cert-value-line">
+                  <div class="cert-value-row">
+                    <span class="cert-colon" [style.visibility]="first ? 'visible' : 'hidden'">:</span>
+                    <span class="val-text">{{ line | uppercase }}</span>
+                  </div>
+                  <div class="cert-underline underline-solid"></div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- 5. Caste -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('caste', 'Caste') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.caste || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. Sponsors -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('sponsors', 'Sponsors') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.sponsors || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Domicile -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('domicile', 'Domicile') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.domicile || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8. Place of Confirmation -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('place_of_confirmation', 'Place of Confirmation') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ placeOfConfirmation | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 9. Date of Confirmation -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('date_of_confirmation', 'Date of Confirmation') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ formatDate(data.date_of_confirmation) }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 10. Bishop who confirmed -->
+          <div class="cert-row">
+            <div class="cert-label">{{ lbl('bishop', 'Bishop who confirmed') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon">:</span>
+                  <span class="val-text">{{ (data.bishop_name || '') | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 11. Blank Priest line matching Photo 4 -->
+          <div class="cert-row cert-row--priest">
+            <div class="cert-label">{{ lbl('priest', 'Priest') }}</div>
+            <div class="cert-field-lines">
+              <div class="cert-value-line">
+                <div class="cert-value-row">
+                  <span class="cert-colon" style="visibility: hidden;">:</span>
+                  <span class="val-text">{{ priestName | uppercase }}</span>
+                </div>
+                <div class="cert-underline underline-solid"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ========================================== -->
+      <!-- FOOTER AREA: Date, Seal, Signatory         -->
+      <!-- ========================================== -->
+      <div class="cert-footer">
+        @if (certType === 'death') {
+          <div class="cert-footer__col cert-footer__col--left">
+            <div class="cert-footer-line">
+              <span class="lbl-theme">{{ lbl('place_label', 'Place :') }} </span>
+              <span class="val-text">{{ (effectiveChurch.city || 'Tuticorin') | uppercase }}</span>
+            </div>
+            <div class="cert-footer-line">
+              <span class="lbl-theme">{{ lbl('date_label', 'Date  :') }} </span>
+              <span class="val-text">{{ todayFormatted }}</span>
+            </div>
+          </div>
+        } @else {
+          <div class="cert-footer__col cert-footer__col--left">
+            <div class="cert-footer-line">
+              <span class="lbl-theme">{{ lbl('date_label', 'Date :') }} </span>
+              <span class="val-text">{{ todayFormatted }}</span>
+            </div>
+          </div>
+        }
+
+        <div class="cert-footer__col cert-footer__col--center">
+          <span class="lbl-theme cert-seal-text">{{ sealText }}</span>
+        </div>
+
+        <div class="cert-footer__col cert-footer__col--right">
+          <span class="lbl-theme cert-priest-sign">{{ signatoryTitle }}</span>
+        </div>
+      </div>
+
+      <!-- Certificate Number micro-meta -->
+      <div class="cert-meta-tag">
+        <span>Certificate No.: {{ effectiveCertificateNo }}</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -38,6 +38,7 @@ export class SettingsHubComponent {
     { labelKey: 'settings.receiptSettings', descriptionKey: 'settings.receiptSettingsDesc', icon: 'receipt_long', route: '/masters/receipt_series', permissions: ['masters.view'] },
     { labelKey: 'settings.printSettings', descriptionKey: 'settings.printSettingsDesc', icon: 'print', route: '/masters/print_templates', permissions: ['masters.view'] },
     { labelKey: 'settings.certificateTemplates', descriptionKey: 'settings.certificateTemplatesDesc', icon: 'workspace_premium', route: '/settings/certificate-templates', permissions: ['masters.view', 'certificates.view'] },
+    { labelKey: 'settings.expenseHeads', descriptionKey: 'settings.expenseHeadsDesc', icon: 'account_tree', route: '/settings/expense-heads', permissions: ['expenses.view', 'settings.view'] },
     { labelKey: 'settings.languageSettings', descriptionKey: 'settings.languageSettingsDesc', icon: 'translate', route: '/settings/language', permissions: [] },
     { labelKey: 'settings.keyboardGuide', descriptionKey: 'settings.keyboardGuideDesc', icon: 'keyboard', route: '/settings/keyboard-guide', permissions: [] },
   ];

@@ -1,9 +1,17 @@
 <div class="bulk-form">
   <div class="bulk-form__header">
-    <a routerLink="/mass-intentions" class="bulk-form__back">
-      <mat-icon>arrow_back</mat-icon>
-    </a>
-    <h1>{{ 'massIntentions.bulkNewTitle' | translate }}</h1>
+    <div class="bulk-form__header-title">
+      <a routerLink="/mass-intentions" class="bulk-form__back">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <h1>{{ 'massIntentions.bulkNewTitle' | translate }}</h1>
+    </div>
+    <div class="bulk-form__header-actions">
+      <button mat-stroked-button type="button" class="preview-btn" (click)="openPreviewModal()" [matTooltip]="'common.previewReceipt' | translate">
+        <mat-icon>visibility</mat-icon>
+        <span>{{ 'common.previewReceipt' | translate }}</span>
+      </button>
+    </div>
   </div>
   <p class="text-muted bulk-form__subtitle">{{ 'massIntentions.bulkSubtitle' | translate }}</p>
 

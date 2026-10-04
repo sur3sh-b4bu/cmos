@@ -1028,6 +1028,149 @@ const TABLES_SCHEMA = {
       created_at: 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
     },
   },
+
+  account_heads: {
+    createSql: `CREATE TABLE IF NOT EXISTS account_heads (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      church_id INT UNSIGNED NULL,
+      type ENUM('receipt', 'payment') NOT NULL,
+      section VARCHAR(100) NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      tamil_name VARCHAR(255) NULL,
+      code VARCHAR(100) NULL,
+      is_system TINYINT(1) NOT NULL DEFAULT 0,
+      auto_source VARCHAR(100) NULL,
+      order_index INT NOT NULL DEFAULT 0,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_heads_church_type (church_id, type, is_active),
+      INDEX idx_heads_section (section, order_index)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    columns: {
+      id: 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY',
+      church_id: 'INT UNSIGNED NULL',
+      type: "ENUM('receipt', 'payment') NOT NULL",
+      section: 'VARCHAR(100) NOT NULL',
+      name: 'VARCHAR(255) NOT NULL',
+      tamil_name: 'VARCHAR(255) NULL',
+      code: 'VARCHAR(100) NULL',
+      is_system: 'TINYINT(1) NOT NULL DEFAULT 0',
+      auto_source: 'VARCHAR(100) NULL',
+      order_index: 'INT NOT NULL DEFAULT 0',
+      is_active: 'TINYINT(1) NOT NULL DEFAULT 1',
+      created_at: 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
+      updated_at: 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+    },
+  },
+
+  church_expenses: {
+    createSql: `CREATE TABLE IF NOT EXISTS church_expenses (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      church_id INT UNSIGNED NOT NULL,
+      branch_id INT UNSIGNED NULL,
+      entry_date DATE NOT NULL,
+      month_year VARCHAR(7) NOT NULL,
+      type ENUM('receipt', 'payment') NOT NULL,
+      head_id INT UNSIGNED NULL,
+      head_name VARCHAR(255) NOT NULL,
+      amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      payment_method_id INT UNSIGNED NULL,
+      voucher_no VARCHAR(50) NULL,
+      paid_to VARCHAR(255) NULL,
+      notes TEXT NULL,
+      is_auto_sync TINYINT(1) NOT NULL DEFAULT 0,
+      created_by INT UNSIGNED NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      deleted_at DATETIME NULL,
+      INDEX idx_expenses_church_month (church_id, month_year, entry_date),
+      INDEX idx_expenses_head (head_id),
+      INDEX idx_expenses_deleted (deleted_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    columns: {
+      id: 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY',
+      church_id: 'INT UNSIGNED NOT NULL',
+      branch_id: 'INT UNSIGNED NULL',
+      entry_date: 'DATE NOT NULL',
+      month_year: 'VARCHAR(7) NOT NULL',
+      type: "ENUM('receipt', 'payment') NOT NULL",
+      head_id: 'INT UNSIGNED NULL',
+      head_name: 'VARCHAR(255) NOT NULL',
+      amount: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      payment_method_id: 'INT UNSIGNED NULL',
+      voucher_no: 'VARCHAR(50) NULL',
+      paid_to: 'VARCHAR(255) NULL',
+      notes: 'TEXT NULL',
+      is_auto_sync: 'TINYINT(1) NOT NULL DEFAULT 0',
+      created_by: 'INT UNSIGNED NULL',
+      created_at: 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
+      updated_at: 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+      deleted_at: 'DATETIME NULL',
+    },
+  },
+
+  monthly_financial_abstracts: {
+    createSql: `CREATE TABLE IF NOT EXISTS monthly_financial_abstracts (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      church_id INT UNSIGNED NOT NULL,
+      branch_id INT UNSIGNED NULL,
+      month_year VARCHAR(7) NOT NULL,
+      opening_cash_hand DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      opening_cash_bank DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      opening_fixed_deposits DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      closing_cash_hand DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      closing_cash_bank DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      closing_fixed_deposits DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      receipts_specific_project DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      payments_specific_project DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      remit_stole_fees DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      remit_mass_intentions DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      remit_parish_contribution DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      remit_diocesan_collection DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      recv_monthly_allowance DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      recv_medical_allowance DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      recv_mission_conveyance DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      recv_any_other DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      priest_name VARCHAR(255) NULL,
+      designation VARCHAR(255) NULL,
+      unit_no VARCHAR(50) NULL,
+      notes TEXT NULL,
+      created_by INT UNSIGNED NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uk_church_month_branch (church_id, month_year, branch_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    columns: {
+      id: 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY',
+      church_id: 'INT UNSIGNED NOT NULL',
+      branch_id: 'INT UNSIGNED NULL',
+      month_year: 'VARCHAR(7) NOT NULL',
+      opening_cash_hand: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      opening_cash_bank: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      opening_fixed_deposits: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      closing_cash_hand: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      closing_cash_bank: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      closing_fixed_deposits: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      receipts_specific_project: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      payments_specific_project: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      remit_stole_fees: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      remit_mass_intentions: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      remit_parish_contribution: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      remit_diocesan_collection: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      recv_monthly_allowance: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      recv_medical_allowance: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      recv_mission_conveyance: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      recv_any_other: 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00',
+      priest_name: 'VARCHAR(255) NULL',
+      designation: 'VARCHAR(255) NULL',
+      unit_no: 'VARCHAR(50) NULL',
+      notes: 'TEXT NULL',
+      created_by: 'INT UNSIGNED NULL',
+      created_at: 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
+      updated_at: 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+    },
+  },
 };
 
 async function syncDatabase() {
@@ -1165,14 +1308,26 @@ async function syncDatabase() {
         ('contributions', 'update', 'contributions.update', 'update contributions'),
         ('contributions', 'delete', 'contributions.delete', 'delete contributions'),
         ('contributions', 'print', 'contributions.print', 'print contributions'),
-        ('contributions', 'export', 'contributions.export', 'export contributions')
+        ('contributions', 'export', 'contributions.export', 'export contributions'),
+        ('expenses', 'view', 'expenses.view', 'View church expenses and accounts'),
+        ('expenses', 'create', 'expenses.create', 'Create expense/income entries'),
+        ('expenses', 'update', 'expenses.update', 'Update expense/income entries'),
+        ('expenses', 'delete', 'expenses.delete', 'Delete expense/income entries'),
+        ('expenses', 'print', 'expenses.print', 'Print financial journal and report'),
+        ('expenses', 'export', 'expenses.export', 'Export financial records to Excel')
     `);
 
-    // Map permissions to ADMIN & OFFICE_STAFF
+    // Map permissions to ADMIN & ACCOUNTANT
     await conn.query(`
       INSERT IGNORE INTO role_permissions (role_id, permission_id)
       SELECT r.id, p.id FROM roles r CROSS JOIN permissions p
-      WHERE r.code = 'ADMIN' AND p.module IN ('confirmation_certificates', 'contributions')
+      WHERE r.code = 'ADMIN' AND p.module IN ('confirmation_certificates', 'contributions', 'expenses')
+    `);
+
+    await conn.query(`
+      INSERT IGNORE INTO role_permissions (role_id, permission_id)
+      SELECT r.id, p.id FROM roles r CROSS JOIN permissions p
+      WHERE r.code = 'ACCOUNTANT' AND p.module IN ('contributions', 'expenses')
     `);
 
     await conn.query(`

@@ -1,0 +1,66 @@
+<div class="lpd-container">
+  <!-- Dialog Header -->
+  <div class="lpd-header">
+    <div class="lpd-header__left">
+      <div class="lpd-icon-box">
+        <mat-icon>{{ data.previewType === 'certificate' ? 'workspace_premium' : 'receipt_long' }}</mat-icon>
+      </div>
+      <div>
+        <h2 class="lpd-title">{{ data.title }}</h2>
+        <div class="lpd-subtitle">
+          <span class="lpd-live-indicator">
+            <span class="lpd-live-dot"></span>
+            Live Updates Active
+          </span>
+          <span class="lpd-hint">Changes typed in the form reflect immediately</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zoom & Action Controls -->
+    <div class="lpd-header__actions">
+      <div class="lpd-zoom-controls">
+        <button mat-icon-button type="button" (click)="zoomOut()" [disabled]="zoom() <= 0.6" matTooltip="Zoom Out">
+          <mat-icon>remove</mat-icon>
+        </button>
+        <button mat-button class="lpd-zoom-label" type="button" (click)="resetZoom()" matTooltip="Reset Zoom">
+          {{ (zoom() * 100).toFixed(0) }}%
+        </button>
+        <button mat-icon-button type="button" (click)="zoomIn()" [disabled]="zoom() >= 1.4" matTooltip="Zoom In">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+
+      <button mat-icon-button class="lpd-close-btn" type="button" (click)="close()" matTooltip="Close (Esc)">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Dialog Body / Document Canvas -->
+  <mat-dialog-content class="lpd-content" #contentEl>
+    <div class="lpd-canvas">
+      @if (data.previewType === 'certificate' && data.certType) {
+        <coms-certificate-live-preview
+          [certType]="data.certType"
+          [data]="liveData()"
+          [certificateNo]="data.certificateNo || null"
+          [template]="data.template || null"
+          [church]="data.church || null"
+          [zoom]="zoom()"
+        />
+      }
+
+      @if (data.previewType === 'receipt') {
+        <coms-receipt-live-preview
+          [receiptType]="data.receiptType || 'mass-intention'"
+          [data]="liveData()"
+          [receiptNo]="data.receiptNo || null"
+          [bulkRows]="data.bulkRows || []"
+          [church]="data.church || null"
+          [zoom]="zoom()"
+        />
+      }
+    </div>
+  </mat-dialog-content>
+</div>

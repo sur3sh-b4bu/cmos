@@ -92,6 +92,8 @@ interface RowFailure {
  * payment spanning many bookings), all sharing the one payment method/
  * reference the panel confirmed.
  */
+import { LivePreviewDialogComponent } from '../../../shared/components/live-preview-dialog/live-preview-dialog';
+
 @Component({
   selector: 'coms-bulk-mass-intention-form',
   standalone: true,
@@ -126,6 +128,25 @@ export class BulkMassIntentionFormComponent implements OnInit {
   private dialog = inject(MatDialog);
   currencyService = inject(CurrencyService);
   languageService = inject(LanguageService);
+
+  openPreviewModal(): void {
+    const title = this.translate.instant('common.previewReceipt');
+    const rows = this.rowsArray.getRawValue();
+    this.dialog.open(LivePreviewDialogComponent, {
+      width: '740px',
+      maxWidth: '96vw',
+      autoFocus: false,
+      restoreFocus: true,
+      data: {
+        title: `${title} - ${this.translate.instant('common.livePreview')}`,
+        previewType: 'receipt',
+        receiptType: 'bulk-mass-intention',
+        formGroup: this.headerForm,
+        bulkRows: rows,
+        receiptNo: 'PREVIEW-BATCH',
+      },
+    });
+  }
 
   /** calendarHeaderComponent needs a class reference, not a template var. */
   readonly todayHeader = DatepickerTodayHeaderComponent;

@@ -13,6 +13,7 @@ const churchSetupRoutes = require('./churchSetupRoutes');
 const centralRoutes = require('./centralRoutes');
 const publicRoutes = require('./publicRoutes');
 const trashRoutes = require('./trashRoutes');
+const expenseRoutes = require('./expenseRoutes');
 
 const router = express.Router();
 
@@ -33,6 +34,7 @@ router.use('/contributions', contributionRoutes);
 router.use('/certificates', certificateRoutes);
 router.use('/certificate-templates', certificateTemplateRoutes);
 router.use('/reports', reportRoutes);
+router.use('/expenses', expenseRoutes);
 router.use('/audit-logs', auditLogRoutes);
 router.use('/users', userAdminRoutes);
 router.use('/roles', roleRoutes);

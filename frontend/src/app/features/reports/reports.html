@@ -53,12 +53,14 @@
             emptyMessageKey="reports.emptyMassIntentions"
             [columns]="prayerColumns"
             [rows]="prayerRowsPage()"
-            [total]="data.rows.length"
+            [total]="filteredPrayerRows().length"
             [pageIndex]="prayerPage()"
             [pageSize]="prayerPageSize()"
             [showExport]="true"
             [exportAllFn]="asyncPrayerAll"
             (pageChange)="onPrayerPageChange($event)"
+            (searchChange)="onPrayerSearch($event)"
+            (sortChange)="onPrayerSort($event)"
           />
         } @else {
           <div class="reports__loading"><mat-progress-spinner mode="indeterminate" diameter="32" /></div>
@@ -147,12 +149,14 @@
             emptyMessageKey="reports.emptyCollections"
             [columns]="collectionColumns"
             [rows]="collectionsRowsPage()"
-            [total]="data.byDay.length"
+            [total]="filteredCollectionsRows().length"
             [pageIndex]="collectionsPage()"
             [pageSize]="collectionsPageSize()"
             [cellTemplates]="collectionCellTemplates"
             [exportAllFn]="asyncCollectionsAll"
             (pageChange)="onCollectionsPageChange($event)"
+            (searchChange)="onCollectionsSearch($event)"
+            (sortChange)="onCollectionsSort($event)"
           />
         } @else {
           <div class="reports__loading"><mat-progress-spinner mode="indeterminate" diameter="32" /></div>
@@ -241,12 +245,14 @@
             emptyMessageKey="reports.emptyContributions"
             [columns]="contributionCollectionColumns"
             [rows]="contributionCollectionsRowsPage()"
-            [total]="data.byDay.length"
+            [total]="filteredContributionCollectionsRows().length"
             [pageIndex]="contributionCollectionsPage()"
             [pageSize]="contributionCollectionsPageSize()"
             [cellTemplates]="contributionCollectionCellTemplates"
             [exportAllFn]="asyncContributionCollectionsAll"
             (pageChange)="onContributionCollectionsPageChange($event)"
+            (searchChange)="onContributionCollectionsSearch($event)"
+            (sortChange)="onContributionCollectionsSort($event)"
           />
         } @else {
           <div class="reports__loading"><mat-progress-spinner mode="indeterminate" diameter="32" /></div>
@@ -306,11 +312,13 @@
             emptyMessageKey="reports.emptyCertificates"
             [columns]="certificateColumns"
             [rows]="certificatesRowsPage()"
-            [total]="data.rows.length"
+            [total]="filteredCertificatesRows().length"
             [pageIndex]="certificatesPage()"
             [pageSize]="certificatesPageSize()"
             [exportAllFn]="asyncCertificatesAll"
             (pageChange)="onCertificatesPageChange($event)"
+            (searchChange)="onCertificatesSearch($event)"
+            (sortChange)="onCertificatesSort($event)"
           />
         } @else {
           <div class="reports__loading"><mat-progress-spinner mode="indeterminate" diameter="32" /></div>

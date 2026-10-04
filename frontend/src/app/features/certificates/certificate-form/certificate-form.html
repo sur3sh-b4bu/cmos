@@ -3,7 +3,28 @@
     <a [routerLink]="['/certificates', certType]" class="cert-form__back">
       <mat-icon>arrow_back</mat-icon>
     </a>
-    <h1>{{ (editId() ? 'common.edit' : 'common.new') | translate }} {{ config.singularTitle | translate }}</h1>
+    <div class="cert-form__title-group">
+      <h1>{{ (editId() ? 'common.edit' : 'common.new') | translate }} {{ config.singularTitle | translate }}</h1>
+    </div>
+
+    <!-- Preview Controls -->
+    <div class="cert-form__header-actions">
+      <button mat-stroked-button type="button" class="cert-form__preview-btn" (click)="openPreviewModal()">
+        <mat-icon>visibility</mat-icon>
+        <span>{{ 'common.previewCertificate' | translate }}</span>
+      </button>
+
+      <button
+        mat-icon-button
+        type="button"
+        class="cert-form__side-toggle"
+        [class.active]="showSidePreview()"
+        (click)="toggleSidePreview()"
+        [matTooltip]="'common.toggleSidePreview' | translate"
+      >
+        <mat-icon>{{ showSidePreview() ? 'view_sidebar' : 'splitscreen' }}</mat-icon>
+      </button>
+    </div>
   </div>
 
   @if (loading()) {
@@ -25,40 +46,19 @@
       </div>
     }
 
-    <form class="cert-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
-      <div class="cert-form__grid">
-        @for (field of config.formFields; track field.key) {
-          @if (isFieldVisible(field)) {
-            <mat-form-field appearance="outline" [class.cert-form__span-2]="field.span2">
-              <mat-label>{{ field.label | translate }}</mat-label>
+    <div class="cert-form__layout" [class.cert-form__layout--split]="showSidePreview()">
+      <form class="cert-form__form surface-card" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="cert-form__grid">
+          @for (field of config.formFields; track field.key) {
+            @if (isFieldVisible(field)) {
+              <mat-form-field appearance="outline" [class.cert-form__span-2]="field.span2 && !showSidePreview()">
+                <mat-label>{{ field.label | translate }}</mat-label>
 
-              @switch (field.type) {
-                @case ('text') {
-                  <input matInput [formControlName]="field.key" />
-                  @if (certType === 'marriage') {
-                    @if (field.key === 'witness2_name' && witnessCount() === 2) {
-                      <button
-                        mat-icon-button
-                        matIconSuffix
-                        type="button"
-                        [matTooltip]="'certificates.marriage.addWitness' | translate"
-                        (click)="addWitness(); $event.stopPropagation()"
-                        color="primary"
-                      >
-                        <mat-icon>add_circle</mat-icon>
-                      </button>
-                    }
-                    @if (field.key === 'witness3_name') {
-                      <button
-                        mat-icon-button
-                        matIconSuffix
-                        type="button"
-                        [matTooltip]="'certificates.marriage.removeWitness' | translate"
-                        (click)="removeWitness(3); $event.stopPropagation()"
-                      >
-                        <mat-icon>remove_circle_outline</mat-icon>
-                      </button>
-                      @if (witnessCount() === 3) {
+                @switch (field.type) {
+                  @case ('text') {
+                    <input matInput [formControlName]="field.key" />
+                    @if (certType === 'marriage') {
+                      @if (field.key === 'witness2_name' && witnessCount() === 2) {
                         <button
                           mat-icon-button
                           matIconSuffix
@@ -70,64 +70,118 @@
                           <mat-icon>add_circle</mat-icon>
                         </button>
                       }
-                    }
-                    @if (field.key === 'witness4_name') {
-                      <button
-                        mat-icon-button
-                        matIconSuffix
-                        type="button"
-                        [matTooltip]="'certificates.marriage.removeWitness' | translate"
-                        (click)="removeWitness(4); $event.stopPropagation()"
-                      >
-                        <mat-icon>remove_circle_outline</mat-icon>
-                      </button>
+                      @if (field.key === 'witness3_name') {
+                        <button
+                          mat-icon-button
+                          matIconSuffix
+                          type="button"
+                          [matTooltip]="'certificates.marriage.removeWitness' | translate"
+                          (click)="removeWitness(3); $event.stopPropagation()"
+                        >
+                          <mat-icon>remove_circle_outline</mat-icon>
+                        </button>
+                        @if (witnessCount() === 3) {
+                          <button
+                            mat-icon-button
+                            matIconSuffix
+                            type="button"
+                            [matTooltip]="'certificates.marriage.addWitness' | translate"
+                            (click)="addWitness(); $event.stopPropagation()"
+                            color="primary"
+                          >
+                            <mat-icon>add_circle</mat-icon>
+                          </button>
+                        }
+                      }
+                      @if (field.key === 'witness4_name') {
+                        <button
+                          mat-icon-button
+                          matIconSuffix
+                          type="button"
+                          [matTooltip]="'certificates.marriage.removeWitness' | translate"
+                          (click)="removeWitness(4); $event.stopPropagation()"
+                        >
+                          <mat-icon>remove_circle_outline</mat-icon>
+                        </button>
+                      }
                     }
                   }
+                  @case ('textarea') {
+                    <textarea matInput rows="3" [formControlName]="field.key"></textarea>
+                  }
+                  @case ('date') {
+                    <ng-container>
+                      <input
+                        matInput
+                        [matDatepicker]="picker"
+                        [formControlName]="field.key"
+                      />
+                      <mat-datepicker-toggle matIconSuffix [for]="picker" />
+                      <mat-datepicker #picker [calendarHeaderComponent]="todayHeader" />
+                    </ng-container>
+                  }
+                  @case ('select') {
+                    <mat-select [formControlName]="field.key">
+                      @for (opt of optionsFor(field); track opt.id) {
+                        <mat-option [value]="opt.id">{{ opt.name }}</mat-option>
+                      }
+                    </mat-select>
+                  }
                 }
-                @case ('textarea') {
-                  <textarea matInput rows="3" [formControlName]="field.key"></textarea>
-                }
-                @case ('date') {
-                  <ng-container>
-                    <input
-                      matInput
-                      [matDatepicker]="picker"
-                      [formControlName]="field.key"
-                    />
-                    <mat-datepicker-toggle matIconSuffix [for]="picker" />
-                    <mat-datepicker #picker [calendarHeaderComponent]="todayHeader" />
-                  </ng-container>
-                }
-                @case ('select') {
-                  <mat-select [formControlName]="field.key">
-                    @for (opt of optionsFor(field); track opt.id) {
-                      <mat-option [value]="opt.id">{{ opt.name }}</mat-option>
-                    }
-                  </mat-select>
-                }
-              }
 
-              @if (field.required && form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
-                <mat-error>{{ 'certificates.common.fieldRequired' | translate: { field: (field.label | translate) } }}</mat-error>
-              }
-              @if (form.get(field.key)?.hasError('matDatepickerParse')) {
-                <mat-error>{{ 'certificates.common.dateInvalid' | translate: { field: (field.label | translate) } }}</mat-error>
-              }
-            </mat-form-field>
+                @if (field.required && form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
+                  <mat-error>{{ 'certificates.common.fieldRequired' | translate: { field: (field.label | translate) } }}</mat-error>
+                }
+                @if (form.get(field.key)?.hasError('matDatepickerParse')) {
+                  <mat-error>{{ 'certificates.common.dateInvalid' | translate: { field: (field.label | translate) } }}</mat-error>
+                }
+              </mat-form-field>
+            }
           }
-        }
-      </div>
+        </div>
 
-      <div class="cert-form__actions">
-        <a mat-button [routerLink]="['/certificates', certType]">{{ 'common.cancel' | translate }}</a>
-        <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
-          @if (saving()) {
-            <mat-progress-spinner diameter="18" mode="indeterminate" />
-          } @else {
-            <span>{{ (editId() ? 'common.saveChanges' : 'certificates.common.saveAndGenerate') | translate }}</span>
-          }
-        </button>
-      </div>
-    </form>
+        <div class="cert-form__actions">
+          <button mat-stroked-button type="button" (click)="openPreviewModal()">
+            <mat-icon>visibility</mat-icon>
+            <span>{{ 'common.livePreview' | translate }}</span>
+          </button>
+          <a mat-button [routerLink]="['/certificates', certType]">{{ 'common.cancel' | translate }}</a>
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+            @if (saving()) {
+              <mat-progress-spinner diameter="18" mode="indeterminate" />
+            } @else {
+              <span>{{ (editId() ? 'common.saveChanges' : 'certificates.common.saveAndGenerate') | translate }}</span>
+            }
+          </button>
+        </div>
+      </form>
+
+      <!-- Side-by-Side Live Preview Pane -->
+      @if (showSidePreview()) {
+        <div class="cert-form__side-preview surface-card">
+          <div class="side-preview-header">
+            <span class="side-preview-title">
+              <mat-icon>workspace_premium</mat-icon>
+              {{ 'common.previewCertificate' | translate }}
+            </span>
+            <div class="side-preview-actions">
+              <button mat-icon-button type="button" (click)="openPreviewModal()" matTooltip="Open Full Screen Preview">
+                <mat-icon>fullscreen</mat-icon>
+              </button>
+              <button mat-icon-button type="button" (click)="toggleSidePreview()" matTooltip="Close Side Preview">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+          <div class="side-preview-body">
+            <coms-certificate-live-preview
+              [certType]="certType"
+              [data]="form.value"
+              [certificateNo]="justSavedCertNo() || (editId() ? 'CERT-' + editId() : 'PREVIEW-CERT')"
+            />
+          </div>
+        </div>
+      }
+    </div>
   }
 </div>

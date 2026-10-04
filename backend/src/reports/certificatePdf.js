@@ -179,7 +179,7 @@ function buildExactMarriageDocument(record, church, ink, template = null) {
   const rawFields = [record.witness1_name, record.witness2_name, record.witness3_name, record.witness4_name];
   for (const f of rawFields) {
     if (f && String(f).trim()) {
-      const parts = String(f).split(/,|\n/).map((s) => s.trim()).filter(Boolean);
+      const parts = String(f).split(/\n/).map((s) => s.trim()).filter(Boolean);
       extractedWitnessNames.push(...parts);
     }
   }
@@ -263,10 +263,10 @@ function buildExactMarriageDocument(record, church, ink, template = null) {
   return {
     pageSize: 'A4',
     pageOrientation: 'portrait',
-    pageMargins: [42, 42, 42, 85],
+    pageMargins: [42, 42, 42, 75],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
     footer: (currentPage, pageCount) => ({
-      margin: [42, 0, 42, 20],
+      margin: [42, 0, 42, 26],
       stack: [
         {
           columns: [
@@ -425,10 +425,10 @@ function buildExactBaptismDocument(record, church, ink, template = null) {
   return {
     pageSize: 'A4',
     pageOrientation: 'portrait',
-    pageMargins: [44, 44, 44, 85],
+    pageMargins: [44, 44, 44, 75],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
     footer: (currentPage, pageCount) => ({
-      margin: [44, 0, 44, 20],
+      margin: [44, 0, 44, 26],
       stack: [
         {
           columns: [
@@ -682,10 +682,10 @@ function buildExactDeathDocument(record, church, ink, template = null) {
   return {
     pageSize: 'A4',
     pageOrientation: 'portrait',
-    pageMargins: [42, 38, 42, 88],
+    pageMargins: [42, 38, 42, 75],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
     footer: (currentPage, pageCount) => ({
-      margin: [42, 0, 42, 18],
+      margin: [42, 0, 42, 26],
       stack: [
         {
           columns: [
@@ -879,10 +879,10 @@ function buildExactConfirmationDocument(record, church, ink, template = null) {
   return {
     pageSize: 'A4',
     pageOrientation: 'portrait',
-    pageMargins: [42, 44, 42, 85],
+    pageMargins: [42, 44, 42, 75],
     defaultStyle: { font: 'Times', fontSize: FONT_SIZE, color: DATA_COLOR },
     footer: (currentPage, pageCount) => ({
-      margin: [42, 0, 42, 20],
+      margin: [42, 0, 42, 26],
       stack: [
         {
           columns: [

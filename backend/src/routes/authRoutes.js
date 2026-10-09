@@ -24,15 +24,4 @@ router.post(
   authController.changePassword
 );
 
-// --- WebAuthn: biometric / passkey sign-in ---
-// Enrolling a device requires an existing session; signing in with one
-// obviously cannot.
-router.post('/webauthn/register/options', authenticate, authController.webauthnRegisterOptions);
-router.post('/webauthn/register/verify', authenticate, authController.webauthnRegisterVerify);
-router.get('/webauthn/devices', authenticate, authController.webauthnListDevices);
-router.delete('/webauthn/devices/:id', authenticate, authController.webauthnRemoveDevice);
-
-router.post('/webauthn/login/options', authController.webauthnLoginOptions);
-router.post('/webauthn/login/verify', authController.webauthnLoginVerify);
-
 module.exports = router;

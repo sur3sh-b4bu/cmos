@@ -20,7 +20,6 @@ const { generateDailyRegisterPdf } = require('../reports/dailyRegisterPdf');
 const { findMatch, listUpcoming } = require('../utils/restrictedDates');
 const ApiError = require('../utils/ApiError');
 const { pool } = require('../config/db');
-const { emitToChurch } = require('../realtime/socketServer');
 
 /**
  * Rejects a booking/payment on a Restricted Date. Enforced here (not just in
@@ -163,13 +162,6 @@ async function create(payload, req) {
     newValues: created,
   });
 
-  // Lets every other logged-in user of this church know their Mass
-  // Intentions list/dashboard is now stale, so it can quietly refetch
-  // instead of them only finding out on their next manual reload -- see
-  // socketServer.js's own comment for why this is safe to broadcast
-  // (church-scoped room, tiny signal-only payload).
-  emitToChurch(req.user.churchId, 'mass-intentions:changed', { action: 'created', id: created.id });
-
   return created;
 }
 
@@ -218,8 +210,6 @@ async function update(id, payload, req) {
     newValues: updated,
   });
 
-  emitToChurch(req.user.churchId, 'mass-intentions:changed', { action: 'updated', id });
-
   return updated;
 }
 
@@ -234,7 +224,6 @@ async function remove(id, req) {
     entityId: id,
     oldValues: existing,
   });
-  emitToChurch(req.user.churchId, 'mass-intentions:changed', { action: 'deleted', id });
 }
 
 async function refund(id, payload = {}, req) {
@@ -249,7 +238,6 @@ async function refund(id, payload = {}, req) {
     oldValues: existing,
     newValues: updated,
   });
-  emitToChurch(req.user.churchId, 'mass-intentions:changed', { action: 'refunded', id });
   return updated;
 }
 
@@ -265,7 +253,6 @@ async function unrefund(id, req) {
     oldValues: existing,
     newValues: updated,
   });
-  emitToChurch(req.user.churchId, 'mass-intentions:changed', { action: 'unrefunded', id });
   return updated;
 }
 

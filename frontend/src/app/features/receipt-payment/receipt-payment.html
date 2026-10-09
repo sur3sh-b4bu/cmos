@@ -1,0 +1,606 @@
+<div class="receipt-payment-page">
+  <!-- Top Sub-Navigation Tabs matching other sections -->
+  <nav class="sub-nav-tabs no-print">
+    <a routerLink="/mass-intentions" routerLinkActive="sub-nav-tabs__link--active" class="sub-nav-tabs__link">
+      <mat-icon>volunteer_activism</mat-icon>
+      <span>{{ 'nav.massIntentions' | translate }}</span>
+    </a>
+    <a routerLink="/mass-intentions/register" routerLinkActive="sub-nav-tabs__link--active" class="sub-nav-tabs__link">
+      <mat-icon>menu_book</mat-icon>
+      <span>{{ 'nav.dailyRegister' | translate }}</span>
+    </a>
+    <a routerLink="/contributions" routerLinkActive="sub-nav-tabs__link--active" class="sub-nav-tabs__link">
+      <mat-icon>redeem</mat-icon>
+      <span>{{ 'nav.contributions' | translate }}</span>
+    </a>
+    <a routerLink="/receipt-payment" routerLinkActive="sub-nav-tabs__link--active" [routerLinkActiveOptions]="{ exact: true }" class="sub-nav-tabs__link">
+      <mat-icon>receipt_long</mat-icon>
+      <span>{{ 'nav.receiptPayment' | translate }}</span>
+    </a>
+  </nav>
+
+  <!-- Page Header & Date Navigator -->
+  <div class="page-header no-print">
+    <div class="page-header__left">
+      <h1>{{ 'receiptPayment.title' | translate }}</h1>
+      <p class="text-muted">{{ 'receiptPayment.subtitle' | translate }}</p>
+    </div>
+
+    <div class="page-header__controls">
+      <!-- Date Navigator -->
+      <div class="date-navigator-wrap">
+        <button
+          mat-icon-button
+          type="button"
+          (click)="prevDay()"
+          [matTooltip]="'common.previousPage' | translate"
+        >
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+
+        <mat-form-field appearance="outline" class="date-form-field" subscriptSizing="dynamic">
+          <input
+            matInput
+            [matDatepicker]="picker"
+            [ngModel]="selectedDate()"
+            (dateChange)="onDateChange($event.value)"
+            readonly
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker [calendarHeaderComponent]="todayHeader"></mat-datepicker>
+        </mat-form-field>
+
+        <button
+          mat-icon-button
+          type="button"
+          (click)="nextDay()"
+          [matTooltip]="'common.nextPage' | translate"
+        >
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+
+        <button
+          mat-stroked-button
+          type="button"
+          class="btn-today"
+          (click)="today()"
+        >
+          {{ 'common.today' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Statistics Bar -->
+  <div class="stats-banner no-print">
+    <div class="stat-card stat-card--receipt">
+      <div class="stat-card__icon">
+        <mat-icon>arrow_downward</mat-icon>
+      </div>
+      <div class="stat-card__info">
+        <span class="label">{{ 'receiptPayment.totalReceipts' | translate }}</span>
+        <span class="value text-success">{{ formatCurrency(summaryStats().totalReceipts) }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--payment">
+      <div class="stat-card__icon">
+        <mat-icon>arrow_upward</mat-icon>
+      </div>
+      <div class="stat-card__info">
+        <span class="label">{{ 'receiptPayment.totalPayments' | translate }}</span>
+        <span class="value text-danger">{{ formatCurrency(summaryStats().totalPayments) }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--net">
+      <div class="stat-card__icon">
+        <mat-icon>account_balance_wallet</mat-icon>
+      </div>
+      <div class="stat-card__info">
+        <span class="label">{{ 'receiptPayment.netCashFlow' | translate }}</span>
+        <span
+          class="value"
+          [class.text-success]="summaryStats().netCashflow >= 0"
+          [class.text-danger]="summaryStats().netCashflow < 0"
+        >
+          {{ formatCurrency(summaryStats().netCashflow) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--count">
+      <div class="stat-card__icon">
+        <mat-icon>format_list_numbered</mat-icon>
+      </div>
+      <div class="stat-card__info">
+        <span class="label">{{ 'receiptPayment.recentEntries' | translate }}</span>
+        <span class="value">{{ summaryStats().count }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main 2-Column Section: Data Entry Form on Left, Live Dropdown & Preview on Right -->
+  <div class="main-layout-grid">
+    <!-- LEFT: Entry Form Card -->
+    <div class="entry-card glass-card no-print">
+      <div class="entry-card__header">
+        <div class="header-title">
+          <mat-icon class="icon-accent">post_add</mat-icon>
+          <h3>{{ 'receiptPayment.newEntry' | translate }}</h3>
+        </div>
+
+        <!-- Type Selector: Receipt vs Payment Toggle -->
+        <div class="type-toggle-pills">
+          <button
+            type="button"
+            class="type-pill-btn type-pill-btn--receipt"
+            [class.active]="form().type === 'receipt'"
+            (click)="setType('receipt')"
+          >
+            <mat-icon>arrow_downward</mat-icon>
+            <span>{{ 'receiptPayment.receipt' | translate }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="type-pill-btn type-pill-btn--payment"
+            [class.active]="form().type === 'payment'"
+            (click)="setType('payment')"
+          >
+            <mat-icon>arrow_upward</mat-icon>
+            <span>{{ 'receiptPayment.payment' | translate }}</span>
+          </button>
+        </div>
+      </div>
+
+      <form (ngSubmit)="submitSave()" class="entry-form">
+        <div class="form-fields-grid">
+          <!-- 1. Date Input -->
+          <div class="form-field-group">
+            <label>
+              <mat-icon class="field-icon">calendar_month</mat-icon>
+              {{ 'receiptPayment.entryDate' | translate }} *
+            </label>
+            <div class="input-wrap">
+              <input
+                type="date"
+                class="form-control"
+                [ngModel]="form().entryDate"
+                (ngModelChange)="form().entryDate = $event"
+                name="entryDate"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- 2. "Based On" / Account Head Dropdown -->
+          <div class="form-field-group">
+            <label>
+              <mat-icon class="field-icon">account_tree</mat-icon>
+              {{ 'receiptPayment.basedOn' | translate }} ({{ form().type === 'receipt' ? 'Receipt' : 'Payment' }}) *
+            </label>
+            <div class="input-wrap">
+              <select
+                class="form-control select-head"
+                [ngModel]="form().headId"
+                (ngModelChange)="onHeadChange($event)"
+                name="headId"
+                required
+              >
+                <option [ngValue]="null">{{ 'receiptPayment.selectBasedOn' | translate }}</option>
+                @for (group of groupedHeadsForType(); track group.section) {
+                  <optgroup [label]="group.section">
+                    @for (h of group.items; track h.id) {
+                      <option [value]="h.id">
+                        {{ h.name }} @if (h.tamil_name) { ({{ h.tamil_name }}) }
+                      </option>
+                    }
+                  </optgroup>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- 3. Amount Input (₹) -->
+          <div class="form-field-group">
+            <label>
+              <mat-icon class="field-icon">currency_rupee</mat-icon>
+              {{ 'receiptPayment.amount' | translate }} *
+            </label>
+            <div class="amount-wrap">
+              <span class="currency-symbol">₹</span>
+              <input
+                type="number"
+                class="form-control amount-input"
+                [ngModel]="form().amount"
+                (ngModelChange)="form().amount = $event"
+                name="amount"
+                placeholder="0.00"
+                min="0.01"
+                step="any"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- 4. Payment Mode Selector -->
+          <div class="form-field-group">
+            <label>
+              <mat-icon class="field-icon">payments</mat-icon>
+              {{ 'receiptPayment.paymentMode' | translate }}
+            </label>
+            <div class="mode-pills-row">
+              <button
+                type="button"
+                class="mode-btn"
+                [class.selected]="form().paymentModeCode === 'CASH'"
+                (click)="setPaymentMode('CASH')"
+              >
+                <mat-icon>payments</mat-icon>
+                <span>Cash</span>
+              </button>
+
+              <button
+                type="button"
+                class="mode-btn"
+                [class.selected]="form().paymentModeCode === 'BANK_TRANSFER' || form().paymentModeCode === 'CHEQUE'"
+                (click)="setPaymentMode('BANK_TRANSFER')"
+              >
+                <mat-icon>account_balance</mat-icon>
+                <span>Bank</span>
+              </button>
+
+              <button
+                type="button"
+                class="mode-btn"
+                [class.selected]="form().paymentModeCode === 'UPI'"
+                (click)="setPaymentMode('UPI')"
+              >
+                <mat-icon>qr_code_2</mat-icon>
+                <span>UPI</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 5. Voucher / Ref No. -->
+          <div class="form-field-group">
+            <label>
+              <mat-icon class="field-icon">receipt</mat-icon>
+              {{ 'receiptPayment.voucherNo' | translate }}
+            </label>
+            <div class="input-wrap">
+              <input
+                type="text"
+                class="form-control"
+                [ngModel]="form().voucherNo"
+                (ngModelChange)="form().voucherNo = $event"
+                name="voucherNo"
+                placeholder="e.g. VCH-001 / Cheque #"
+              />
+            </div>
+          </div>
+
+          <!-- 6. Paid To / Received From -->
+          <div class="form-field-group">
+            <label>
+              <mat-icon class="field-icon">person</mat-icon>
+              {{ 'receiptPayment.payerOrPayee' | translate }}
+            </label>
+            <div class="input-wrap">
+              <input
+                type="text"
+                class="form-control"
+                [ngModel]="form().paidTo"
+                (ngModelChange)="form().paidTo = $event"
+                name="paidTo"
+                placeholder="e.g. Parishioner name, Vendor name"
+              />
+            </div>
+          </div>
+
+          <!-- 7. Remarks / Notes Input -->
+          <div class="form-field-group form-field-group--full">
+            <label>
+              <mat-icon class="field-icon">notes</mat-icon>
+              {{ 'receiptPayment.remarks' | translate }}
+            </label>
+            <div class="input-wrap">
+              <textarea
+                class="form-control remarks-input"
+                rows="2"
+                [ngModel]="form().notes"
+                (ngModelChange)="form().notes = $event"
+                name="notes"
+                placeholder="Enter remarks, description, or purpose of this transaction..."
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions-row">
+          <button
+            type="button"
+            mat-stroked-button
+            class="btn-clear"
+            (click)="resetForm()"
+            [disabled]="submitting()"
+          >
+            <mat-icon>refresh</mat-icon>
+            <span>{{ 'receiptPayment.clear' | translate }}</span>
+          </button>
+
+          <button
+            type="submit"
+            mat-flat-button
+            color="primary"
+            class="btn-save"
+            [disabled]="submitting() || !form().amount"
+          >
+            @if (submitting()) {
+              <mat-spinner diameter="18"></mat-spinner>
+              <span>{{ 'receiptPayment.saving' | translate }}</span>
+            } @else {
+              <ng-container>
+                <mat-icon>check_circle</mat-icon>
+                <span>{{ 'receiptPayment.save' | translate }}</span>
+              </ng-container>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- RIGHT: Live Dropdown & Preview Voucher Card -->
+    <div class="preview-column">
+      <!-- Preview Dropdown Card -->
+      <div class="preview-selector-card glass-card no-print">
+        <div class="preview-selector-card__header">
+          <div class="selector-title">
+            <mat-icon class="icon-accent">visibility</mat-icon>
+            <h4>{{ 'receiptPayment.previewDropdown' | translate }}</h4>
+          </div>
+        </div>
+
+        <div class="preview-dropdown-wrap">
+          <select
+            class="form-control preview-select"
+            [ngModel]="selectedPreviewId()"
+            (ngModelChange)="onPreviewSelect($event)"
+          >
+            <option [ngValue]="null">{{ 'receiptPayment.selectToPreview' | translate }}</option>
+            @for (tx of transactions(); track tx.id) {
+              <option [value]="tx.id">
+                [{{ tx.type === 'receipt' ? 'RECEIPT' : 'PAYMENT' }}]
+                {{ tx.account_head_name || tx.head_name || 'General' }}
+                — ₹{{ tx.amount }} ({{ tx.entry_date }})
+                @if (tx.voucher_no) { · {{ tx.voucher_no }} }
+              </option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Printable Preview Voucher Card -->
+      <div class="voucher-preview-container" id="preview-voucher-card">
+        @if (selectedPreviewTx(); as tx) {
+          <div class="voucher-card glass-card" [class.voucher-card--receipt]="tx.type === 'receipt'" [class.voucher-card--payment]="tx.type === 'payment'">
+            <!-- Voucher Header -->
+            <div class="voucher-card__header">
+              <div class="church-brand">
+                <mat-icon class="brand-icon">church</mat-icon>
+                <div>
+                  <h4 class="church-name">{{ currentChurchName() }}</h4>
+                  <span class="diocese-subtitle">DIOCESE OF TUTICORIN</span>
+                </div>
+              </div>
+
+              <div class="voucher-badge-wrap">
+                <span class="voucher-type-badge" [class.badge-receipt]="tx.type === 'receipt'" [class.badge-payment]="tx.type === 'payment'">
+                  {{ tx.type === 'receipt' ? ('receiptPayment.receiptVoucher' | translate) : ('receiptPayment.paymentVoucher' | translate) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="voucher-divider"></div>
+
+            <!-- Voucher Meta Row -->
+            <div class="voucher-meta-row">
+              <div class="meta-item">
+                <span class="meta-label">{{ 'receiptPayment.entryDate' | translate }}:</span>
+                <span class="meta-val font-bold">{{ tx.entry_date }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">{{ 'receiptPayment.voucherNo' | translate }}:</span>
+                <span class="meta-val font-mono">{{ tx.voucher_no || 'VCH-' + tx.id }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">{{ 'receiptPayment.paymentMode' | translate }}:</span>
+                <span class="meta-val">
+                  <mat-icon class="inline-icon">{{ getPaymentMethodIcon(tx.payment_method_code) }}</mat-icon>
+                  {{ getPaymentMethodLabel(tx.payment_method_code) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Main Voucher Details Box -->
+            <div class="voucher-details-box">
+              <div class="voucher-field">
+                <span class="label">{{ 'receiptPayment.basedOn' | translate }}:</span>
+                <span class="val head-name">{{ tx.account_head_name || tx.head_name || 'General' }}</span>
+                @if (tx.account_head_tamil_name) {
+                  <span class="val-tamil">({{ tx.account_head_tamil_name }})</span>
+                }
+              </div>
+
+              @if (tx.paid_to) {
+                <div class="voucher-field">
+                  <span class="label">{{ 'receiptPayment.payerOrPayee' | translate }}:</span>
+                  <span class="val font-semibold">{{ tx.paid_to }}</span>
+                </div>
+              }
+
+              @if (tx.notes) {
+                <div class="voucher-field">
+                  <span class="label">{{ 'receiptPayment.remarks' | translate }}:</span>
+                  <span class="val text-muted">{{ tx.notes }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Amount Highlight Banner -->
+            <div class="voucher-amount-box" [class.amount-box--receipt]="tx.type === 'receipt'" [class.amount-box--payment]="tx.type === 'payment'">
+              <span class="amount-label">{{ 'receiptPayment.amount' | translate }}</span>
+              <span class="amount-val">{{ formatCurrency(tx.amount) }}</span>
+            </div>
+
+            <!-- Footer Signatures & Actions -->
+            <div class="voucher-footer">
+              <div class="voucher-signatures">
+                <div class="sign-box">
+                  <span class="sign-line"></span>
+                  <span class="sign-title">Prepared By</span>
+                </div>
+                <div class="sign-box">
+                  <span class="sign-line"></span>
+                  <span class="sign-title">Parish Priest / In-Charge</span>
+                </div>
+              </div>
+
+              <div class="voucher-actions no-print">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="btn-print-voucher"
+                  (click)="printVoucher()"
+                >
+                  <mat-icon>print</mat-icon>
+                  <span>{{ 'receiptPayment.printVoucher' | translate }}</span>
+                </button>
+
+                <button
+                  mat-icon-button
+                  color="warn"
+                  type="button"
+                  (click)="deleteTransaction(tx.id)"
+                  [matTooltip]="'common.delete' | translate"
+                >
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <!-- Empty State when no entry is selected -->
+          <div class="empty-preview glass-card no-print">
+            <div class="empty-preview__content">
+              <mat-icon class="empty-icon">receipt_long</mat-icon>
+              <h4>{{ 'receiptPayment.previewTitle' | translate }}</h4>
+              <p>{{ 'receiptPayment.emptyPreviewHint' | translate }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved Transactions Table for the Selected Date -->
+  <div class="history-section glass-card no-print">
+    <div class="history-section__header">
+      <div class="title-group">
+        <mat-icon class="icon-accent">history</mat-icon>
+        <h3>{{ 'receiptPayment.recentEntries' | translate }} ({{ selectedDateStr() }})</h3>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-wrap">
+        <mat-spinner diameter="36"></mat-spinner>
+      </div>
+    } @else if (transactions().length === 0) {
+      <div class="empty-table-state">
+        <mat-icon>inbox</mat-icon>
+        <p>{{ 'receiptPayment.noEntries' | translate }}</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="receipt-table">
+          <thead>
+            <tr>
+              <th class="col-sno">#</th>
+              <th class="col-date">{{ 'receiptPayment.entryDate' | translate }}</th>
+              <th class="col-type">{{ 'receiptPayment.type' | translate }}</th>
+              <th class="col-head">{{ 'receiptPayment.basedOn' | translate }}</th>
+              <th class="col-mode">{{ 'receiptPayment.paymentMode' | translate }}</th>
+              <th class="col-voucher">{{ 'receiptPayment.voucherNo' | translate }}</th>
+              <th class="col-payee">{{ 'receiptPayment.payerOrPayee' | translate }}</th>
+              <th class="col-remarks">{{ 'receiptPayment.remarks' | translate }}</th>
+              <th class="col-amount text-right">{{ 'receiptPayment.amount' | translate }}</th>
+              <th class="col-actions text-center">{{ 'common.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tx of transactions(); track tx.id; let i = $index) {
+              <tr class="tx-row" [class.tx-row--active]="selectedPreviewId() === tx.id">
+                <td class="col-sno text-muted">{{ i + 1 }}</td>
+                <td class="col-date font-mono">{{ tx.entry_date }}</td>
+                <td class="col-type">
+                  <span class="type-pill" [class.type-pill--receipt]="tx.type === 'receipt'" [class.type-pill--payment]="tx.type === 'payment'">
+                    <mat-icon>{{ tx.type === 'receipt' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                    {{ tx.type === 'receipt' ? 'Receipt' : 'Payment' }}
+                  </span>
+                </td>
+                <td class="col-head">
+                  <div class="head-info">
+                    <span class="head-primary">{{ tx.account_head_name || tx.head_name || 'General' }}</span>
+                    @if (tx.account_head_tamil_name) {
+                      <span class="head-tamil text-muted">{{ tx.account_head_tamil_name }}</span>
+                    }
+                  </div>
+                </td>
+                <td class="col-mode">
+                  <span class="mode-pill">
+                    <mat-icon>{{ getPaymentMethodIcon(tx.payment_method_code) }}</mat-icon>
+                    <span>{{ getPaymentMethodLabel(tx.payment_method_code) }}</span>
+                  </span>
+                </td>
+                <td class="col-voucher font-mono">{{ tx.voucher_no || '—' }}</td>
+                <td class="col-payee">{{ tx.paid_to || '—' }}</td>
+                <td class="col-remarks text-muted">{{ tx.notes || '—' }}</td>
+                <td
+                  class="col-amount text-right font-mono font-bold"
+                  [class.text-success]="tx.type === 'receipt'"
+                  [class.text-danger]="tx.type === 'payment'"
+                >
+                  {{ tx.type === 'receipt' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
+                </td>
+                <td class="col-actions text-center">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="btn-preview-row"
+                    (click)="selectTxToPreview(tx)"
+                    [matTooltip]="'receiptPayment.previewTitle' | translate"
+                  >
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    type="button"
+                    (click)="deleteTransaction(tx.id)"
+                    [matTooltip]="'common.delete' | translate"
+                  >
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

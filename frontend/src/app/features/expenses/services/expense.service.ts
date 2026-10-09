@@ -94,11 +94,21 @@ export class ExpenseService {
       }
     });
     return this.http
-      .get<ApiResponse<{ rows: ChurchExpenseTransaction[]; total: number; page: number; limit: number }>>(
+      .get<any>(
         `${this.baseUrl}/transactions`,
         { params }
       )
-      .pipe(map((res) => res.data));
+      .pipe(
+        map((res) => {
+          const rows: ChurchExpenseTransaction[] = Array.isArray(res.data)
+            ? res.data
+            : (res.data?.rows || []);
+          const total = res.pagination?.total ?? (res.data?.total || rows.length);
+          const page = res.pagination?.page ?? (res.data?.page || 1);
+          const limit = res.pagination?.limit ?? (res.data?.limit || rows.length || 50);
+          return { rows, total, page, limit };
+        })
+      );
   }
 
   createTransaction(data: {

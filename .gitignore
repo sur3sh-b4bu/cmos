@@ -1,9 +1,14 @@
 ## Node / backend
 node_modules/
+.env
+*.env
 backend/.env
+backend/src/.env
 backend/logs/*.log
 backend/uploads/
 backend/backups/
+backend/src/iisnode/
+iisnode/
 npm-debug.log*
 
 ## Angular / frontend
@@ -22,4 +27,6 @@ Thumbs.db
 coverage/
 screenshot_ref.png
 coms_build_repo/
+temp_coms_build/
+
 

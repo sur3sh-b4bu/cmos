@@ -147,6 +147,18 @@ export const routes: Routes = [
         ],
       },
       {
+        path: 'receipt-payment',
+        canActivate: [churchContextGuard],
+        data: { breadcrumb: 'nav.receiptPayment' },
+        loadComponent: () =>
+          import('./features/receipt-payment/receipt-payment').then((m) => m.ReceiptPaymentComponent),
+      },
+      {
+        path: 'receipts-payments',
+        pathMatch: 'full',
+        redirectTo: 'receipt-payment',
+      },
+      {
         path: 'expenses',
         canActivate: [churchContextGuard, permissionGuard],
         data: { breadcrumb: 'nav.expenses', permissions: ['expenses.view'] },

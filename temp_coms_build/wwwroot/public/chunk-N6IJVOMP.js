@@ -1,1 +1,0 @@
-import{p as o}from"./chunk-A3OL4LEI.js";var i=1e3;async function p(r){let e=[],s=1/0,a=1;for(;e.length<s;){let t=await o(r(a,i));if(s=t.meta.total,e.push(...t.data),!t.data.length)break;a+=1}return e}export{p as a};

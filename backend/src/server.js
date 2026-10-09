@@ -2,7 +2,6 @@ const app = require('./app');
 const env = require('./config/env');
 const logger = require('./utils/logger');
 const { checkConnection } = require('./config/db');
-const { initSocketServer } = require('./realtime/socketServer');
 
 async function start() {
   try {
@@ -13,10 +12,11 @@ async function start() {
     process.exit(1);
   }
 
-  const server = app.listen(env.port, () => {
-    logger.info(`COMS API listening on port ${env.port} [${env.nodeEnv}]`);
+  const port = env.port || 4000;
+  const nodeEnv = env.nodeEnv || 'development';
+  const server = app.listen(port, () => {
+    logger.info(`COMS API listening on port ${port} [${nodeEnv}]`);
   });
-  initSocketServer(server);
 
   process.on('unhandledRejection', (reason) => {
     logger.error('Unhandled promise rejection', { reason });

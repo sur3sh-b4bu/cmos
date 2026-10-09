@@ -3,7 +3,6 @@ const contributionRepository = require('../repositories/contributionRepository')
 const contributionPaymentRepository = require('../repositories/contributionPaymentRepository');
 const auditService = require('./auditService');
 const ApiError = require('../utils/ApiError');
-const { emitToChurch } = require('../realtime/socketServer');
 const { toLocalDateString } = require('../utils/dateFormat');
 const { effectiveBranchId } = require('../utils/effectiveScope');
 
@@ -51,8 +50,6 @@ async function receivePayment(contributionId, payload, req) {
     entityId: contributionId,
     newValues: { method: payload.method, referenceNumber: payload.referenceNumber || null, amount: contribution.contribution_amount },
   });
-
-  emitToChurch(contribution.church_id, 'contributions:changed', { action: 'paid', id: contributionId });
 
   return updated;
 }

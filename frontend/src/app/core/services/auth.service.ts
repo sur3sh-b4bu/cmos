@@ -21,6 +21,7 @@ const ADMIN_ACTIVE_BRANCH_STORAGE_KEY = 'coms.adminActiveBranchId';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly baseUrl = `${environment.apiBaseUrl}/auth`;
+  
 
   readonly currentUser = signal<CurrentUser | null>(null);
   readonly isAuthenticated = computed(() => this.currentUser() !== null);

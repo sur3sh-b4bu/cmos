@@ -95,7 +95,8 @@ function receiptFooter(church, lang) {
  */
 function buildQrPayload(intention, church, mode, lang) {
   if (mode === 'url' && intention.public_token) {
-    return `${env.publicAppUrl}/r/${intention.public_token}`;
+    const baseUrl = (env.publicAppUrl || 'http://localhost:4200').replace(/\/+$/, '');
+    return `${baseUrl}/r/${intention.public_token}`;
   }
 
   const date = new Date(intention.prayer_date);

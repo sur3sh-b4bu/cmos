@@ -6,7 +6,6 @@ const receiptSeriesRepository = require('../repositories/receiptSeriesRepository
 const auditService = require('./auditService');
 const { pool } = require('../config/db');
 const ApiError = require('../utils/ApiError');
-const { emitToChurch } = require('../realtime/socketServer');
 const { effectiveBranchId } = require('../utils/effectiveScope');
 const { runImport } = require('../excel/importEngine');
 const { buildWorkbookBuffer } = require('../excel/workbookWriter');
@@ -170,7 +169,6 @@ async function importCertificates(type, { buffer, fileName, lang, mapping }, req
       entityType: config.table,
       newValues: { file: fileName, imported: report.imported, failed: report.failed },
     });
-    emitToChurch(req.user.churchId, 'certificates:changed', { type, action: 'imported' });
   }
   return report;
 }

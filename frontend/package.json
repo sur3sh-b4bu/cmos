@@ -26,7 +26,6 @@
     "@simplewebauthn/browser": "^13.3.0",
     "exceljs": "^4.4.0",
     "rxjs": "~7.8.0",
-    "socket.io-client": "^4.8.3",
     "tslib": "^2.3.0"
   },
   "devDependencies": {

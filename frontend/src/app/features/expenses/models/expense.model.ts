@@ -90,10 +90,12 @@ export interface ChurchExpenseTransaction {
   head_id?: number | null;
   head_name: string;
   account_head_name?: string;
+  account_head_tamil_name?: string;
   section?: string;
   amount: number;
   payment_method_id?: number | null;
   payment_method_name?: string;
+  payment_method_code?: string;
   voucher_no?: string | null;
   paid_to?: string | null;
   notes?: string | null;

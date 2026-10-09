@@ -4,7 +4,9 @@ const sessionRepository = require('../repositories/sessionRepository');
 const auditService = require('./auditService');
 const { generateSessionToken, hashSessionToken } = require('../utils/sessionToken');
 const ApiError = require('../utils/ApiError');
-const env = require('../config/env');
+
+// 100 years (effectively permanent / never expires)
+const PERMANENT_EXPIRY_MS = 100 * 365 * 24 * 60 * 60 * 1000;
 
 function sanitizeUser(user, permissions) {
   return {
@@ -30,7 +32,7 @@ function sanitizeUser(user, permissions) {
 
 async function issueSession(userId, req) {
   const token = generateSessionToken();
-  const expiresAt = new Date(Date.now() + env.session.expiresInDays * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + PERMANENT_EXPIRY_MS);
   await sessionRepository.create({
     userId,
     sessionHash: hashSessionToken(token),
@@ -69,9 +71,7 @@ async function login({ username, password }, req) {
 }
 
 /**
- * Issues a session and writes the audit entry for an already-authenticated
- * user. Shared by password login and WebAuthn login so the two can never
- * drift apart on session lifetime or auditing.
+ * Issues a session and writes the audit entry for an already-authenticated user.
  */
 async function issueSessionForUser(user, req, action = 'LOGIN_SUCCESS') {
   const permissions = await userRepository.getPermissionCodes(user.role_id);

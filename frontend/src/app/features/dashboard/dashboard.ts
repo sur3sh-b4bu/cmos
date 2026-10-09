@@ -1,6 +1,5 @@
 import { Component, DestroyRef, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,7 +8,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
-import { RealtimeService } from '../../core/services/realtime.service';
 import { CurrencyService } from '../../core/services/currency.service';
 import { DashboardFilterService } from '../../core/services/dashboard-filter.service';
 import { MasterLookupService } from '../../core/services/master-lookup.service';
@@ -48,7 +46,6 @@ export class DashboardComponent implements OnInit {
   private currencyService = inject(CurrencyService);
   private translate = inject(TranslateService);
   private dialog = inject(MatDialog);
-  private realtime = inject(RealtimeService);
   private destroyRef = inject(DestroyRef);
   /** The filter itself lives in the header, not on this page -- see
    * DashboardFilterService's own comment. */
@@ -114,25 +111,6 @@ export class DashboardComponent implements OnInit {
     this.currencyService.load();
     this.fetchStats();
     this.masterLookup.list<{ id: number; name: string }>('masses').subscribe((rows) => this.massOrder.set(rows));
-
-    // Another user of this church just changed a Mass Intention or a
-    // Contribution -- the stat cards/upcoming list/collections trend below are
-    // all derived from that same data, so quietly refetch instead of
-    // leaving them stale until the next manual reload.
-    this.realtime
-      .on('mass-intentions:changed')
-      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.fetchStats();
-        this.fetchPeriodStats();
-      });
-    this.realtime
-      .on('contributions:changed')
-      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.fetchStats();
-        this.fetchPeriodStats();
-      });
   }
 
   private fetchStats(): void {

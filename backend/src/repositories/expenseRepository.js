@@ -460,7 +460,7 @@ async function listTransactions({ churchId, branchId, dateFrom, dateTo, type, he
   const total = countRes[0].total;
 
   const listSql = `
-    SELECT e.*, ah.name AS account_head_name, ah.section, pm.name AS payment_method_name, u.display_name AS created_by_name
+    SELECT e.*, ah.name AS account_head_name, ah.tamil_name AS account_head_tamil_name, ah.section, pm.name AS payment_method_name, pm.code AS payment_method_code, u.full_name AS created_by_name
     FROM church_expenses e
     LEFT JOIN account_heads ah ON ah.id = e.head_id
     LEFT JOIN payment_methods pm ON pm.id = e.payment_method_id

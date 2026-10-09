@@ -20,7 +20,6 @@ import { NotificationService } from '../../../core/services/notification.service
 import { FileDownloadService } from '../../../core/services/file-download.service';
 import { extractErrorMessage } from '../../../core/utils/http-error.util';
 import { AuthService } from '../../../core/services/auth.service';
-import { RealtimeService } from '../../../core/services/realtime.service';
 import { CurrencyService } from '../../../core/services/currency.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { formatDateDMY } from '../../../core/utils/date-format.util';
@@ -55,7 +54,6 @@ export class MassIntentionsListComponent implements OnInit {
   currencyService = inject(CurrencyService);
   private translate = inject(TranslateService);
   private masterLookup = inject(MasterLookupService);
-  private realtime = inject(RealtimeService);
   private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -142,16 +140,6 @@ export class MassIntentionsListComponent implements OnInit {
     // are plain instant()-resolved text, so they need re-translating.
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.buildFilterFields());
     this.fetch();
-
-    // Another user of this SAME church (see socketServer.js's church-scoped
-    // rooms) just created/updated/deleted/paid a Mass Intention -- refetch
-    // so it shows up here without anyone needing a manual page reload.
-    // debounceTime coalesces a burst (e.g. a Bulk Mass Intention save
-    // creating several rows back to back) into a single refetch.
-    this.realtime
-      .on('mass-intentions:changed')
-      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.fetch());
   }
 
   /** Mass/Payment Method options come from their own masters lookup;

@@ -17,7 +17,6 @@ import { NotificationService } from '../../../core/services/notification.service
 import { FileDownloadService } from '../../../core/services/file-download.service';
 import { extractErrorMessage } from '../../../core/utils/http-error.util';
 import { AuthService } from '../../../core/services/auth.service';
-import { RealtimeService } from '../../../core/services/realtime.service';
 import { formatDateDMY } from '../../../core/utils/date-format.util';
 import { CertificateService, CertificateType } from '../certificate.service';
 import { ServerTransfer } from '../../../core/services/excel-transfer.service';
@@ -42,7 +41,6 @@ export class CertificateListComponent implements OnChanges, OnInit {
   private dialog = inject(MatDialog);
   private translate = inject(TranslateService);
   private masterLookup = inject(MasterLookupService);
-  private realtime = inject(RealtimeService);
   private destroyRef = inject(DestroyRef);
   authService = inject(AuthService);
 
@@ -137,12 +135,6 @@ export class CertificateListComponent implements OnChanges, OnInit {
    * only refetch if it's the type currently on screen, reading certType
    * fresh at event time rather than whatever it was when this subscribed. */
   ngOnInit(): void {
-    this.realtime
-      .on<{ type: CertificateType }>('certificates:changed')
-      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
-      .subscribe((payload) => {
-        if (payload.type === this.certType) this.fetch();
-      });
 
   }
 

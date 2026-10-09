@@ -6,7 +6,6 @@ const { generateContributionReceiptPdf } = require('../reports/contributionRecei
 const { generateContributionReceiptHtml } = require('../reports/contributionReceiptHtml');
 const ApiError = require('../utils/ApiError');
 const { pool } = require('../config/db');
-const { emitToChurch } = require('../realtime/socketServer');
 const { effectiveBranchId } = require('../utils/effectiveScope');
 
 /** `{ churchId, branchId }` for every read below -- churchId is always the
@@ -98,8 +97,6 @@ async function create(payload, req) {
     newValues: created,
   });
 
-  emitToChurch(churchId, 'contributions:changed', { action: 'created', id: created.id });
-
   return created;
 }
 
@@ -133,8 +130,6 @@ async function update(id, payload, req) {
     newValues: updated,
   });
 
-  emitToChurch(req.user.churchId, 'contributions:changed', { action: 'updated', id });
-
   return updated;
 }
 
@@ -149,7 +144,6 @@ async function remove(id, req) {
     entityId: id,
     oldValues: existing,
   });
-  emitToChurch(req.user.churchId, 'contributions:changed', { action: 'deleted', id });
 }
 
 async function refund(id, payload = {}, req) {
@@ -164,7 +158,6 @@ async function refund(id, payload = {}, req) {
     oldValues: existing,
     newValues: updated,
   });
-  emitToChurch(req.user.churchId, 'contributions:changed', { action: 'refunded', id });
   return updated;
 }
 
@@ -180,7 +173,6 @@ async function unrefund(id, req) {
     oldValues: existing,
     newValues: updated,
   });
-  emitToChurch(req.user.churchId, 'contributions:changed', { action: 'unrefunded', id });
   return updated;
 }
 

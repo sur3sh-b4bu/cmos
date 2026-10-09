@@ -10,11 +10,23 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ExpenseService } from './services/expense.service';
-import { AccountHead, ChurchExpenseTransaction, LedgerItem, MonthlyAbstract, MonthlyAccountsResponse } from './models/expense.model';
+import {
+  AccountHead,
+  ChurchExpenseTransaction,
+  LedgerItem,
+  MonthlyAbstract,
+} from './models/expense.model';
 import { NotificationService } from '../../core/services/notification.service';
 import { CurrencyService } from '../../core/services/currency.service';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
+import { MasterLookupService } from '../../core/services/master-lookup.service';
+
+export interface PaymentMethodMaster {
+  id: number;
+  name: string;
+  code: string;
+}
 
 @Component({
   selector: 'coms-expenses',
@@ -37,10 +49,11 @@ import { LanguageService } from '../../core/services/language.service';
 export class ExpensesComponent implements OnInit {
   private expenseService = inject(ExpenseService);
   private notification = inject(NotificationService);
+  private masterLookup = inject(MasterLookupService);
   currencyService = inject(CurrencyService);
   authService = inject(AuthService);
   languageService = inject(LanguageService);
-  private translate = inject(TranslateService);
+  translate = inject(TranslateService);
 
   // Active Month & Year
   currentYear = signal<number>(new Date().getFullYear());
@@ -77,13 +90,18 @@ export class ExpensesComponent implements OnInit {
 
   years: number[] = [];
 
+  // Main Top-level Tabs (0: Monthly Ledger & Abstract, 1: Daily Receipts & Payments Entry)
+  mainActiveTab = signal<number>(0);
+
+  // Sub-view inside Monthly Tab (0: Parish Journal Front, 1: Diocese Abstract Back)
+  monthlySubTab = signal<number>(0);
+
   // State
   loading = signal<boolean>(false);
   saving = signal<boolean>(false);
   printing = signal<boolean>(false);
-  activeTab = signal<number>(0);
 
-  // Ledger Data
+  // Ledger Data for Monthly View
   receipts = signal<LedgerItem[]>([]);
   payments = signal<LedgerItem[]>([]);
   abstract = signal<MonthlyAbstract>({
@@ -126,23 +144,19 @@ export class ExpensesComponent implements OnInit {
     fixedDeposits: 0,
   });
 
-  // Account Heads list for Quick Transaction Modal
+  // Account Heads & Payment Methods Masters
   accountHeads = signal<AccountHead[]>([]);
+  paymentMethods = signal<PaymentMethodMaster[]>([]);
 
-  // Transactions list
-  transactions = signal<ChurchExpenseTransaction[]>([]);
-  transactionsTotal = signal<number>(0);
-  txLoading = signal<boolean>(false);
-  txPage = signal<number>(1);
-  txLimit = signal<number>(25);
-
-  // New Transaction Form Model
-  showNewTxModal = signal<boolean>(false);
-  newTx = signal<{
+  // Daily Form Model
+  todayDateStr = new Date().toISOString().slice(0, 10);
+  dailyForm = signal<{
     entryDate: string;
     type: 'receipt' | 'payment';
     headId: number | null;
     headName: string;
+    paymentModeCode: string; // 'CASH' | 'BANK_TRANSFER' | 'CHEQUE' | 'UPI'
+    paymentMethodId: number | null;
     amount: number | null;
     voucherNo: string;
     paidTo: string;
@@ -152,13 +166,57 @@ export class ExpensesComponent implements OnInit {
     type: 'payment',
     headId: null,
     headName: '',
+    paymentModeCode: 'CASH',
+    paymentMethodId: null,
     amount: null,
     voucherNo: '',
     paidTo: '',
     notes: '',
   });
 
-  // Calculated totals
+  dailySubmitting = signal<boolean>(false);
+
+  // Daily Filter & Search
+  dailyFilterDate = signal<string>('');
+  dailyFilterType = signal<'ALL' | 'receipt' | 'payment'>('ALL');
+  dailyFilterHeadId = signal<number | null>(null);
+  dailySearchQuery = signal<string>('');
+
+  // Transactions list
+  transactions = signal<ChurchExpenseTransaction[]>([]);
+  transactionsTotal = signal<number>(0);
+  txLoading = signal<boolean>(false);
+  txPage = signal<number>(1);
+  txLimit = signal<number>(100);
+
+  // Filtered Heads for form
+  headsForCurrentType = computed(() => {
+    const t = this.dailyForm().type;
+    return this.accountHeads().filter((h) => h.type === t);
+  });
+
+  // Grouped heads by section for dropdown
+  groupedHeadsForType = computed(() => {
+    const heads = this.headsForCurrentType();
+    const groups: { section: string; items: AccountHead[] }[] = [];
+    const map = new Map<string, AccountHead[]>();
+
+    for (const h of heads) {
+      const sec = h.section || 'General';
+      if (!map.has(sec)) {
+        map.set(sec, []);
+      }
+      map.get(sec)!.push(h);
+    }
+
+    map.forEach((items, section) => {
+      groups.push({ section, items });
+    });
+
+    return groups;
+  });
+
+  // Calculated Monthly totals
   totalReceipts = computed(() => {
     return this.receipts().reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
   });
@@ -169,14 +227,12 @@ export class ExpensesComponent implements OnInit {
 
   // Abstract calculations
   abstractTotalReceiptsParish = computed(() => {
-    // Receipts from the parish journal excluding opening balances and specific project
     return this.receipts()
       .filter((r) => !['REC_OPEN_CASH', 'REC_OPEN_BANK', 'REC_OPEN_FD', 'REC_PROJ_INC'].includes(r.code || ''))
       .reduce((s, r) => s + (Number(r.amount) || 0), 0);
   });
 
   abstractTotalPaymentsParish = computed(() => {
-    // Payments from the parish journal excluding closing balances and specific project
     return this.payments()
       .filter((p) => !['PAY_CLOSE_CASH', 'PAY_CLOSE_BANK', 'PAY_CLOSE_FD', 'PAY_PROJ_SPENT'].includes(p.code || ''))
       .reduce((s, p) => s + (Number(p.amount) || 0), 0);
@@ -228,13 +284,108 @@ export class ExpensesComponent implements OnInit {
     return this.totalRemittance() - this.totalReceivables();
   });
 
+  // Daily Filtered Transactions
+  filteredTransactions = computed(() => {
+    let list = this.transactions();
+    const filterDate = this.dailyFilterDate();
+    const filterType = this.dailyFilterType();
+    const filterHead = this.dailyFilterHeadId();
+    const query = (this.dailySearchQuery() || '').toLowerCase().trim();
+
+    if (filterDate) {
+      list = list.filter((t) => t.entry_date === filterDate);
+    }
+    if (filterType !== 'ALL') {
+      list = list.filter((t) => t.type === filterType);
+    }
+    if (filterHead) {
+      list = list.filter((t) => t.head_id === Number(filterHead));
+    }
+    if (query) {
+      list = list.filter(
+        (t) =>
+          (t.head_name || '').toLowerCase().includes(query) ||
+          (t.account_head_name || '').toLowerCase().includes(query) ||
+          (t.account_head_tamil_name || '').toLowerCase().includes(query) ||
+          (t.paid_to || '').toLowerCase().includes(query) ||
+          (t.voucher_no || '').toLowerCase().includes(query) ||
+          (t.notes || '').toLowerCase().includes(query)
+      );
+    }
+    return list;
+  });
+
+  // Daily / Month Aggregate Summary
+  dailySummaryStats = computed(() => {
+    const list = this.filteredTransactions();
+    let totalReceipts = 0;
+    let totalPayments = 0;
+    let cashReceipts = 0;
+    let bankReceipts = 0;
+    let upiReceipts = 0;
+    let cashPayments = 0;
+    let bankPayments = 0;
+    let upiPayments = 0;
+
+    for (const item of list) {
+      const amt = Number(item.amount) || 0;
+      const code = (item.payment_method_code || '').toUpperCase();
+
+      if (item.type === 'receipt') {
+        totalReceipts += amt;
+        if (code === 'CASH') cashReceipts += amt;
+        else if (code === 'UPI') upiReceipts += amt;
+        else bankReceipts += amt;
+      } else {
+        totalPayments += amt;
+        if (code === 'CASH') cashPayments += amt;
+        else if (code === 'UPI') upiPayments += amt;
+        else bankPayments += amt;
+      }
+    }
+
+    return {
+      count: list.length,
+      totalReceipts,
+      totalPayments,
+      netCashflow: totalReceipts - totalPayments,
+      cashReceipts,
+      bankReceipts,
+      upiReceipts,
+      cashPayments,
+      bankPayments,
+      upiPayments,
+    };
+  });
+
   ngOnInit(): void {
     const currentY = new Date().getFullYear();
     for (let y = currentY + 1; y >= currentY - 5; y--) {
       this.years.push(y);
     }
+
     this.loadMonthlyAccounts();
     this.loadAccountHeads();
+    this.loadPaymentMethods();
+    this.loadTransactions();
+  }
+
+  loadPaymentMethods(): void {
+    this.masterLookup.list<PaymentMethodMaster>('payment_methods').subscribe({
+      next: (methods) => {
+        this.paymentMethods.set(methods || []);
+        // Set default payment method if available
+        const cashMethod = methods.find((m) => m.code === 'CASH');
+        if (cashMethod && !this.dailyForm().paymentMethodId) {
+          this.dailyForm.update((f) => ({
+            ...f,
+            paymentModeCode: 'CASH',
+            paymentMethodId: cashMethod.id,
+          }));
+        }
+      },
+      error: (err) => console.error('Error fetching payment methods', err),
+    });
   }
 
   loadAccountHeads(): void {
@@ -251,7 +402,9 @@ export class ExpensesComponent implements OnInit {
         this.receipts.set(data.receipts || []);
         this.payments.set(data.payments || []);
         this.abstract.set(data.abstract || ({} as any));
-        this.autoAggregates.set(data.autoAggregates || { massIntentionsOffering: 0, massIntentionsCount: 0, contributionsByType: {} });
+        this.autoAggregates.set(
+          data.autoAggregates || { massIntentionsOffering: 0, massIntentionsCount: 0, contributionsByType: {} }
+        );
         this.prevMonthClosing.set(data.prevMonthClosing || { cashHand: 0, cashBank: 0, fixedDeposits: 0 });
         this.loading.set(false);
       },
@@ -264,17 +417,25 @@ export class ExpensesComponent implements OnInit {
 
   onMonthChange(month: number): void {
     this.currentMonth.set(month);
+    this.syncDailyEntryDateWithMonth();
     this.loadMonthlyAccounts();
-    if (this.activeTab() === 2) {
-      this.loadTransactions();
-    }
+    this.loadTransactions();
   }
 
   onYearChange(year: number): void {
     this.currentYear.set(year);
+    this.syncDailyEntryDateWithMonth();
     this.loadMonthlyAccounts();
-    if (this.activeTab() === 2) {
-      this.loadTransactions();
+    this.loadTransactions();
+  }
+
+  syncDailyEntryDateWithMonth(): void {
+    const today = new Date();
+    const isCurrent = today.getFullYear() === this.currentYear() && today.getMonth() + 1 === this.currentMonth();
+    if (isCurrent) {
+      this.dailyForm.update((f) => ({ ...f, entryDate: today.toISOString().slice(0, 10) }));
+    } else {
+      this.dailyForm.update((f) => ({ ...f, entryDate: `${this.monthYear()}-01` }));
     }
   }
 
@@ -287,7 +448,9 @@ export class ExpensesComponent implements OnInit {
     }
     this.currentMonth.set(m);
     this.currentYear.set(y);
+    this.syncDailyEntryDateWithMonth();
     this.loadMonthlyAccounts();
+    this.loadTransactions();
   }
 
   nextMonth(): void {
@@ -299,7 +462,9 @@ export class ExpensesComponent implements OnInit {
     }
     this.currentMonth.set(m);
     this.currentYear.set(y);
+    this.syncDailyEntryDateWithMonth();
     this.loadMonthlyAccounts();
+    this.loadTransactions();
   }
 
   saveLedger(): void {
@@ -383,10 +548,12 @@ export class ExpensesComponent implements OnInit {
     });
   }
 
-  onTabChange(index: number): void {
-    this.activeTab.set(index);
-    if (index === 2) {
+  onMainTabChange(index: number): void {
+    this.mainActiveTab.set(index);
+    if (index === 1) {
       this.loadTransactions();
+    } else {
+      this.loadMonthlyAccounts();
     }
   }
 
@@ -420,84 +587,134 @@ export class ExpensesComponent implements OnInit {
       });
   }
 
-  openNewTxModal(): void {
-    this.newTx.set({
-      entryDate: `${this.monthYear()}-01`,
-      type: 'payment',
+  // Daily Entry Form Methods
+  setDailyType(type: 'receipt' | 'payment'): void {
+    this.dailyForm.update((f) => ({
+      ...f,
+      type,
       headId: null,
       headName: '',
-      amount: null,
-      voucherNo: '',
-      paidTo: '',
-      notes: '',
-    });
-    this.showNewTxModal.set(true);
+    }));
   }
 
-  closeNewTxModal(): void {
-    this.showNewTxModal.set(false);
+  setPaymentMode(code: string): void {
+    const matched = this.paymentMethods().find((m) => m.code === code);
+    this.dailyForm.update((f) => ({
+      ...f,
+      paymentModeCode: code,
+      paymentMethodId: matched ? matched.id : null,
+    }));
   }
 
-  onTxHeadChange(headId: number): void {
+  onDailyHeadChange(headId: any): void {
     const head = this.accountHeads().find((h) => h.id === Number(headId));
     if (head) {
-      this.newTx.update((prev) => ({
-        ...prev,
+      this.dailyForm.update((f) => ({
+        ...f,
         headId: head.id,
         headName: head.name,
-        type: head.type,
+      }));
+    } else {
+      this.dailyForm.update((f) => ({
+        ...f,
+        headId: null,
+        headName: '',
       }));
     }
   }
 
-  submitNewTransaction(): void {
-    const tx = this.newTx();
-    if (!tx.amount || tx.amount <= 0) {
+  submitDailyTransaction(): void {
+    const f = this.dailyForm();
+    if (!f.entryDate) {
+      this.notification.warning('Please select an entry date');
+      return;
+    }
+    if (!f.amount || f.amount <= 0) {
       this.notification.warning('Please enter a valid amount');
       return;
     }
-    if (!tx.headName && !tx.headId) {
+    if (!f.headId && !f.headName) {
       this.notification.warning('Please select an account head');
       return;
     }
 
+    // Resolve payment method id
+    let pmId = f.paymentMethodId;
+    if (!pmId && f.paymentModeCode) {
+      const pm = this.paymentMethods().find((m) => m.code === f.paymentModeCode);
+      if (pm) pmId = pm.id;
+    }
+
+    this.dailySubmitting.set(true);
+
     this.expenseService
       .createTransaction({
-        entryDate: tx.entryDate,
-        type: tx.type,
-        headId: tx.headId ? Number(tx.headId) : null,
-        headName: tx.headName || 'General Expense',
-        amount: Number(tx.amount),
-        voucherNo: tx.voucherNo || null,
-        paidTo: tx.paidTo || null,
-        notes: tx.notes || null,
+        entryDate: f.entryDate,
+        type: f.type,
+        headId: f.headId ? Number(f.headId) : null,
+        headName: f.headName || 'General',
+        amount: Number(f.amount),
+        paymentMethodId: pmId || null,
+        voucherNo: f.voucherNo || null,
+        paidTo: f.paidTo || null,
+        notes: f.notes || null,
       })
       .subscribe({
         next: () => {
-          this.notification.success('Transaction added successfully');
-          this.closeNewTxModal();
-          this.loadMonthlyAccounts();
+          this.dailySubmitting.set(false);
+          this.notification.success(
+            f.type === 'receipt'
+              ? 'Receipt entry saved and added to monthly calculation.'
+              : 'Payment entry saved and added to monthly calculation.'
+          );
+
+          // Reset amount and notes, keep date and type
+          this.dailyForm.update((prev) => ({
+            ...prev,
+            amount: null,
+            voucherNo: '',
+            paidTo: '',
+            notes: '',
+          }));
+
+          // Reload both daily audit log and monthly ledger calculation immediately
           this.loadTransactions();
+          this.loadMonthlyAccounts();
         },
         error: (err) => {
+          this.dailySubmitting.set(false);
           this.notification.error(err.message || 'Failed to save transaction');
         },
       });
   }
 
+  resetDailyForm(): void {
+    this.dailyForm.update((prev) => ({
+      ...prev,
+      amount: null,
+      voucherNo: '',
+      paidTo: '',
+      notes: '',
+      headId: null,
+      headName: '',
+    }));
+  }
+
   deleteTransaction(id: number): void {
-    if (!confirm('Are you sure you want to delete this transaction entry?')) return;
+    const confirmMsg = this.translate.instant('expenses.deleteConfirm');
+    if (!confirm(confirmMsg)) return;
+
     this.expenseService.deleteTransaction(id).subscribe({
       next: () => {
         this.notification.success('Transaction deleted');
-        this.loadMonthlyAccounts();
         this.loadTransactions();
+        this.loadMonthlyAccounts();
       },
       error: (err) => this.notification.error(err.message || 'Failed to delete transaction'),
     });
   }
 
-  // Update item amount on manual entry
+  // Update item amount on manual entry in front page
   updateItemAmount(item: LedgerItem, newAmount: any): void {
     const parsed = parseFloat(newAmount) || 0;
     item.amount = parsed;
@@ -525,5 +742,35 @@ export class ExpensesComponent implements OnInit {
     const m = this.months.find((item) => item.value === this.currentMonth());
     if (!m) return '';
     return this.languageService.isTamil() ? m.tamilName : m.name;
+  }
+
+  getPaymentMethodIcon(code?: string): string {
+    switch ((code || '').toUpperCase()) {
+      case 'CASH':
+        return 'payments';
+      case 'UPI':
+        return 'qr_code_2';
+      case 'CHEQUE':
+        return 'request_quote';
+      case 'BANK_TRANSFER':
+      case 'CARD':
+        return 'account_balance';
+      default:
+        return 'credit_card';
+    }
+  }
+
+  getPaymentMethodLabel(code?: string): string {
+    switch ((code || '').toUpperCase()) {
+      case 'CASH':
+        return this.translate.instant('expenses.cashHand');
+      case 'UPI':
+        return this.translate.instant('expenses.onlineUpi');
+      case 'CHEQUE':
+      case 'BANK_TRANSFER':
+        return this.translate.instant('expenses.cashBank');
+      default:
+        return code || 'Cash';
+    }
   }
 }

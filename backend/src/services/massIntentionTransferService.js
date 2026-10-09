@@ -5,7 +5,6 @@ const massIntentionRepository = require('../repositories/massIntentionRepository
 const lookupRepository = require('../repositories/lookupRepository');
 const auditService = require('./auditService');
 const { pool } = require('../config/db');
-const { emitToChurch } = require('../realtime/socketServer');
 const { effectiveBranchId } = require('../utils/effectiveScope');
 const { findMatch } = require('../utils/restrictedDates');
 const { runImport } = require('../excel/importEngine');
@@ -182,7 +181,6 @@ async function importMassIntentions({ buffer, fileName, lang, mapping }, req) {
       entityType: 'mass_intentions',
       newValues: { file: fileName, imported: report.imported, failed: report.failed },
     });
-    emitToChurch(req.user.churchId, 'mass-intentions:changed', { action: 'imported' });
   }
   return report;
 }

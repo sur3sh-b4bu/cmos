@@ -6,7 +6,6 @@ const auditService = require('./auditService');
 const { generateCertificatePdf } = require('../reports/certificatePdf');
 const ApiError = require('../utils/ApiError');
 const { pool } = require('../config/db');
-const { emitToChurch } = require('../realtime/socketServer');
 const { effectiveBranchId } = require('../utils/effectiveScope');
 const { getCertificateColumns, columnLabel } = require('../excel/specs/certificateSpec');
 const { CERTIFICATE_DATE_RULES, checkDateRules, normalizeDateFields } = require('../validators/businessRules');
@@ -109,7 +108,6 @@ async function create(type, rawPayload, req) {
     entityId: created.id,
     newValues: created,
   });
-  emitToChurch(churchId, 'certificates:changed', { type, action: 'created', id: created.id });
   return created;
 }
 
@@ -127,7 +125,6 @@ async function update(type, id, rawPayload, req) {
     oldValues: before,
     newValues: updated,
   });
-  emitToChurch(req.user.churchId, 'certificates:changed', { type, action: 'updated', id });
   return updated;
 }
 
@@ -143,7 +140,6 @@ async function remove(type, id, req) {
     entityId: id,
     oldValues: before,
   });
-  emitToChurch(req.user.churchId, 'certificates:changed', { type, action: 'deleted', id });
 }
 
 const templateRepo = require('../repositories/certificateTemplateRepository');

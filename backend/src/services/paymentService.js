@@ -8,7 +8,6 @@ const { effectiveBranchId } = require('../utils/effectiveScope');
 const { resolveProvider } = require('../payments');
 const ApiError = require('../utils/ApiError');
 const { pool } = require('../config/db');
-const { emitToChurch } = require('../realtime/socketServer');
 const { toLocalDateString } = require('../utils/dateFormat');
 
 const VALID_METHODS = ['cash', 'upi', 'cheque', 'bank_transfer', 'other'];
@@ -83,8 +82,6 @@ async function receivePayment(intentionId, payload, req) {
     entityId: intentionId,
     newValues: { method: payload.method, referenceNumber: payload.referenceNumber || null, amount: intention.offering_amount },
   });
-
-  emitToChurch(intention.church_id, 'mass-intentions:changed', { action: 'paid', id: intentionId });
 
   return updated;
 }

@@ -1,1 +1,0 @@
-import{W as n,sa as t}from"./chunk-A3OL4LEI.js";var o=class a{range=t({from:"",to:""});label=t("");setRange(e){this.range.set(e)}setLabel(e){this.label.set(e)}static \u0275fac=function(r){return new(r||a)};static \u0275prov=n({token:a,factory:a.\u0275fac,providedIn:"root"})};export{o as a};

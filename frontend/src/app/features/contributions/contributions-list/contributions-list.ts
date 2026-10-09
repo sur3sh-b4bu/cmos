@@ -20,7 +20,6 @@ import { NotificationService } from '../../../core/services/notification.service
 import { FileDownloadService } from '../../../core/services/file-download.service';
 import { extractErrorMessage } from '../../../core/utils/http-error.util';
 import { AuthService } from '../../../core/services/auth.service';
-import { RealtimeService } from '../../../core/services/realtime.service';
 import { CurrencyService } from '../../../core/services/currency.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { formatDateDMY } from '../../../core/utils/date-format.util';
@@ -55,7 +54,6 @@ export class ContributionsListComponent implements OnInit {
   currencyService = inject(CurrencyService);
   private translate = inject(TranslateService);
   private masterLookup = inject(MasterLookupService);
-  private realtime = inject(RealtimeService);
   private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -122,11 +120,6 @@ export class ContributionsListComponent implements OnInit {
     this.buildFilterFields();
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.buildFilterFields());
     this.fetch();
-
-    this.realtime
-      .on('contributions:changed')
-      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.fetch());
   }
 
   private buildFilterFields(): void {

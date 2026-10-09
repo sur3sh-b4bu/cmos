@@ -1,0 +1,6 @@
+{
+  "production": true,
+  "apiBaseUrl": "/api",
+  "backendIp": "",
+  "backendPort": 4000
+}

@@ -3,7 +3,6 @@
 const contributionRepository = require('../repositories/contributionRepository');
 const auditService = require('./auditService');
 const { pool } = require('../config/db');
-const { emitToChurch } = require('../realtime/socketServer');
 const { effectiveBranchId } = require('../utils/effectiveScope');
 const { runImport } = require('../excel/importEngine');
 const { buildWorkbookBuffer } = require('../excel/workbookWriter');
@@ -111,7 +110,6 @@ async function importContributions({ buffer, fileName, lang, mapping }, req) {
       entityType: 'contributions',
       newValues: { file: fileName, imported: report.imported, failed: report.failed },
     });
-    emitToChurch(req.user.churchId, 'contributions:changed', { action: 'imported' });
   }
   return report;
 }

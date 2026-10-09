@@ -2,7 +2,6 @@ jest.mock('../repositories/massIntentionRepository');
 jest.mock('../repositories/receiptSeriesRepository');
 jest.mock('../repositories/lookupRepository');
 jest.mock('../services/auditService');
-jest.mock('../realtime/socketServer', () => ({ emitToChurch: jest.fn() }));
 jest.mock('../config/db', () => ({ pool: { getConnection: jest.fn() } }));
 
 const massIntentionRepository = require('../repositories/massIntentionRepository');

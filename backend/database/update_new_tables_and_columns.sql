@@ -5,7 +5,7 @@
 -- Can be run in MySQL Workbench, phpMyAdmin, HeidiSQL, or MySQL CLI.
 --
 -- Logic:
--- 1. Creates any missing tables with IF NOT EXISTS.
+-- 1. Creates any missing tables with IF NOT EXISTS (All 43 tables).
 -- 2. Checks information_schema for every column:
 --    IF column exists -> SKIPS and logs verified
 --    IF column missing -> ADDS column safely without disturbing data
@@ -263,7 +263,7 @@ CREATE TABLE IF NOT EXISTS `roles` (
   `updated_by` INT UNSIGNED NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
-  `church_id` INT UNSIGNED NULL AFTER description,,
+  `church_id` INT UNSIGNED NULL AFTER description,
   UNIQUE KEY `uq_roles_code` (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -625,9 +625,9 @@ CREATE TABLE IF NOT EXISTS `prayer_intentions` (
   `updated_by` INT UNSIGNED NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
-  `public_token` CHAR(32) NULL AFTER receipt_no,,
-  `bulk_batch_id` VARCHAR(36) NULL AFTER public_token,,
-  `is_refunded` TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active,,
+  `public_token` CHAR(32) NULL AFTER receipt_no,
+  `bulk_batch_id` VARCHAR(36) NULL AFTER public_token,
+  `is_refunded` TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active,
   UNIQUE KEY `uq_prayer_intentions_receipt` (receipt_no),
   KEY `idx_prayer_intentions_date_mass` (prayer_date, mass_id),
   KEY `idx_prayer_intentions_status` (status_id),
@@ -655,8 +655,8 @@ CREATE TABLE IF NOT EXISTS `baptism_certificates` (
   `updated_by` INT UNSIGNED NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
-  `place_of_baptism` VARCHAR(200) NULL AFTER date_of_baptism,,
-  `branch_id` INT UNSIGNED NULL AFTER church_id,,
+  `place_of_baptism` VARCHAR(200) NULL AFTER date_of_baptism,
+  `branch_id` INT UNSIGNED NULL AFTER church_id,
   UNIQUE KEY `uq_baptism_certificate_no` (certificate_no),
   KEY `idx_baptism_child_name` (child_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -679,9 +679,9 @@ CREATE TABLE IF NOT EXISTS `marriage_certificates` (
   `updated_by` INT UNSIGNED NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
-  `where_married` VARCHAR(200) NULL AFTER marriage_date,,
-  `branch_id` INT UNSIGNED NULL AFTER church_id,,
-  `witness3_name` VARCHAR(150) NULL AFTER witness2_name,,
+  `where_married` VARCHAR(200) NULL AFTER marriage_date,
+  `branch_id` INT UNSIGNED NULL AFTER church_id,
+  `witness3_name` VARCHAR(150) NULL AFTER witness2_name,
   UNIQUE KEY `uq_marriage_certificate_no` (certificate_no),
   KEY `idx_marriage_names` (bride_name, groom_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -704,8 +704,8 @@ CREATE TABLE IF NOT EXISTS `death_certificates` (
   `updated_by` INT UNSIGNED NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
-  `age` VARCHAR(10) NULL AFTER deceased_name,,
-  `branch_id` INT UNSIGNED NULL AFTER church_id,,
+  `age` VARCHAR(10) NULL AFTER deceased_name,
+  `branch_id` INT UNSIGNED NULL AFTER church_id,
   UNIQUE KEY `uq_death_certificate_no` (certificate_no),
   KEY `idx_death_deceased_name` (deceased_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -765,7 +765,7 @@ CREATE TABLE IF NOT EXISTS `payment_transactions` (
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` INT UNSIGNED NULL,
   `verified_at` DATETIME NULL,
-  `method` ENUM('cash', 'upi', 'cheque', 'bank_transfer', 'other') NULL AFTER provider,,
+  `method` ENUM('cash', 'upi', 'cheque', 'bank_transfer', 'other') NULL AFTER provider,
   UNIQUE KEY `uq_payment_transactions_ref` (transaction_ref),
   KEY `idx_payment_transactions_intention` (prayer_intention_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1070,7 +1070,7 @@ CALL CheckAndSyncColumn('roles', 'updated_at', 'DATETIME NOT NULL DEFAULT CURREN
 CALL CheckAndSyncColumn('roles', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
 CALL CheckAndSyncColumn('roles', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
 CALL CheckAndSyncColumn('roles', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
-CALL CheckAndSyncColumn('roles', 'church_id', 'INT UNSIGNED NULL AFTER description,', 'is_deleted');
+CALL CheckAndSyncColumn('roles', 'church_id', 'INT UNSIGNED NULL AFTER description', 'is_deleted');
 
 -- Table: permissions
 CALL CheckAndSyncColumn('permissions', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
@@ -1387,9 +1387,9 @@ CALL CheckAndSyncColumn('prayer_intentions', 'updated_at', 'DATETIME NOT NULL DE
 CALL CheckAndSyncColumn('prayer_intentions', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
 CALL CheckAndSyncColumn('prayer_intentions', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
 CALL CheckAndSyncColumn('prayer_intentions', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
-CALL CheckAndSyncColumn('prayer_intentions', 'public_token', 'CHAR(32) NULL AFTER receipt_no,', 'is_deleted');
-CALL CheckAndSyncColumn('prayer_intentions', 'bulk_batch_id', 'VARCHAR(36) NULL AFTER public_token,', 'public_token');
-CALL CheckAndSyncColumn('prayer_intentions', 'is_refunded', 'TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active,', 'bulk_batch_id');
+CALL CheckAndSyncColumn('prayer_intentions', 'public_token', 'CHAR(32) NULL AFTER receipt_no', 'is_deleted');
+CALL CheckAndSyncColumn('prayer_intentions', 'bulk_batch_id', 'VARCHAR(36) NULL AFTER public_token', 'public_token');
+CALL CheckAndSyncColumn('prayer_intentions', 'is_refunded', 'TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active', 'bulk_batch_id');
 
 -- Table: baptism_certificates
 CALL CheckAndSyncColumn('baptism_certificates', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
@@ -1412,8 +1412,8 @@ CALL CheckAndSyncColumn('baptism_certificates', 'updated_at', 'DATETIME NOT NULL
 CALL CheckAndSyncColumn('baptism_certificates', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
 CALL CheckAndSyncColumn('baptism_certificates', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
 CALL CheckAndSyncColumn('baptism_certificates', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
-CALL CheckAndSyncColumn('baptism_certificates', 'place_of_baptism', 'VARCHAR(200) NULL AFTER date_of_baptism,', 'is_deleted');
-CALL CheckAndSyncColumn('baptism_certificates', 'branch_id', 'INT UNSIGNED NULL AFTER church_id,', 'place_of_baptism');
+CALL CheckAndSyncColumn('baptism_certificates', 'place_of_baptism', 'VARCHAR(200) NULL AFTER date_of_baptism', 'is_deleted');
+CALL CheckAndSyncColumn('baptism_certificates', 'branch_id', 'INT UNSIGNED NULL AFTER church_id', 'place_of_baptism');
 
 -- Table: marriage_certificates
 CALL CheckAndSyncColumn('marriage_certificates', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
@@ -1433,9 +1433,9 @@ CALL CheckAndSyncColumn('marriage_certificates', 'updated_at', 'DATETIME NOT NUL
 CALL CheckAndSyncColumn('marriage_certificates', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
 CALL CheckAndSyncColumn('marriage_certificates', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
 CALL CheckAndSyncColumn('marriage_certificates', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
-CALL CheckAndSyncColumn('marriage_certificates', 'where_married', 'VARCHAR(200) NULL AFTER marriage_date,', 'is_deleted');
-CALL CheckAndSyncColumn('marriage_certificates', 'branch_id', 'INT UNSIGNED NULL AFTER church_id,', 'where_married');
-CALL CheckAndSyncColumn('marriage_certificates', 'witness3_name', 'VARCHAR(150) NULL AFTER witness2_name,', 'branch_id');
+CALL CheckAndSyncColumn('marriage_certificates', 'where_married', 'VARCHAR(200) NULL AFTER marriage_date', 'is_deleted');
+CALL CheckAndSyncColumn('marriage_certificates', 'branch_id', 'INT UNSIGNED NULL AFTER church_id', 'where_married');
+CALL CheckAndSyncColumn('marriage_certificates', 'witness3_name', 'VARCHAR(150) NULL AFTER witness2_name', 'branch_id');
 
 -- Table: death_certificates
 CALL CheckAndSyncColumn('death_certificates', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
@@ -1455,8 +1455,8 @@ CALL CheckAndSyncColumn('death_certificates', 'updated_at', 'DATETIME NOT NULL D
 CALL CheckAndSyncColumn('death_certificates', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
 CALL CheckAndSyncColumn('death_certificates', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
 CALL CheckAndSyncColumn('death_certificates', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
-CALL CheckAndSyncColumn('death_certificates', 'age', 'VARCHAR(10) NULL AFTER deceased_name,', 'is_deleted');
-CALL CheckAndSyncColumn('death_certificates', 'branch_id', 'INT UNSIGNED NULL AFTER church_id,', 'age');
+CALL CheckAndSyncColumn('death_certificates', 'age', 'VARCHAR(10) NULL AFTER deceased_name', 'is_deleted');
+CALL CheckAndSyncColumn('death_certificates', 'branch_id', 'INT UNSIGNED NULL AFTER church_id', 'age');
 
 -- Table: audit_logs
 CALL CheckAndSyncColumn('audit_logs', 'id', 'BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
@@ -1504,7 +1504,7 @@ CALL CheckAndSyncColumn('payment_transactions', 'failure_reason', 'VARCHAR(255) 
 CALL CheckAndSyncColumn('payment_transactions', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'failure_reason');
 CALL CheckAndSyncColumn('payment_transactions', 'created_by', 'INT UNSIGNED NULL', 'created_at');
 CALL CheckAndSyncColumn('payment_transactions', 'verified_at', 'DATETIME NULL', 'created_by');
-CALL CheckAndSyncColumn('payment_transactions', 'method', 'ENUM(\'cash\', \'upi\', \'cheque\', \'bank_transfer\', \'other\') NULL AFTER provider,', 'verified_at');
+CALL CheckAndSyncColumn('payment_transactions', 'method', 'ENUM(\'cash\', \'upi\', \'cheque\', \'bank_transfer\', \'other\') NULL AFTER provider', 'verified_at');
 
 -- Table: contributions
 CALL CheckAndSyncColumn('contributions', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');

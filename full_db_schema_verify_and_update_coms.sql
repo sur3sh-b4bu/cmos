@@ -871,8 +871,44 @@ CREATE TABLE IF NOT EXISTS `monthly_financial_abstracts` (
 
 
 -- =============================================================================
--- 2. COLUMN-BY-COLUMN VERIFICATION & SAFE ADDITION
+-- 2. COLUMN-BY-COLUMN VERIFICATION & SAFE ADDITION (ALL TABLES & COLUMNS)
 -- =============================================================================
+
+-- Table: countries
+CALL CheckAndSyncColumn('countries', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('countries', 'name', 'VARCHAR(100) NOT NULL', 'id');
+CALL CheckAndSyncColumn('countries', 'iso_code', 'VARCHAR(3) NOT NULL', 'name');
+CALL CheckAndSyncColumn('countries', 'phone_code', 'VARCHAR(10) NULL', 'iso_code');
+CALL CheckAndSyncColumn('countries', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'phone_code');
+CALL CheckAndSyncColumn('countries', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('countries', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('countries', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('countries', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('countries', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: states
+CALL CheckAndSyncColumn('states', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('states', 'country_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('states', 'name', 'VARCHAR(100) NOT NULL', 'country_id');
+CALL CheckAndSyncColumn('states', 'code', 'VARCHAR(10) NULL', 'name');
+CALL CheckAndSyncColumn('states', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'code');
+CALL CheckAndSyncColumn('states', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('states', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('states', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('states', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('states', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: districts
+CALL CheckAndSyncColumn('districts', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('districts', 'state_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('districts', 'name', 'VARCHAR(100) NOT NULL', 'state_id');
+CALL CheckAndSyncColumn('districts', 'code', 'VARCHAR(10) NULL', 'name');
+CALL CheckAndSyncColumn('districts', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'code');
+CALL CheckAndSyncColumn('districts', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('districts', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('districts', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('districts', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('districts', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
 
 -- Table: churches
 CALL CheckAndSyncColumn('churches', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
@@ -903,6 +939,36 @@ CALL CheckAndSyncColumn('churches', 'updated_by', 'INT UNSIGNED NULL', 'updated_
 CALL CheckAndSyncColumn('churches', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
 CALL CheckAndSyncColumn('churches', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
 
+-- Table: branches
+CALL CheckAndSyncColumn('branches', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('branches', 'church_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('branches', 'name', 'VARCHAR(150) NOT NULL', 'church_id');
+CALL CheckAndSyncColumn('branches', 'code', 'VARCHAR(30) NULL', 'name');
+CALL CheckAndSyncColumn('branches', 'address', 'VARCHAR(255) NULL', 'code');
+CALL CheckAndSyncColumn('branches', 'phone', 'VARCHAR(20) NULL', 'address');
+CALL CheckAndSyncColumn('branches', 'email', 'VARCHAR(150) NULL', 'phone');
+CALL CheckAndSyncColumn('branches', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'email');
+CALL CheckAndSyncColumn('branches', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('branches', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('branches', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('branches', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('branches', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: priests
+CALL CheckAndSyncColumn('priests', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('priests', 'church_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('priests', 'name', 'VARCHAR(150) NOT NULL', 'church_id');
+CALL CheckAndSyncColumn('priests', 'title', 'VARCHAR(50) NULL DEFAULT \'Rev. Fr.\'', 'name');
+CALL CheckAndSyncColumn('priests', 'phone', 'VARCHAR(20) NULL', 'title');
+CALL CheckAndSyncColumn('priests', 'email', 'VARCHAR(150) NULL', 'phone');
+CALL CheckAndSyncColumn('priests', 'is_parish_priest', 'TINYINT(1) NOT NULL DEFAULT 0', 'email');
+CALL CheckAndSyncColumn('priests', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'is_parish_priest');
+CALL CheckAndSyncColumn('priests', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('priests', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('priests', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('priests', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('priests', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
 -- Table: masses
 CALL CheckAndSyncColumn('masses', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
 CALL CheckAndSyncColumn('masses', 'church_id', 'INT UNSIGNED NOT NULL', 'id');
@@ -921,6 +987,91 @@ CALL CheckAndSyncColumn('masses', 'updated_by', 'INT UNSIGNED NULL', 'updated_at
 CALL CheckAndSyncColumn('masses', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
 CALL CheckAndSyncColumn('masses', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
 
+-- Table: roles
+CALL CheckAndSyncColumn('roles', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('roles', 'name', 'VARCHAR(100) NOT NULL', 'id');
+CALL CheckAndSyncColumn('roles', 'code', 'VARCHAR(50) NOT NULL', 'name');
+CALL CheckAndSyncColumn('roles', 'description', 'VARCHAR(255) NULL', 'code');
+CALL CheckAndSyncColumn('roles', 'church_id', 'INT UNSIGNED NULL', 'description');
+CALL CheckAndSyncColumn('roles', 'is_system_role', 'TINYINT(1) NOT NULL DEFAULT 0', 'church_id');
+CALL CheckAndSyncColumn('roles', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'is_system_role');
+CALL CheckAndSyncColumn('roles', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('roles', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('roles', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('roles', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('roles', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: permissions
+CALL CheckAndSyncColumn('permissions', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('permissions', 'module', 'VARCHAR(50) NOT NULL', 'id');
+CALL CheckAndSyncColumn('permissions', 'action', 'VARCHAR(50) NOT NULL', 'module');
+CALL CheckAndSyncColumn('permissions', 'code', 'VARCHAR(100) NOT NULL', 'action');
+CALL CheckAndSyncColumn('permissions', 'description', 'VARCHAR(255) NULL', 'code');
+CALL CheckAndSyncColumn('permissions', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'description');
+CALL CheckAndSyncColumn('permissions', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('permissions', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('permissions', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('permissions', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('permissions', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: role_permissions
+CALL CheckAndSyncColumn('role_permissions', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('role_permissions', 'role_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('role_permissions', 'permission_id', 'INT UNSIGNED NOT NULL', 'role_id');
+CALL CheckAndSyncColumn('role_permissions', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'permission_id');
+CALL CheckAndSyncColumn('role_permissions', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('role_permissions', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('role_permissions', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('role_permissions', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('role_permissions', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: statuses
+CALL CheckAndSyncColumn('statuses', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('statuses', 'entity_type', 'VARCHAR(50) NOT NULL', 'id');
+CALL CheckAndSyncColumn('statuses', 'code', 'VARCHAR(50) NOT NULL', 'entity_type');
+CALL CheckAndSyncColumn('statuses', 'label', 'VARCHAR(100) NOT NULL', 'code');
+CALL CheckAndSyncColumn('statuses', 'color', 'VARCHAR(20) NULL', 'label');
+CALL CheckAndSyncColumn('statuses', 'sort_order', 'INT NOT NULL DEFAULT 0', 'color');
+CALL CheckAndSyncColumn('statuses', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'sort_order');
+CALL CheckAndSyncColumn('statuses', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('statuses', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('statuses', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('statuses', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('statuses', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: genders
+CALL CheckAndSyncColumn('genders', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('genders', 'name', 'VARCHAR(30) NOT NULL', 'id');
+CALL CheckAndSyncColumn('genders', 'code', 'VARCHAR(10) NOT NULL', 'name');
+CALL CheckAndSyncColumn('genders', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'code');
+CALL CheckAndSyncColumn('genders', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('genders', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('genders', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('genders', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('genders', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: departments
+CALL CheckAndSyncColumn('departments', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('departments', 'name', 'VARCHAR(100) NOT NULL', 'id');
+CALL CheckAndSyncColumn('departments', 'code', 'VARCHAR(30) NOT NULL', 'name');
+CALL CheckAndSyncColumn('departments', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'code');
+CALL CheckAndSyncColumn('departments', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('departments', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('departments', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('departments', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('departments', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: languages
+CALL CheckAndSyncColumn('languages', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('languages', 'name', 'VARCHAR(50) NOT NULL', 'id');
+CALL CheckAndSyncColumn('languages', 'code', 'VARCHAR(10) NOT NULL', 'name');
+CALL CheckAndSyncColumn('languages', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'code');
+CALL CheckAndSyncColumn('languages', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('languages', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('languages', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('languages', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('languages', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
 -- Table: prayer_intention_master
 CALL CheckAndSyncColumn('prayer_intention_master', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
 CALL CheckAndSyncColumn('prayer_intention_master', 'name', 'VARCHAR(100) NOT NULL', 'id');
@@ -937,7 +1088,95 @@ CALL CheckAndSyncColumn('prayer_intention_master', 'updated_by', 'INT UNSIGNED N
 CALL CheckAndSyncColumn('prayer_intention_master', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
 CALL CheckAndSyncColumn('prayer_intention_master', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
 
--- Table: prayer_intentions (Mass Intentions)
+-- Table: payment_methods
+CALL CheckAndSyncColumn('payment_methods', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('payment_methods', 'name', 'VARCHAR(50) NOT NULL', 'id');
+CALL CheckAndSyncColumn('payment_methods', 'code', 'VARCHAR(20) NOT NULL', 'name');
+CALL CheckAndSyncColumn('payment_methods', 'description', 'VARCHAR(255) NULL', 'code');
+CALL CheckAndSyncColumn('payment_methods', 'is_default', 'TINYINT(1) NOT NULL DEFAULT 0', 'description');
+CALL CheckAndSyncColumn('payment_methods', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'is_default');
+CALL CheckAndSyncColumn('payment_methods', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('payment_methods', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('payment_methods', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('payment_methods', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('payment_methods', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: certificate_types
+CALL CheckAndSyncColumn('certificate_types', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('certificate_types', 'name', 'VARCHAR(50) NOT NULL', 'id');
+CALL CheckAndSyncColumn('certificate_types', 'code', 'VARCHAR(30) NOT NULL', 'name');
+CALL CheckAndSyncColumn('certificate_types', 'description', 'VARCHAR(255) NULL', 'code');
+CALL CheckAndSyncColumn('certificate_types', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'description');
+CALL CheckAndSyncColumn('certificate_types', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('certificate_types', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('certificate_types', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('certificate_types', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('certificate_types', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: users
+CALL CheckAndSyncColumn('users', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('users', 'church_id', 'INT UNSIGNED NULL', 'id');
+CALL CheckAndSyncColumn('users', 'branch_id', 'INT UNSIGNED NULL', 'church_id');
+CALL CheckAndSyncColumn('users', 'role_id', 'INT UNSIGNED NOT NULL', 'branch_id');
+CALL CheckAndSyncColumn('users', 'employee_code', 'VARCHAR(30) NULL', 'role_id');
+CALL CheckAndSyncColumn('users', 'full_name', 'VARCHAR(150) NOT NULL', 'employee_code');
+CALL CheckAndSyncColumn('users', 'username', 'VARCHAR(60) NOT NULL', 'full_name');
+CALL CheckAndSyncColumn('users', 'email', 'VARCHAR(150) NULL', 'username');
+CALL CheckAndSyncColumn('users', 'phone', 'VARCHAR(20) NULL', 'email');
+CALL CheckAndSyncColumn('users', 'password_hash', 'VARCHAR(255) NOT NULL', 'phone');
+CALL CheckAndSyncColumn('users', 'must_change_password', 'TINYINT(1) NOT NULL DEFAULT 0', 'password_hash');
+CALL CheckAndSyncColumn('users', 'last_login_at', 'DATETIME NULL', 'must_change_password');
+CALL CheckAndSyncColumn('users', 'failed_login_attempts', 'INT UNSIGNED NOT NULL DEFAULT 0', 'last_login_at');
+CALL CheckAndSyncColumn('users', 'locked_until', 'DATETIME NULL', 'failed_login_attempts');
+CALL CheckAndSyncColumn('users', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'locked_until');
+CALL CheckAndSyncColumn('users', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('users', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('users', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+CALL CheckAndSyncColumn('users', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
+CALL CheckAndSyncColumn('users', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+
+-- Table: user_sessions
+CALL CheckAndSyncColumn('user_sessions', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('user_sessions', 'session_token', 'CHAR(64) NOT NULL UNIQUE', 'id');
+CALL CheckAndSyncColumn('user_sessions', 'user_id', 'INT UNSIGNED NOT NULL', 'session_token');
+CALL CheckAndSyncColumn('user_sessions', 'church_id', 'INT UNSIGNED NOT NULL', 'user_id');
+CALL CheckAndSyncColumn('user_sessions', 'ip_address', 'VARCHAR(45) NULL', 'church_id');
+CALL CheckAndSyncColumn('user_sessions', 'user_agent', 'VARCHAR(255) NULL', 'ip_address');
+CALL CheckAndSyncColumn('user_sessions', 'expires_at', 'DATETIME NOT NULL', 'user_agent');
+CALL CheckAndSyncColumn('user_sessions', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'expires_at');
+CALL CheckAndSyncColumn('user_sessions', 'last_activity_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_at');
+
+-- Table: refresh_tokens
+CALL CheckAndSyncColumn('refresh_tokens', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('refresh_tokens', 'user_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('refresh_tokens', 'token_hash', 'VARCHAR(255) NOT NULL', 'user_id');
+CALL CheckAndSyncColumn('refresh_tokens', 'expires_at', 'DATETIME NOT NULL', 'token_hash');
+CALL CheckAndSyncColumn('refresh_tokens', 'revoked_at', 'DATETIME NULL', 'expires_at');
+CALL CheckAndSyncColumn('refresh_tokens', 'replaced_by_token_id', 'INT UNSIGNED NULL', 'revoked_at');
+CALL CheckAndSyncColumn('refresh_tokens', 'ip_address', 'VARCHAR(64) NULL', 'replaced_by_token_id');
+CALL CheckAndSyncColumn('refresh_tokens', 'user_agent', 'VARCHAR(255) NULL', 'ip_address');
+CALL CheckAndSyncColumn('refresh_tokens', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'user_agent');
+
+-- Table: webauthn_credentials
+CALL CheckAndSyncColumn('webauthn_credentials', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('webauthn_credentials', 'user_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('webauthn_credentials', 'credential_id', 'VARCHAR(255) NOT NULL UNIQUE', 'user_id');
+CALL CheckAndSyncColumn('webauthn_credentials', 'public_key', 'TEXT NOT NULL', 'credential_id');
+CALL CheckAndSyncColumn('webauthn_credentials', 'counter', 'INT UNSIGNED NOT NULL DEFAULT 0', 'public_key');
+CALL CheckAndSyncColumn('webauthn_credentials', 'transports', 'VARCHAR(255) NULL', 'counter');
+CALL CheckAndSyncColumn('webauthn_credentials', 'device_name', 'VARCHAR(100) NULL', 'transports');
+CALL CheckAndSyncColumn('webauthn_credentials', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'device_name');
+CALL CheckAndSyncColumn('webauthn_credentials', 'last_used_at', 'DATETIME NULL', 'created_at');
+
+-- Table: receipt_series
+CALL CheckAndSyncColumn('receipt_series', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('receipt_series', 'church_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('receipt_series', 'prefix', 'VARCHAR(10) NOT NULL DEFAULT \'REC\'', 'church_id');
+CALL CheckAndSyncColumn('receipt_series', 'current_number', 'INT UNSIGNED NOT NULL DEFAULT 0', 'prefix');
+CALL CheckAndSyncColumn('receipt_series', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'current_number');
+CALL CheckAndSyncColumn('receipt_series', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_at');
+
+-- Table: prayer_intentions
 CALL CheckAndSyncColumn('prayer_intentions', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
 CALL CheckAndSyncColumn('prayer_intentions', 'church_id', 'INT UNSIGNED NOT NULL', 'id');
 CALL CheckAndSyncColumn('prayer_intentions', 'branch_id', 'INT UNSIGNED NULL', 'church_id');
@@ -970,6 +1209,19 @@ CALL CheckAndSyncColumn('prayer_intentions', 'refunded_by', 'INT UNSIGNED NULL',
 CALL CheckAndSyncColumn('prayer_intentions', 'refund_reason', 'VARCHAR(500) NULL', 'refunded_by');
 CALL CheckAndSyncColumn('prayer_intentions', 'refund_amount', 'DECIMAL(10,2) NULL', 'refund_reason');
 CALL CheckAndSyncColumn('prayer_intentions', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'refund_amount');
+
+-- Table: payment_transactions
+CALL CheckAndSyncColumn('payment_transactions', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('payment_transactions', 'prayer_intention_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('payment_transactions', 'provider', 'VARCHAR(30) NOT NULL', 'prayer_intention_id');
+CALL CheckAndSyncColumn('payment_transactions', 'transaction_ref', 'VARCHAR(100) NOT NULL', 'provider');
+CALL CheckAndSyncColumn('payment_transactions', 'provider_transaction_id', 'VARCHAR(100) NULL', 'transaction_ref');
+CALL CheckAndSyncColumn('payment_transactions', 'amount', 'DECIMAL(10,2) NOT NULL', 'provider_transaction_id');
+CALL CheckAndSyncColumn('payment_transactions', 'status', 'ENUM(\'pending\', \'success\', \'failed\') NOT NULL DEFAULT \'pending\'', 'amount');
+CALL CheckAndSyncColumn('payment_transactions', 'failure_reason', 'VARCHAR(255) NULL', 'status');
+CALL CheckAndSyncColumn('payment_transactions', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'failure_reason');
+CALL CheckAndSyncColumn('payment_transactions', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('payment_transactions', 'verified_at', 'DATETIME NULL', 'created_by');
 
 -- Table: contribution_types
 CALL CheckAndSyncColumn('contribution_types', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
@@ -1009,6 +1261,23 @@ CALL CheckAndSyncColumn('contributions', 'refunded_by', 'INT UNSIGNED NULL', 're
 CALL CheckAndSyncColumn('contributions', 'refund_reason', 'VARCHAR(500) NULL', 'refunded_by');
 CALL CheckAndSyncColumn('contributions', 'refund_amount', 'DECIMAL(10,2) NULL', 'refund_reason');
 CALL CheckAndSyncColumn('contributions', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'refund_amount');
+
+-- Table: contribution_payment_transactions
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'contribution_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'provider', 'VARCHAR(30) NOT NULL', 'contribution_id');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'transaction_ref', 'VARCHAR(100) NOT NULL', 'provider');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'provider_transaction_id', 'VARCHAR(100) NULL', 'transaction_ref');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'amount', 'DECIMAL(10,2) NOT NULL', 'provider_transaction_id');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'status', 'ENUM(\'pending\', \'success\', \'failed\') NOT NULL DEFAULT \'pending\'', 'amount');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'failure_reason', 'VARCHAR(255) NULL', 'status');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'method', 'ENUM(\'cash\', \'upi\', \'cheque\', \'bank_transfer\', \'other\') NULL', 'failure_reason');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'reference_number', 'VARCHAR(100) NULL', 'method');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'remarks', 'VARCHAR(500) NULL', 'reference_number');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'payment_date', 'DATE NULL', 'remarks');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'payment_date');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('contribution_payment_transactions', 'verified_at', 'DATETIME NULL', 'created_by');
 
 -- Table: baptism_certificates
 CALL CheckAndSyncColumn('baptism_certificates', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
@@ -1114,6 +1383,29 @@ CALL CheckAndSyncColumn('confirmation_certificates', 'updated_by', 'INT UNSIGNED
 CALL CheckAndSyncColumn('confirmation_certificates', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
 CALL CheckAndSyncColumn('confirmation_certificates', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
 
+-- Table: certificate_series
+CALL CheckAndSyncColumn('certificate_series', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('certificate_series', 'church_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('certificate_series', 'certificate_type', 'VARCHAR(50) NOT NULL', 'church_id');
+CALL CheckAndSyncColumn('certificate_series', 'prefix', 'VARCHAR(10) NOT NULL', 'certificate_type');
+CALL CheckAndSyncColumn('certificate_series', 'next_number', 'INT UNSIGNED NOT NULL DEFAULT 1', 'prefix');
+CALL CheckAndSyncColumn('certificate_series', 'number_padding', 'INT UNSIGNED NOT NULL DEFAULT 4', 'next_number');
+CALL CheckAndSyncColumn('certificate_series', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'number_padding');
+CALL CheckAndSyncColumn('certificate_series', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_at');
+
+-- Table: certificate_templates
+CALL CheckAndSyncColumn('certificate_templates', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('certificate_templates', 'church_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('certificate_templates', 'certificate_type', 'VARCHAR(50) NOT NULL', 'church_id');
+CALL CheckAndSyncColumn('certificate_templates', 'template_name', 'VARCHAR(100) NOT NULL', 'certificate_type');
+CALL CheckAndSyncColumn('certificate_templates', 'html_template', 'MEDIUMTEXT NOT NULL', 'template_name');
+CALL CheckAndSyncColumn('certificate_templates', 'css_styles', 'MEDIUMTEXT NULL', 'html_template');
+CALL CheckAndSyncColumn('certificate_templates', 'is_default', 'TINYINT(1) NOT NULL DEFAULT 0', 'css_styles');
+CALL CheckAndSyncColumn('certificate_templates', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'is_default');
+CALL CheckAndSyncColumn('certificate_templates', 'created_by', 'INT UNSIGNED NULL', 'created_at');
+CALL CheckAndSyncColumn('certificate_templates', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
+CALL CheckAndSyncColumn('certificate_templates', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
+
 -- Table: certificate_print_templates
 CALL CheckAndSyncColumn('certificate_print_templates', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
 CALL CheckAndSyncColumn('certificate_print_templates', 'church_id', 'INT UNSIGNED NOT NULL', 'id');
@@ -1127,46 +1419,39 @@ CALL CheckAndSyncColumn('certificate_print_templates', 'field_labels', 'JSON NUL
 CALL CheckAndSyncColumn('certificate_print_templates', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'field_labels');
 CALL CheckAndSyncColumn('certificate_print_templates', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_at');
 
--- Table: roles
-CALL CheckAndSyncColumn('roles', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
-CALL CheckAndSyncColumn('roles', 'name', 'VARCHAR(100) NOT NULL', 'id');
-CALL CheckAndSyncColumn('roles', 'code', 'VARCHAR(50) NOT NULL', 'name');
-CALL CheckAndSyncColumn('roles', 'description', 'VARCHAR(255) NULL', 'code');
-CALL CheckAndSyncColumn('roles', 'church_id', 'INT UNSIGNED NULL', 'description');
-CALL CheckAndSyncColumn('roles', 'is_system_role', 'TINYINT(1) NOT NULL DEFAULT 0', 'church_id');
-CALL CheckAndSyncColumn('roles', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'is_system_role');
-CALL CheckAndSyncColumn('roles', 'created_by', 'INT UNSIGNED NULL', 'created_at');
-CALL CheckAndSyncColumn('roles', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
-CALL CheckAndSyncColumn('roles', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
-CALL CheckAndSyncColumn('roles', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
-CALL CheckAndSyncColumn('roles', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+-- Table: restricted_dates
+CALL CheckAndSyncColumn('restricted_dates', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('restricted_dates', 'church_id', 'INT UNSIGNED NOT NULL', 'id');
+CALL CheckAndSyncColumn('restricted_dates', 'restricted_date', 'DATE NOT NULL', 'church_id');
+CALL CheckAndSyncColumn('restricted_dates', 'reason', 'VARCHAR(255) NULL', 'restricted_date');
+CALL CheckAndSyncColumn('restricted_dates', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'reason');
+CALL CheckAndSyncColumn('restricted_dates', 'created_by', 'INT UNSIGNED NULL', 'created_at');
 
--- Table: users
-CALL CheckAndSyncColumn('users', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
-CALL CheckAndSyncColumn('users', 'church_id', 'INT UNSIGNED NULL', 'id');
-CALL CheckAndSyncColumn('users', 'branch_id', 'INT UNSIGNED NULL', 'church_id');
-CALL CheckAndSyncColumn('users', 'role_id', 'INT UNSIGNED NOT NULL', 'branch_id');
-CALL CheckAndSyncColumn('users', 'employee_code', 'VARCHAR(30) NULL', 'role_id');
-CALL CheckAndSyncColumn('users', 'full_name', 'VARCHAR(150) NOT NULL', 'employee_code');
-CALL CheckAndSyncColumn('users', 'username', 'VARCHAR(60) NOT NULL', 'full_name');
-CALL CheckAndSyncColumn('users', 'email', 'VARCHAR(150) NULL', 'username');
-CALL CheckAndSyncColumn('users', 'phone', 'VARCHAR(20) NULL', 'email');
-CALL CheckAndSyncColumn('users', 'password_hash', 'VARCHAR(255) NOT NULL', 'phone');
-CALL CheckAndSyncColumn('users', 'must_change_password', 'TINYINT(1) NOT NULL DEFAULT 0', 'password_hash');
-CALL CheckAndSyncColumn('users', 'last_login_at', 'DATETIME NULL', 'must_change_password');
-CALL CheckAndSyncColumn('users', 'failed_login_attempts', 'INT UNSIGNED NOT NULL DEFAULT 0', 'last_login_at');
-CALL CheckAndSyncColumn('users', 'locked_until', 'DATETIME NULL', 'failed_login_attempts');
-CALL CheckAndSyncColumn('users', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'locked_until');
-CALL CheckAndSyncColumn('users', 'created_by', 'INT UNSIGNED NULL', 'created_at');
-CALL CheckAndSyncColumn('users', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_by');
-CALL CheckAndSyncColumn('users', 'updated_by', 'INT UNSIGNED NULL', 'updated_at');
-CALL CheckAndSyncColumn('users', 'is_active', 'TINYINT(1) NOT NULL DEFAULT 1', 'updated_by');
-CALL CheckAndSyncColumn('users', 'is_deleted', 'TINYINT(1) NOT NULL DEFAULT 0', 'is_active');
+-- Table: audit_logs
+CALL CheckAndSyncColumn('audit_logs', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('audit_logs', 'church_id', 'INT UNSIGNED NULL', 'id');
+CALL CheckAndSyncColumn('audit_logs', 'user_id', 'INT UNSIGNED NULL', 'church_id');
+CALL CheckAndSyncColumn('audit_logs', 'module', 'VARCHAR(50) NOT NULL', 'user_id');
+CALL CheckAndSyncColumn('audit_logs', 'action', 'VARCHAR(50) NOT NULL', 'module');
+CALL CheckAndSyncColumn('audit_logs', 'entity_id', 'INT UNSIGNED NULL', 'action');
+CALL CheckAndSyncColumn('audit_logs', 'ip_address', 'VARCHAR(45) NULL', 'entity_id');
+CALL CheckAndSyncColumn('audit_logs', 'user_agent', 'VARCHAR(255) NULL', 'ip_address');
+CALL CheckAndSyncColumn('audit_logs', 'old_values', 'JSON NULL', 'user_agent');
+CALL CheckAndSyncColumn('audit_logs', 'new_values', 'JSON NULL', 'old_values');
+CALL CheckAndSyncColumn('audit_logs', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'new_values');
+
+-- Table: system_settings
+CALL CheckAndSyncColumn('system_settings', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
+CALL CheckAndSyncColumn('system_settings', 'church_id', 'INT UNSIGNED NULL', 'id');
+CALL CheckAndSyncColumn('system_settings', 'setting_key', 'VARCHAR(100) NOT NULL UNIQUE', 'church_id');
+CALL CheckAndSyncColumn('system_settings', 'setting_value', 'TEXT NULL', 'setting_key');
+CALL CheckAndSyncColumn('system_settings', 'description', 'VARCHAR(255) NULL', 'setting_value');
+CALL CheckAndSyncColumn('system_settings', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'description');
 
 -- Table: account_heads
 CALL CheckAndSyncColumn('account_heads', 'id', 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY', '');
 CALL CheckAndSyncColumn('account_heads', 'church_id', 'INT UNSIGNED NULL', 'id');
-CALL CheckAndSyncColumn('account_heads', 'type', "ENUM('receipt', 'payment') NOT NULL", 'church_id');
+CALL CheckAndSyncColumn('account_heads', 'type', 'ENUM(\'receipt\', \'payment\') NOT NULL', 'church_id');
 CALL CheckAndSyncColumn('account_heads', 'section', 'VARCHAR(100) NOT NULL', 'type');
 CALL CheckAndSyncColumn('account_heads', 'name', 'VARCHAR(255) NOT NULL', 'section');
 CALL CheckAndSyncColumn('account_heads', 'tamil_name', 'VARCHAR(255) NULL', 'name');
@@ -1184,7 +1469,7 @@ CALL CheckAndSyncColumn('church_expenses', 'church_id', 'INT UNSIGNED NOT NULL',
 CALL CheckAndSyncColumn('church_expenses', 'branch_id', 'INT UNSIGNED NULL', 'church_id');
 CALL CheckAndSyncColumn('church_expenses', 'entry_date', 'DATE NOT NULL', 'branch_id');
 CALL CheckAndSyncColumn('church_expenses', 'month_year', 'VARCHAR(7) NOT NULL', 'entry_date');
-CALL CheckAndSyncColumn('church_expenses', 'type', "ENUM('receipt', 'payment') NOT NULL", 'month_year');
+CALL CheckAndSyncColumn('church_expenses', 'type', 'ENUM(\'receipt\', \'payment\') NOT NULL', 'month_year');
 CALL CheckAndSyncColumn('church_expenses', 'head_id', 'INT UNSIGNED NULL', 'type');
 CALL CheckAndSyncColumn('church_expenses', 'head_name', 'VARCHAR(255) NOT NULL', 'head_id');
 CALL CheckAndSyncColumn('church_expenses', 'amount', 'DECIMAL(12, 2) NOT NULL DEFAULT 0.00', 'head_name');
@@ -1227,7 +1512,148 @@ CALL CheckAndSyncColumn('monthly_financial_abstracts', 'created_by', 'INT UNSIGN
 CALL CheckAndSyncColumn('monthly_financial_abstracts', 'created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP', 'created_by');
 CALL CheckAndSyncColumn('monthly_financial_abstracts', 'updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'created_at');
 
--- Check Indexes for refund and performance
+-- =============================================================================
+-- INDEX VERIFICATION & SAFE CREATION
+-- =============================================================================
+
+-- Indexes for: countries
+CALL CheckAndSyncIndex('countries', 'uq_countries_iso', 'iso_code');
+
+-- Indexes for: states
+CALL CheckAndSyncIndex('states', 'idx_states_country', 'country_id');
+
+-- Indexes for: districts
+CALL CheckAndSyncIndex('districts', 'idx_districts_state', 'state_id');
+
+-- Indexes for: branches
+CALL CheckAndSyncIndex('branches', 'idx_branches_church', 'church_id');
+
+-- Indexes for: priests
+CALL CheckAndSyncIndex('priests', 'idx_priests_church', 'church_id');
+
+-- Indexes for: masses
+CALL CheckAndSyncIndex('masses', 'idx_masses_church', 'church_id');
+
+-- Indexes for: roles
+CALL CheckAndSyncIndex('roles', 'uq_roles_code', 'code');
+
+-- Indexes for: permissions
+CALL CheckAndSyncIndex('permissions', 'uq_permissions_code', 'code');
+
+-- Indexes for: role_permissions
+CALL CheckAndSyncIndex('role_permissions', 'uq_role_permission', 'role_id, permission_id');
+
+-- Indexes for: statuses
+CALL CheckAndSyncIndex('statuses', 'uq_status_entity_code', 'entity_type, code');
+
+-- Indexes for: genders
+CALL CheckAndSyncIndex('genders', 'uq_genders_code', 'code');
+
+-- Indexes for: departments
+CALL CheckAndSyncIndex('departments', 'uq_departments_code', 'code');
+
+-- Indexes for: languages
+CALL CheckAndSyncIndex('languages', 'uq_languages_code', 'code');
+
+-- Indexes for: prayer_intention_master
+CALL CheckAndSyncIndex('prayer_intention_master', 'uq_pim_code', 'code');
+
+-- Indexes for: payment_methods
+CALL CheckAndSyncIndex('payment_methods', 'uq_pm_code', 'code');
+
+-- Indexes for: certificate_types
+CALL CheckAndSyncIndex('certificate_types', 'uq_ct_code', 'code');
+
+-- Indexes for: users
+CALL CheckAndSyncIndex('users', 'uq_users_username', 'username');
+CALL CheckAndSyncIndex('users', 'idx_users_role', 'role_id');
+CALL CheckAndSyncIndex('users', 'idx_users_church', 'church_id');
+
+-- Indexes for: user_sessions
+CALL CheckAndSyncIndex('user_sessions', 'idx_user_sessions_user', 'user_id');
+CALL CheckAndSyncIndex('user_sessions', 'idx_user_sessions_expires', 'expires_at');
+
+-- Indexes for: refresh_tokens
+CALL CheckAndSyncIndex('refresh_tokens', 'idx_refresh_tokens_user', 'user_id');
+CALL CheckAndSyncIndex('refresh_tokens', 'idx_refresh_tokens_expiry', 'expires_at');
+
+-- Indexes for: webauthn_credentials
+CALL CheckAndSyncIndex('webauthn_credentials', 'idx_webauthn_user', 'user_id');
+
+-- Indexes for: receipt_series
+CALL CheckAndSyncIndex('receipt_series', 'uq_receipt_series_church', 'church_id');
+
+-- Indexes for: prayer_intentions
+CALL CheckAndSyncIndex('prayer_intentions', 'idx_prayer_intentions_church_receipt', 'church_id, receipt_no');
+CALL CheckAndSyncIndex('prayer_intentions', 'idx_prayer_intentions_date_mass', 'prayer_date, mass_id');
+CALL CheckAndSyncIndex('prayer_intentions', 'idx_prayer_intentions_status', 'status_id');
+CALL CheckAndSyncIndex('prayer_intentions', 'idx_prayer_intentions_phone', 'phone');
+CALL CheckAndSyncIndex('prayer_intentions', 'idx_prayer_intentions_refunded', 'is_refunded, refunded_at');
+
+-- Indexes for: payment_transactions
+CALL CheckAndSyncIndex('payment_transactions', 'uq_payment_transactions_ref', 'transaction_ref');
+CALL CheckAndSyncIndex('payment_transactions', 'idx_payment_transactions_intention', 'prayer_intention_id');
+
+-- Indexes for: contribution_types
+CALL CheckAndSyncIndex('contribution_types', 'uq_contribution_types_code', 'code');
+
+-- Indexes for: contributions
+CALL CheckAndSyncIndex('contributions', 'idx_contributions_church_receipt', 'church_id, receipt_no');
+CALL CheckAndSyncIndex('contributions', 'idx_contributions_phone', 'phone');
+CALL CheckAndSyncIndex('contributions', 'idx_contributions_refunded', 'is_refunded, refunded_at');
+
+-- Indexes for: contribution_payment_transactions
+CALL CheckAndSyncIndex('contribution_payment_transactions', 'uq_contribution_payment_transactions_ref', 'transaction_ref');
+CALL CheckAndSyncIndex('contribution_payment_transactions', 'idx_contribution_payment_transactions_contribution', 'contribution_id');
+
+-- Indexes for: baptism_certificates
+CALL CheckAndSyncIndex('baptism_certificates', 'uq_baptism_certificate_no', 'certificate_no');
+CALL CheckAndSyncIndex('baptism_certificates', 'idx_baptism_child_name', 'child_name');
+
+-- Indexes for: marriage_certificates
+CALL CheckAndSyncIndex('marriage_certificates', 'uq_marriage_certificate_no', 'certificate_no');
+CALL CheckAndSyncIndex('marriage_certificates', 'idx_marriage_names', 'bride_name, groom_name');
+
+-- Indexes for: death_certificates
+CALL CheckAndSyncIndex('death_certificates', 'uq_death_certificate_no', 'certificate_no');
+CALL CheckAndSyncIndex('death_certificates', 'idx_death_deceased_name', 'deceased_name');
+
+-- Indexes for: confirmation_certificates
+CALL CheckAndSyncIndex('confirmation_certificates', 'uq_confirmation_certificate_no', 'certificate_no');
+CALL CheckAndSyncIndex('confirmation_certificates', 'idx_confirmation_name', 'name');
+
+-- Indexes for: certificate_series
+CALL CheckAndSyncIndex('certificate_series', 'uq_cert_series_church_type', 'church_id, certificate_type');
+
+-- Indexes for: certificate_templates
+CALL CheckAndSyncIndex('certificate_templates', 'uq_cert_tmpl_church_type', 'church_id, certificate_type, template_name');
+
+-- Indexes for: certificate_print_templates
+CALL CheckAndSyncIndex('certificate_print_templates', 'uq_church_cert_type', 'church_id, certificate_type');
+CALL CheckAndSyncIndex('certificate_print_templates', 'idx_cert_templates_church', 'church_id');
+
+-- Indexes for: restricted_dates
+CALL CheckAndSyncIndex('restricted_dates', 'uq_restricted_date_church', 'church_id, restricted_date');
+
+-- Indexes for: audit_logs
+CALL CheckAndSyncIndex('audit_logs', 'idx_audit_church', 'church_id');
+CALL CheckAndSyncIndex('audit_logs', 'idx_audit_user', 'user_id');
+CALL CheckAndSyncIndex('audit_logs', 'idx_audit_module', 'module');
+CALL CheckAndSyncIndex('audit_logs', 'idx_audit_created', 'created_at');
+
+-- Indexes for: account_heads
+CALL CheckAndSyncIndex('account_heads', 'idx_heads_church_type', 'church_id, type, is_active');
+CALL CheckAndSyncIndex('account_heads', 'idx_heads_section', 'section, order_index');
+
+-- Indexes for: church_expenses
+CALL CheckAndSyncIndex('church_expenses', 'idx_expenses_church_month', 'church_id, month_year, entry_date');
+CALL CheckAndSyncIndex('church_expenses', 'idx_expenses_head', 'head_id');
+CALL CheckAndSyncIndex('church_expenses', 'idx_expenses_deleted', 'deleted_at');
+
+-- Indexes for: monthly_financial_abstracts
+CALL CheckAndSyncIndex('monthly_financial_abstracts', 'uk_church_month_branch', 'church_id, month_year, branch_id');
+
+-- Refund & Analytics Performance Indexes
 CALL CheckAndSyncIndex('prayer_intentions', 'idx_prayer_intentions_refunded', 'is_refunded, refunded_at');
 CALL CheckAndSyncIndex('contributions', 'idx_contributions_refunded', 'is_refunded, refunded_at');
 

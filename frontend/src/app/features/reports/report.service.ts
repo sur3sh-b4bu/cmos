@@ -191,4 +191,14 @@ export class ReportService {
     if (lang === 'ta') params.set('lang', 'ta');
     return `${this.baseUrl}/certificates/print?${params.toString()}`;
   }
+
+  overallFinancial(query: DateRangeQuery): Observable<any> {
+    return this.http
+      .get<ApiResponse<any>>(`${this.baseUrl}/overall-financial`, { params: this.buildParams(query) })
+      .pipe(map((res) => res.data));
+  }
+
+  getOverallFinancialPrintUrl(dateFrom: string, dateTo: string = dateFrom, lang: AppLang = 'en'): string {
+    return `${this.baseUrl}/overall-financial/print?dateFrom=${dateFrom}&dateTo=${dateTo}${lang === 'ta' ? '&lang=ta' : ''}`;
+  }
 }

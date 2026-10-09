@@ -68,6 +68,46 @@
           {{ 'common.today' | translate }}
         </button>
       </div>
+
+      <!-- 3 Types of Print Actions Toolbar -->
+      <div class="print-actions-group">
+        <!-- 1. Day Print (Selected Day) -->
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          class="btn-print-action btn-print-action--day"
+          (click)="printSelectedDayReport()"
+          [matTooltip]="'receiptPayment.printSelectedDayDesc' | translate"
+        >
+          <mat-icon>today</mat-icon>
+          <span>{{ 'receiptPayment.printSelectedDay' | translate }}</span>
+        </button>
+
+        <!-- 2. 31-Day Daywise Print -->
+        <button
+          mat-stroked-button
+          type="button"
+          class="btn-print-action btn-print-action--daywise"
+          (click)="printDaywiseMonthReport()"
+          [matTooltip]="'receiptPayment.printDaywiseMonthDesc' | translate"
+        >
+          <mat-icon>calendar_view_month</mat-icon>
+          <span>{{ 'receiptPayment.printDaywiseMonth' | translate }}</span>
+        </button>
+
+        <!-- 3. Overall Monthly Print -->
+        <button
+          mat-stroked-button
+          type="button"
+          class="btn-print-action btn-print-action--monthly"
+          (click)="printOverallMonthlyReport()"
+          [matTooltip]="'receiptPayment.printOverallMonthlyDesc' | translate"
+        >
+          <mat-icon>assessment</mat-icon>
+          <span>{{ 'receiptPayment.printOverallMonthly' | translate }}</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -123,11 +163,11 @@
   <!-- Main 2-Column Section: Data Entry Form on Left, Live Dropdown & Preview on Right -->
   <div class="main-layout-grid">
     <!-- LEFT: Entry Form Card -->
-    <div class="entry-card glass-card no-print">
+    <div class="entry-card glass-card no-print" id="entry-form-card">
       <div class="entry-card__header">
         <div class="header-title">
-          <mat-icon class="icon-accent">post_add</mat-icon>
-          <h3>{{ 'receiptPayment.newEntry' | translate }}</h3>
+          <mat-icon class="icon-accent">{{ editingTxId() ? 'edit_note' : 'post_add' }}</mat-icon>
+          <h3>{{ editingTxId() ? ('common.edit' | translate) + ' #' + editingTxId() : ('receiptPayment.newEntry' | translate) }}</h3>
         </div>
 
         <!-- Type Selector: Receipt vs Payment Toggle -->
@@ -320,16 +360,30 @@
 
         <!-- Form Actions -->
         <div class="form-actions-row">
-          <button
-            type="button"
-            mat-stroked-button
-            class="btn-clear"
-            (click)="resetForm()"
-            [disabled]="submitting()"
-          >
-            <mat-icon>refresh</mat-icon>
-            <span>{{ 'receiptPayment.clear' | translate }}</span>
-          </button>
+          @if (editingTxId()) {
+            <button
+              type="button"
+              mat-stroked-button
+              color="warn"
+              class="btn-clear"
+              (click)="cancelEdit()"
+              [disabled]="submitting()"
+            >
+              <mat-icon>close</mat-icon>
+              <span>{{ 'common.cancel' | translate }}</span>
+            </button>
+          } @else {
+            <button
+              type="button"
+              mat-stroked-button
+              class="btn-clear"
+              (click)="resetForm()"
+              [disabled]="submitting()"
+            >
+              <mat-icon>refresh</mat-icon>
+              <span>{{ 'receiptPayment.clear' | translate }}</span>
+            </button>
+          }
 
           <button
             type="submit"
@@ -344,7 +398,7 @@
             } @else {
               <ng-container>
                 <mat-icon>check_circle</mat-icon>
-                <span>{{ 'receiptPayment.save' | translate }}</span>
+                <span>{{ (editingTxId() ? 'common.update' : 'receiptPayment.save') | translate }}</span>
               </ng-container>
             }
           </button>
@@ -505,102 +559,104 @@
     </div>
   </div>
 
-  <!-- Saved Transactions Table for the Selected Date -->
+  <!-- Filter Bar for Transactions History -->
+  <div class="no-print">
+    <coms-filter-bar
+      [fields]="filterFields()"
+      [initialValues]="filters()"
+      (filtersChange)="onFiltersChange($event)"
+    />
+  </div>
+
+  <!-- Saved Transactions Table -->
   <div class="history-section glass-card no-print">
     <div class="history-section__header">
       <div class="title-group">
         <mat-icon class="icon-accent">history</mat-icon>
-        <h3>{{ 'receiptPayment.recentEntries' | translate }} ({{ selectedDateStr() }})</h3>
+        <h3>{{ 'receiptPayment.recentEntries' | translate }}</h3>
       </div>
     </div>
 
-    @if (loading()) {
-      <div class="loading-wrap">
-        <mat-spinner diameter="36"></mat-spinner>
-      </div>
-    } @else if (transactions().length === 0) {
-      <div class="empty-table-state">
-        <mat-icon>inbox</mat-icon>
-        <p>{{ 'receiptPayment.noEntries' | translate }}</p>
-      </div>
-    } @else {
-      <div class="table-responsive">
-        <table class="receipt-table">
-          <thead>
-            <tr>
-              <th class="col-sno">#</th>
-              <th class="col-date">{{ 'receiptPayment.entryDate' | translate }}</th>
-              <th class="col-type">{{ 'receiptPayment.type' | translate }}</th>
-              <th class="col-head">{{ 'receiptPayment.basedOn' | translate }}</th>
-              <th class="col-mode">{{ 'receiptPayment.paymentMode' | translate }}</th>
-              <th class="col-voucher">{{ 'receiptPayment.voucherNo' | translate }}</th>
-              <th class="col-payee">{{ 'receiptPayment.payerOrPayee' | translate }}</th>
-              <th class="col-remarks">{{ 'receiptPayment.remarks' | translate }}</th>
-              <th class="col-amount text-right">{{ 'receiptPayment.amount' | translate }}</th>
-              <th class="col-actions text-center">{{ 'common.actions' | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (tx of transactions(); track tx.id; let i = $index) {
-              <tr class="tx-row" [class.tx-row--active]="selectedPreviewId() === tx.id">
-                <td class="col-sno text-muted">{{ i + 1 }}</td>
-                <td class="col-date font-mono">{{ tx.entry_date }}</td>
-                <td class="col-type">
-                  <span class="type-pill" [class.type-pill--receipt]="tx.type === 'receipt'" [class.type-pill--payment]="tx.type === 'payment'">
-                    <mat-icon>{{ tx.type === 'receipt' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
-                    {{ tx.type === 'receipt' ? 'Receipt' : 'Payment' }}
-                  </span>
-                </td>
-                <td class="col-head">
-                  <div class="head-info">
-                    <span class="head-primary">{{ tx.account_head_name || tx.head_name || 'General' }}</span>
-                    @if (tx.account_head_tamil_name) {
-                      <span class="head-tamil text-muted">{{ tx.account_head_tamil_name }}</span>
-                    }
-                  </div>
-                </td>
-                <td class="col-mode">
-                  <span class="mode-pill">
-                    <mat-icon>{{ getPaymentMethodIcon(tx.payment_method_code) }}</mat-icon>
-                    <span>{{ getPaymentMethodLabel(tx.payment_method_code) }}</span>
-                  </span>
-                </td>
-                <td class="col-voucher font-mono">{{ tx.voucher_no || '—' }}</td>
-                <td class="col-payee">{{ tx.paid_to || '—' }}</td>
-                <td class="col-remarks text-muted">{{ tx.notes || '—' }}</td>
-                <td
-                  class="col-amount text-right font-mono font-bold"
-                  [class.text-success]="tx.type === 'receipt'"
-                  [class.text-danger]="tx.type === 'payment'"
-                >
-                  {{ tx.type === 'receipt' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
-                </td>
-                <td class="col-actions text-center">
-                  <button
-                    mat-icon-button
-                    type="button"
-                    class="btn-preview-row"
-                    (click)="selectTxToPreview(tx)"
-                    [matTooltip]="'receiptPayment.previewTitle' | translate"
-                  >
-                    <mat-icon>visibility</mat-icon>
-                  </button>
-
-                  <button
-                    mat-icon-button
-                    color="warn"
-                    type="button"
-                    (click)="deleteTransaction(tx.id)"
-                    [matTooltip]="'common.delete' | translate"
-                  >
-                    <mat-icon>delete_outline</mat-icon>
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
+    <coms-data-table
+      tableId="receipt-payment-entries"
+      exportFileName="receipt-payments"
+      emptyMessageKey="receiptPayment.noEntries"
+      [columns]="columns"
+      [rows]="transactions()"
+      [total]="total()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [sort]="sort()"
+      [loading]="loading()"
+      [cellTemplates]="cellTemplates"
+      [showExport]="true"
+      (pageChange)="onPageChange($event)"
+      (sortChange)="onSortChange($event)"
+      (searchChange)="onSearchChange($event)"
+    />
   </div>
 </div>
+
+<ng-template #typeTpl let-row>
+  <span class="type-pill" [class.type-pill--receipt]="row.type === 'receipt'" [class.type-pill--payment]="row.type === 'payment'">
+    <mat-icon>{{ row.type === 'receipt' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+    {{ row.type === 'receipt' ? 'Receipt' : 'Payment' }}
+  </span>
+</ng-template>
+
+<ng-template #headTpl let-row>
+  <div class="head-info">
+    <span class="head-primary">{{ row.account_head_name || row.head_name || 'General' }}</span>
+    @if (row.account_head_tamil_name) {
+      <span class="head-tamil text-muted">{{ row.account_head_tamil_name }}</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #modeTpl let-row>
+  <span class="mode-pill">
+    <mat-icon>{{ getPaymentMethodIcon(row.payment_method_code) }}</mat-icon>
+    <span>{{ getPaymentMethodLabel(row.payment_method_code) }}</span>
+  </span>
+</ng-template>
+
+<ng-template #amountTpl let-row>
+  <span class="font-mono font-bold" [class.text-success]="row.type === 'receipt'" [class.text-danger]="row.type === 'payment'">
+    {{ row.type === 'receipt' ? '+' : '-' }}{{ formatCurrency(row.amount) }}
+  </span>
+</ng-template>
+
+<ng-template #actionsTpl let-row>
+  <button
+    mat-icon-button
+    type="button"
+    class="btn-row-menu"
+    [matMenuTriggerFor]="rowMenu"
+    (click)="$event.stopPropagation()"
+    [matTooltip]="'common.actions' | translate"
+  >
+    <mat-icon>more_vert</mat-icon>
+  </button>
+
+  <mat-menu #rowMenu="matMenu">
+    <button mat-menu-item (click)="editTransaction(row)">
+      <mat-icon>edit</mat-icon>
+      <span>{{ 'common.edit' | translate }}</span>
+    </button>
+
+    <button mat-menu-item (click)="selectTxToPreview(row)">
+      <mat-icon>visibility</mat-icon>
+      <span>{{ 'receiptPayment.previewTitle' | translate }}</span>
+    </button>
+
+    <button mat-menu-item (click)="printTransactionVoucher(row)">
+      <mat-icon>print</mat-icon>
+      <span>{{ 'receiptPayment.printVoucher' | translate }}</span>
+    </button>
+
+    <button mat-menu-item class="text-danger" (click)="deleteTransaction(row.id)">
+      <mat-icon color="warn">delete_outline</mat-icon>
+      <span>{{ 'common.delete' | translate }}</span>
+    </button>
+  </mat-menu>
+</ng-template>

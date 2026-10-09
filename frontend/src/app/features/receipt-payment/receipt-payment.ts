@@ -1,8 +1,9 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,7 +18,12 @@ import { NotificationService } from '../../core/services/notification.service';
 import { CurrencyService } from '../../core/services/currency.service';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
+import { formatDateDMY } from '../../core/utils/date-format.util';
 import { DatepickerTodayHeaderComponent } from '../../shared/components/datepicker-today-header/datepicker-today-header';
+import { DataTableComponent } from '../../shared/components/data-table/data-table';
+import { DataTableColumn, DataTableSort } from '../../shared/components/data-table/data-table.model';
+import { FilterBarComponent } from '../../shared/components/filter-bar/filter-bar';
+import { FilterFieldDef } from '../../shared/components/filter-bar/filter-bar.model';
 
 export interface PaymentMethodMaster {
   id: number;
@@ -35,11 +41,14 @@ export interface PaymentMethodMaster {
     RouterLinkActive,
     MatIconModule,
     MatButtonModule,
+    MatMenuModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatFormFieldModule,
     MatInputModule,
     MatDatepickerModule,
+    DataTableComponent,
+    FilterBarComponent,
     TranslatePipe,
   ],
   templateUrl: './receipt-payment.html',
@@ -56,6 +65,14 @@ export class ReceiptPaymentComponent implements OnInit {
 
   readonly todayHeader = DatepickerTodayHeaderComponent;
 
+  @ViewChild('typeTpl', { static: true }) typeTpl!: TemplateRef<unknown>;
+  @ViewChild('headTpl', { static: true }) headTpl!: TemplateRef<unknown>;
+  @ViewChild('modeTpl', { static: true }) modeTpl!: TemplateRef<unknown>;
+  @ViewChild('amountTpl', { static: true }) amountTpl!: TemplateRef<unknown>;
+  @ViewChild('actionsTpl', { static: true }) actionsTpl!: TemplateRef<unknown>;
+
+  cellTemplates: Record<string, TemplateRef<unknown>> = {};
+
   // Selected Working Date (Defaults to Today)
   selectedDate = signal<Date>(new Date());
 
@@ -67,17 +84,128 @@ export class ReceiptPaymentComponent implements OnInit {
     return `${y}-${m}-${day}`;
   });
 
+  selectedMonthYear = computed(() => {
+    const d = this.selectedDate();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
+  });
+
   // Master Data Signals
   accountHeads = signal<AccountHead[]>([]);
   paymentMethods = signal<PaymentMethodMaster[]>([]);
 
   // Transactions State
   transactions = signal<ChurchExpenseTransaction[]>([]);
+  total = signal(0);
   loading = signal<boolean>(false);
   submitting = signal<boolean>(false);
-
-  // Selected Preview ID in Dropdown
   selectedPreviewId = signal<number | null>(null);
+  editingTxId = signal<number | null>(null);
+
+  // DataTable & Filtering Signals
+  pageIndex = signal(0);
+  pageSize = signal(25);
+  search = signal('');
+  sort = signal<DataTableSort>({ active: 'entry_date', direction: 'desc' });
+  filters = signal<Record<string, string>>({});
+
+  filterFields = computed<FilterFieldDef[]>(() => {
+    const heads = this.accountHeads().filter((h) => h.is_active);
+    const methods = this.paymentMethods();
+    const isTa = this.languageService.isTamil();
+
+    return [
+      {
+        key: 'dateRange',
+        label: 'receiptPayment.entryDate',
+        type: 'dateRange',
+      },
+      {
+        key: 'type',
+        label: 'receiptPayment.type',
+        type: 'select',
+        options: [
+          { value: 'receipt', label: isTa ? 'வரவு (Receipt)' : 'Receipt' },
+          { value: 'payment', label: isTa ? 'பற்று (Payment)' : 'Payment' },
+        ],
+      },
+      {
+        key: 'headId',
+        label: 'receiptPayment.basedOn',
+        type: 'select',
+        options: heads.map((h) => ({
+          value: h.id,
+          label: isTa && h.tamil_name ? h.tamil_name : `${h.name}${h.tamil_name ? ' (' + h.tamil_name + ')' : ''}`,
+        })),
+      },
+      {
+        key: 'paymentMethodCode',
+        label: 'receiptPayment.paymentMode',
+        type: 'select',
+        options: methods.length > 0
+          ? methods.map((m) => ({ value: m.code, label: m.name }))
+          : [
+              { value: 'CASH', label: 'Cash' },
+              { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
+              { value: 'UPI', label: 'UPI' },
+              { value: 'CHEQUE', label: 'Cheque' },
+            ],
+      },
+    ];
+  });
+
+  columns: DataTableColumn<ChurchExpenseTransaction>[] = [
+    {
+      key: 'entry_date',
+      label: 'receiptPayment.entryDate',
+      sortable: true,
+      accessor: (r) => formatDateDMY(r.entry_date),
+    },
+    {
+      key: 'type',
+      label: 'receiptPayment.type',
+      sortable: true,
+    },
+    {
+      key: 'head_name',
+      label: 'receiptPayment.basedOn',
+      sortable: true,
+    },
+    {
+      key: 'payment_method_name',
+      label: 'receiptPayment.paymentMode',
+      sortable: true,
+    },
+    {
+      key: 'voucher_no',
+      label: 'receiptPayment.voucherNo',
+      sortable: true,
+      accessor: (r) => r.voucher_no || '—',
+    },
+    {
+      key: 'paid_to',
+      label: 'receiptPayment.payerOrPayee',
+      sortable: true,
+      accessor: (r) => r.paid_to || '—',
+    },
+    {
+      key: 'notes',
+      label: 'receiptPayment.remarks',
+      accessor: (r) => r.notes || '—',
+    },
+    {
+      key: 'amount',
+      label: 'receiptPayment.amount',
+      align: 'right',
+      sortable: true,
+    },
+    {
+      key: 'actions',
+      label: 'common.actions',
+      align: 'center',
+    },
+  ];
 
   // Form State
   form = signal<{
@@ -175,8 +303,38 @@ export class ReceiptPaymentComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.cellTemplates = {
+      type: this.typeTpl,
+      head_name: this.headTpl,
+      payment_method_name: this.modeTpl,
+      amount: this.amountTpl,
+      actions: this.actionsTpl,
+    };
     this.loadPaymentMethods();
     this.loadAccountHeads();
+    this.fetchTransactions();
+  }
+
+  onFiltersChange(newFilters: Record<string, string>): void {
+    this.filters.set(newFilters || {});
+    this.pageIndex.set(0);
+    this.fetchTransactions();
+  }
+
+  onSearchChange(term: string): void {
+    this.search.set(term);
+    this.pageIndex.set(0);
+    this.fetchTransactions();
+  }
+
+  onSortChange(s: DataTableSort): void {
+    this.sort.set(s);
+    this.fetchTransactions();
+  }
+
+  onPageChange(e: { pageIndex: number; pageSize: number }): void {
+    this.pageIndex.set(e.pageIndex);
+    this.pageSize.set(e.pageSize);
     this.fetchTransactions();
   }
 
@@ -192,6 +350,14 @@ export class ReceiptPaymentComponent implements OnInit {
     this.selectedDate.set(date);
     const dateStr = this.toDateOnlyString(date);
     this.form.update((f) => ({ ...f, entryDate: dateStr }));
+    // Clear dateRange filter so single-day focus takes over
+    if (this.filters()['dateFrom'] || this.filters()['dateTo']) {
+      this.filters.update((curr) => {
+        const { dateFrom, dateTo, ...rest } = curr;
+        return rest;
+      });
+    }
+    this.pageIndex.set(0);
     this.fetchTransactions();
   }
 
@@ -237,21 +403,57 @@ export class ReceiptPaymentComponent implements OnInit {
 
   fetchTransactions(): void {
     this.loading.set(true);
-    const dateStr = this.selectedDateStr();
+    const f = this.filters();
+    const dateFrom = f['dateFrom'] || this.selectedDateStr();
+    const dateTo = f['dateTo'] || this.selectedDateStr();
+    const type = f['type'] || undefined;
+    const headId = f['headId'] ? Number(f['headId']) : undefined;
+    const paymentMethodCode = f['paymentMethodCode'] || undefined;
+    const search = this.search().trim() || undefined;
 
     this.expenseService
       .listTransactions({
-        dateFrom: dateStr,
-        dateTo: dateStr,
-        page: 1,
-        limit: 100,
+        dateFrom,
+        dateTo,
+        type,
+        headId,
+        paymentMethodCode,
+        search,
+        page: this.pageIndex() + 1,
+        limit: this.pageSize(),
         branchId: this.authService.activeChurchBranch()?.branchId,
       })
       .subscribe({
         next: (res) => {
           this.loading.set(false);
-          const list = res.rows || [];
+          let list = res.rows || [];
+
+          // Client-side safeguard filtering (ensures instantaneous response)
+          if (search) {
+            const s = search.toLowerCase();
+            list = list.filter((t) =>
+              (t.voucher_no && t.voucher_no.toLowerCase().includes(s)) ||
+              (t.paid_to && t.paid_to.toLowerCase().includes(s)) ||
+              (t.notes && t.notes.toLowerCase().includes(s)) ||
+              (t.head_name && t.head_name.toLowerCase().includes(s)) ||
+              (t.account_head_name && t.account_head_name.toLowerCase().includes(s)) ||
+              (t.account_head_tamil_name && t.account_head_tamil_name.toLowerCase().includes(s)) ||
+              String(t.amount).includes(s)
+            );
+          }
+          if (paymentMethodCode) {
+            const pm = paymentMethodCode.toUpperCase();
+            list = list.filter((t) => (t.payment_method_code || '').toUpperCase() === pm);
+          }
+          if (type) {
+            list = list.filter((t) => t.type === type);
+          }
+          if (headId) {
+            list = list.filter((t) => t.head_id === headId);
+          }
+
           this.transactions.set(list);
+          this.total.set(search || paymentMethodCode || type || headId ? list.length : (res.total ?? list.length));
 
           // If previously selected item is still in list, keep it; otherwise select the first item or null
           if (this.selectedPreviewId()) {
@@ -310,6 +512,7 @@ export class ReceiptPaymentComponent implements OnInit {
   }
 
   resetForm(): void {
+    this.editingTxId.set(null);
     const dateStr = this.selectedDateStr();
     const cashMethod = this.paymentMethods().find((m) => m.code === 'CASH');
     this.form.set({
@@ -324,6 +527,31 @@ export class ReceiptPaymentComponent implements OnInit {
       paidTo: '',
       notes: '',
     });
+  }
+
+  editTransaction(tx: ChurchExpenseTransaction): void {
+    this.editingTxId.set(tx.id);
+    const mode = tx.payment_method_code ? tx.payment_method_code.toUpperCase() : 'CASH';
+    const pm = this.paymentMethods().find((m) => m.code === mode);
+    this.form.set({
+      entryDate: tx.entry_date,
+      type: tx.type,
+      headId: tx.head_id ?? null,
+      headName: tx.account_head_name || tx.head_name || '',
+      amount: Number(tx.amount) || null,
+      paymentModeCode: mode,
+      paymentMethodId: tx.payment_method_id ?? (pm ? pm.id : null),
+      voucherNo: tx.voucher_no || '',
+      paidTo: tx.paid_to || '',
+      notes: tx.notes || '',
+    });
+    this.selectedPreviewId.set(tx.id);
+    const el = document.getElementById('entry-form-card');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  cancelEdit(): void {
+    this.resetForm();
   }
 
   submitSave(): void {
@@ -348,6 +576,37 @@ export class ReceiptPaymentComponent implements OnInit {
     }
 
     this.submitting.set(true);
+
+    if (this.editingTxId()) {
+      const txId = this.editingTxId()!;
+      this.expenseService
+        .updateTransaction(txId, {
+          entryDate: f.entryDate,
+          type: f.type,
+          headId: f.headId,
+          headName: headName,
+          amount: Number(f.amount),
+          paymentMethodId: pmId || null,
+          voucherNo: f.voucherNo.trim() || null,
+          paidTo: f.paidTo.trim() || null,
+          notes: f.notes.trim() || null,
+        })
+        .subscribe({
+          next: () => {
+            this.submitting.set(false);
+            this.notification.success('Transaction updated successfully.');
+            this.editingTxId.set(null);
+            this.fetchTransactions();
+            this.resetForm();
+          },
+          error: (err) => {
+            this.submitting.set(false);
+            console.error('Error updating transaction', err);
+            this.notification.error(err?.error?.message || 'Failed to update transaction.');
+          },
+        });
+      return;
+    }
 
     this.expenseService
       .createTransaction({
@@ -392,6 +651,13 @@ export class ReceiptPaymentComponent implements OnInit {
       });
   }
 
+  printTransactionVoucher(tx: ChurchExpenseTransaction): void {
+    this.selectedPreviewId.set(tx.id);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  }
+
   deleteTransaction(id: number): void {
     const confirmMsg = this.translate.instant('expenses.deleteConfirm') || 'Are you sure you want to delete this transaction entry?';
     if (!confirm(confirmMsg)) return;
@@ -413,6 +679,24 @@ export class ReceiptPaymentComponent implements OnInit {
 
   printVoucher(): void {
     window.print();
+  }
+
+  printSelectedDayReport(): void {
+    const dateStr = this.selectedDateStr();
+    const url = this.expenseService.getDailyPrintUrl(dateStr, this.languageService.current());
+    window.open(url, '_blank');
+  }
+
+  printOverallMonthlyReport(): void {
+    const my = this.selectedMonthYear();
+    const url = this.expenseService.getMonthlyPrintUrl(my, this.languageService.current());
+    window.open(url, '_blank');
+  }
+
+  printDaywiseMonthReport(): void {
+    const my = this.selectedMonthYear();
+    const url = this.expenseService.getDaywiseMonthPrintUrl(my, this.languageService.current());
+    window.open(url, '_blank');
   }
 
   formatCurrency(val: number | string | null | undefined): string {

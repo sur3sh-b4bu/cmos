@@ -38,6 +38,25 @@
   }
 }
 
+.reports__header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reports__overall-btn {
+  background: linear-gradient(135deg, var(--coms-color-primary, #072a63) 0%, #0f3d8a 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(7, 42, 99, 0.2);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+
+  &:hover:not([disabled]) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(7, 42, 99, 0.28);
+  }
+}
+
 mat-tab-group {
   display: flex !important;
   flex-direction: column !important;

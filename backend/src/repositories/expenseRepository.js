@@ -428,7 +428,7 @@ async function saveMonthlyLedger(churchId, branchId, monthYear, { entries = [], 
   }
 }
 
-async function listTransactions({ churchId, branchId, dateFrom, dateTo, type, headId, page = 1, limit = 50 }) {
+async function listTransactions({ churchId, branchId, dateFrom, dateTo, type, headId, paymentMethodId, paymentMethodCode, search, page = 1, limit = 50 }) {
   let where = 'WHERE e.church_id = ? AND e.deleted_at IS NULL';
   const params = [churchId];
 
@@ -452,10 +452,29 @@ async function listTransactions({ churchId, branchId, dateFrom, dateTo, type, he
     where += ' AND e.head_id = ?';
     params.push(headId);
   }
+  if (paymentMethodId) {
+    where += ' AND e.payment_method_id = ?';
+    params.push(paymentMethodId);
+  }
+  if (paymentMethodCode) {
+    where += ' AND UPPER(pm.code) = UPPER(?)';
+    params.push(paymentMethodCode);
+  }
+  if (search) {
+    where += ' AND (e.voucher_no LIKE ? OR e.paid_to LIKE ? OR e.notes LIKE ? OR e.head_name LIKE ? OR ah.name LIKE ? OR ah.tamil_name LIKE ? OR CAST(e.amount AS CHAR) LIKE ?)';
+    const term = `%${search}%`;
+    params.push(term, term, term, term, term, term, term);
+  }
 
   const offset = (page - 1) * limit;
 
-  const countSql = `SELECT COUNT(*) AS total FROM church_expenses e ${where}`;
+  const countSql = `
+    SELECT COUNT(*) AS total
+    FROM church_expenses e
+    LEFT JOIN account_heads ah ON ah.id = e.head_id
+    LEFT JOIN payment_methods pm ON pm.id = e.payment_method_id
+    ${where}
+  `;
   const [countRes] = await pool.query(countSql, params);
   const total = countRes[0].total;
 
@@ -499,12 +518,206 @@ async function createTransaction(churchId, branchId, data, userId) {
   return rows[0];
 }
 
+async function updateTransaction(id, churchId, data) {
+  const fields = [];
+  const params = [];
+
+  if (data.entryDate !== undefined) {
+    fields.push('entry_date = ?');
+    params.push(data.entryDate);
+    fields.push('month_year = ?');
+    params.push(parseMonthYear(data.entryDate));
+  }
+  if (data.type !== undefined) { fields.push('type = ?'); params.push(data.type); }
+  if (data.headId !== undefined) { fields.push('head_id = ?'); params.push(data.headId || null); }
+  if (data.headName !== undefined) { fields.push('head_name = ?'); params.push(data.headName); }
+  if (data.amount !== undefined) { fields.push('amount = ?'); params.push(data.amount); }
+  if (data.paymentMethodId !== undefined) { fields.push('payment_method_id = ?'); params.push(data.paymentMethodId || null); }
+  if (data.voucherNo !== undefined) { fields.push('voucher_no = ?'); params.push(data.voucherNo || null); }
+  if (data.paidTo !== undefined) { fields.push('paid_to = ?'); params.push(data.paidTo || null); }
+  if (data.notes !== undefined) { fields.push('notes = ?'); params.push(data.notes || null); }
+
+  if (!fields.length) return null;
+  params.push(id, churchId);
+
+  await pool.query(
+    `UPDATE church_expenses SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? AND church_id = ? AND deleted_at IS NULL`,
+    params
+  );
+  const [rows] = await pool.query('SELECT * FROM church_expenses WHERE id = ?', [id]);
+  return rows[0] || null;
+}
+
 async function deleteTransaction(id, churchId) {
   const [res] = await pool.query(
     'UPDATE church_expenses SET deleted_at = NOW() WHERE id = ? AND church_id = ?',
     [id, churchId]
   );
   return res.affectedRows > 0;
+}
+
+async function getDailyReceiptPaymentData({ churchId, branchId, date }) {
+  let sql = `
+    SELECT e.*, ah.name AS account_head_name, ah.tamil_name AS account_head_tamil_name,
+           ah.section, pm.name AS payment_method_name, pm.code AS payment_method_code,
+           u.full_name AS created_by_name
+    FROM church_expenses e
+    LEFT JOIN account_heads ah ON ah.id = e.head_id
+    LEFT JOIN payment_methods pm ON pm.id = e.payment_method_id
+    LEFT JOIN users u ON u.id = e.created_by
+    WHERE e.church_id = ? AND e.entry_date = ? AND e.deleted_at IS NULL
+  `;
+  const params = [churchId, date];
+  if (branchId) {
+    sql += ' AND (e.branch_id = ? OR e.branch_id IS NULL)';
+    params.push(branchId);
+  }
+  sql += ' ORDER BY e.id ASC';
+
+  const [transactions] = await pool.query(sql, params);
+
+  let totalReceipts = 0;
+  let totalPayments = 0;
+  let receiptCount = 0;
+  let paymentCount = 0;
+  let cashTotal = 0;
+  let bankTotal = 0;
+  let upiTotal = 0;
+  let chequeTotal = 0;
+
+  for (const tx of transactions) {
+    const amt = parseFloat(tx.amount || 0);
+    const mode = (tx.payment_method_code || '').toUpperCase();
+
+    if (tx.type === 'receipt') {
+      totalReceipts += amt;
+      receiptCount++;
+    } else {
+      totalPayments += amt;
+      paymentCount++;
+    }
+
+    if (mode === 'CASH') cashTotal += amt;
+    else if (mode === 'BANK_TRANSFER') bankTotal += amt;
+    else if (mode === 'UPI') upiTotal += amt;
+    else if (mode === 'CHEQUE') chequeTotal += amt;
+    else cashTotal += amt; // Default
+  }
+
+  const netBalance = totalReceipts - totalPayments;
+
+  return {
+    date,
+    transactions,
+    totals: {
+      totalReceipts,
+      totalPayments,
+      netBalance,
+      receiptCount,
+      paymentCount,
+      cashTotal,
+      bankTotal,
+      upiTotal,
+      chequeTotal,
+      totalCount: transactions.length,
+    },
+  };
+}
+
+async function getMonthDaywiseReceiptPaymentData({ churchId, branchId, monthYear }) {
+  const my = monthYear || parseMonthYear(new Date());
+  const [yStr, mStr] = my.split('-');
+  const y = parseInt(yStr, 10);
+  const m = parseInt(mStr, 10);
+
+  const startDate = `${my}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const endDate = `${my}-${String(lastDay).padStart(2, '0')}`;
+
+  let sql = `
+    SELECT e.*, ah.name AS account_head_name, ah.tamil_name AS account_head_tamil_name,
+           ah.section, pm.name AS payment_method_name, pm.code AS payment_method_code
+    FROM church_expenses e
+    LEFT JOIN account_heads ah ON ah.id = e.head_id
+    LEFT JOIN payment_methods pm ON pm.id = e.payment_method_id
+    WHERE e.church_id = ? AND e.entry_date >= ? AND e.entry_date <= ? AND e.deleted_at IS NULL
+  `;
+  const params = [churchId, startDate, endDate];
+  if (branchId) {
+    sql += ' AND (e.branch_id = ? OR e.branch_id IS NULL)';
+    params.push(branchId);
+  }
+  sql += ' ORDER BY e.entry_date ASC, e.id ASC';
+
+  const [entries] = await pool.query(sql, params);
+
+  // Group entries by day of month (1 to lastDay)
+  const entriesByDay = {};
+  for (let d = 1; d <= lastDay; d++) {
+    const dayStr = String(d).padStart(2, '0');
+    const fullDate = `${my}-${dayStr}`;
+    entriesByDay[fullDate] = [];
+  }
+
+  let totalReceipts = 0;
+  let totalPayments = 0;
+
+  for (const e of entries) {
+    const dateStr = String(e.entry_date).slice(0, 10);
+    if (!entriesByDay[dateStr]) {
+      entriesByDay[dateStr] = [];
+    }
+    entriesByDay[dateStr].push(e);
+
+    const amt = parseFloat(e.amount || 0);
+    if (e.type === 'receipt') {
+      totalReceipts += amt;
+    } else {
+      totalPayments += amt;
+    }
+  }
+
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dailyBreakdown = [];
+
+  for (let d = 1; d <= lastDay; d++) {
+    const dayStr = String(d).padStart(2, '0');
+    const fullDate = `${my}-${dayStr}`;
+    const curDate = new Date(y, m - 1, d);
+    const dayName = daysOfWeek[curDate.getDay()];
+    const dayEntries = entriesByDay[fullDate] || [];
+
+    let dayRec = 0;
+    let dayPay = 0;
+    for (const item of dayEntries) {
+      const amt = parseFloat(item.amount || 0);
+      if (item.type === 'receipt') dayRec += amt;
+      else dayPay += amt;
+    }
+
+    dailyBreakdown.push({
+      dayNum: d,
+      dayLabel: `Day ${dayStr} (${dayName})`,
+      fullDate,
+      dateDMY: `${dayStr}/${String(m).padStart(2, '0')}/${y}`,
+      receipts: dayRec,
+      payments: dayPay,
+      net: dayRec - dayPay,
+      entries: dayEntries,
+    });
+  }
+
+  return {
+    monthYear: my,
+    daysInMonth: lastDay,
+    dailyBreakdown,
+    totals: {
+      totalReceipts,
+      totalPayments,
+      netBalance: totalReceipts - totalPayments,
+      totalCount: entries.length,
+    },
+  };
 }
 
 module.exports = {
@@ -516,5 +729,8 @@ module.exports = {
   saveMonthlyLedger,
   listTransactions,
   createTransaction,
+  updateTransaction,
   deleteTransaction,
+  getDailyReceiptPaymentData,
+  getMonthDaywiseReceiptPaymentData,
 };

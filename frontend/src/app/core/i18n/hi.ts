@@ -542,6 +542,7 @@ export const hi = {
     contributionsForRange: 'योगदान: {{from}} - {{to}}',
     emptyCertificates: 'इस तिथि सीमा में कोई प्रमाणपत्र जारी नहीं किया गया।',
     enteredDate: 'प्रविष्टि तिथि',
+    printOverallFinancial: 'समग्र वित्तीय रिपोर्ट प्रिंट',
   },
 
   masters: {
@@ -1077,5 +1078,12 @@ export const hi = {
     printVoucher: 'वाउचर प्रिंट करें',
     receiptVoucher: 'रसीद वाउचर',
     paymentVoucher: 'भुगतान वाउचर',
+    printOptions: 'विवरण प्रिंट करें',
+    printSelectedDay: 'चयनित दिन प्रिंट',
+    printSelectedDayDesc: 'चयनित तिथि की सभी रसीदों और भुगतानों का दैनिक विवरण',
+    printOverallMonthly: 'समग्र मासिक प्रिंट',
+    printOverallMonthlyDesc: 'चयनित माह का समेकित खाता सारांश',
+    printDaywiseMonth: '31 दिन दैनिक रजिस्टर',
+    printDaywiseMonthDesc: 'माह के 1 से 31 दिनों का दिन-वार लेनदेन रजिस्टर',
   },
 };

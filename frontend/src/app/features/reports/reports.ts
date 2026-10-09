@@ -65,6 +65,7 @@ export class ReportsComponent implements OnInit {
   printingFullCollections = signal<boolean>(false);
   printingFullContributions = signal<boolean>(false);
   printingCertificates = signal<boolean>(false);
+  printingOverall = signal<boolean>(false);
 
   range = signal<DateRange>({ from: '', to: '' });
   loading = signal(false);
@@ -236,6 +237,22 @@ export class ReportsComponent implements OnInit {
   onCertificatesSort(sort: DataTableSort): void {
     this.certificatesSort.set(sort);
     this.certificatesPage.set(0);
+  }
+
+  async printOverallFinancialReport(): Promise<void> {
+    if (this.printingOverall()) return;
+    this.printingOverall.set(true);
+    try {
+      await this.fileDownload.printPdf(
+        this.reportService.getOverallFinancialPrintUrl(
+          this.range().from,
+          this.range().to,
+          this.languageService.current()
+        )
+      );
+    } finally {
+      this.printingOverall.set(false);
+    }
   }
 
   async printMassIntentionsReport(): Promise<void> {

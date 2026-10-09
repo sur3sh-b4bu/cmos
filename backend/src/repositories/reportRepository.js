@@ -351,6 +351,274 @@ async function certificatesReport({ churchId, branchId, type, dateFrom, dateTo }
   return { rows: results, summary: { ...summary, total: results.length } };
 }
 
+async function overallFinancialReport({ churchId, branchId, dateFrom, dateTo }) {
+  const from = dateFrom || '1970-01-01';
+  const to = dateTo || '2099-12-31';
+
+  // 1. Mass Intentions Summary & Payment Methods
+  const massParams = [churchId, from, to];
+  let massBranchFilter = '';
+  if (branchId) {
+    massBranchFilter = ' AND (pi.branch_id = ? OR pi.branch_id IS NULL)';
+    massParams.push(branchId);
+  }
+
+  const [[massAgg]] = await pool.query(
+    `SELECT COALESCE(SUM(pt.amount), 0) AS total_amount, COUNT(DISTINCT pi.id) AS total_count
+     FROM prayer_intentions pi
+     JOIN payment_transactions pt ON pt.prayer_intention_id = pi.id AND pt.status = 'success'
+     WHERE pi.church_id = ? AND pi.is_deleted = 0 AND COALESCE(pi.is_refunded, 0) = 0
+       AND pt.payment_date BETWEEN ? AND ?
+       ${massBranchFilter}`,
+    massParams
+  );
+
+  const [massMethods] = await pool.query(
+    `SELECT LOWER(COALESCE(pt.method, 'cash')) AS method, COALESCE(SUM(pt.amount), 0) AS total, COUNT(DISTINCT pi.id) AS count
+     FROM prayer_intentions pi
+     JOIN payment_transactions pt ON pt.prayer_intention_id = pi.id AND pt.status = 'success'
+     WHERE pi.church_id = ? AND pi.is_deleted = 0 AND COALESCE(pi.is_refunded, 0) = 0
+       AND pt.payment_date BETWEEN ? AND ?
+       ${massBranchFilter}
+     GROUP BY LOWER(COALESCE(pt.method, 'cash'))`,
+    massParams
+  );
+
+  // 2. Contributions Summary, Types & Payment Methods
+  const contribParams = [churchId, from, to];
+  let contribBranchFilter = '';
+  if (branchId) {
+    contribBranchFilter = ' AND (c.branch_id = ? OR c.branch_id IS NULL)';
+    contribParams.push(branchId);
+  }
+
+  const [[contribAgg]] = await pool.query(
+    `SELECT COALESCE(SUM(pt.amount), 0) AS total_amount, COUNT(DISTINCT c.id) AS total_count
+     FROM contributions c
+     JOIN contribution_payment_transactions pt ON pt.contribution_id = c.id AND pt.status = 'success'
+     WHERE c.church_id = ? AND c.is_deleted = 0 AND COALESCE(c.is_refunded, 0) = 0
+       AND pt.payment_date BETWEEN ? AND ?
+       ${contribBranchFilter}`,
+    contribParams
+  );
+
+  const [contribTypes] = await pool.query(
+    `SELECT COALESCE(ct.name, c.custom_contribution_type, 'General Contribution') AS type_name,
+            ct.name_ta AS type_name_ta,
+            COALESCE(SUM(pt.amount), 0) AS total,
+            COUNT(DISTINCT c.id) AS count
+     FROM contributions c
+     JOIN contribution_payment_transactions pt ON pt.contribution_id = c.id AND pt.status = 'success'
+     LEFT JOIN contribution_types ct ON ct.id = c.contribution_type_id
+     WHERE c.church_id = ? AND c.is_deleted = 0 AND COALESCE(c.is_refunded, 0) = 0
+       AND pt.payment_date BETWEEN ? AND ?
+       ${contribBranchFilter}
+     GROUP BY ct.id, ct.name, ct.name_ta, c.custom_contribution_type
+     ORDER BY total DESC`,
+    contribParams
+  );
+
+  const [contribMethods] = await pool.query(
+    `SELECT LOWER(COALESCE(pt.method, 'cash')) AS method, COALESCE(SUM(pt.amount), 0) AS total, COUNT(DISTINCT c.id) AS count
+     FROM contributions c
+     JOIN contribution_payment_transactions pt ON pt.contribution_id = c.id AND pt.status = 'success'
+     WHERE c.church_id = ? AND c.is_deleted = 0 AND COALESCE(c.is_refunded, 0) = 0
+       AND pt.payment_date BETWEEN ? AND ?
+       ${contribBranchFilter}
+     GROUP BY LOWER(COALESCE(pt.method, 'cash'))`,
+    contribParams
+  );
+
+  // 3. Church Receipts (Other Income)
+  const receiptParams = [churchId, from, to];
+  let receiptBranchFilter = '';
+  if (branchId) {
+    receiptBranchFilter = ' AND (e.branch_id = ? OR e.branch_id IS NULL)';
+    receiptParams.push(branchId);
+  }
+
+  const [[receiptAgg]] = await pool.query(
+    `SELECT COALESCE(SUM(e.amount), 0) AS total_amount, COUNT(e.id) AS total_count
+     FROM church_expenses e
+     WHERE e.church_id = ? AND e.type = 'receipt' AND e.deleted_at IS NULL
+       AND e.entry_date BETWEEN ? AND ?
+       ${receiptBranchFilter}`,
+    receiptParams
+  );
+
+  const [receiptHeads] = await pool.query(
+    `SELECT COALESCE(ah.name, e.head_name, 'Other Receipt') AS head_name,
+            ah.tamil_name AS head_tamil_name,
+            ah.section,
+            COALESCE(SUM(e.amount), 0) AS total,
+            COUNT(e.id) AS count
+     FROM church_expenses e
+     LEFT JOIN account_heads ah ON ah.id = e.head_id
+     WHERE e.church_id = ? AND e.type = 'receipt' AND e.deleted_at IS NULL
+       AND e.entry_date BETWEEN ? AND ?
+       ${receiptBranchFilter}
+     GROUP BY e.head_id, ah.name, ah.tamil_name, ah.section, e.head_name
+     ORDER BY total DESC`,
+    receiptParams
+  );
+
+  const [receiptMethods] = await pool.query(
+    `SELECT LOWER(COALESCE(pm.code, pm.name, 'cash')) AS method, COALESCE(SUM(e.amount), 0) AS total, COUNT(e.id) AS count
+     FROM church_expenses e
+     LEFT JOIN payment_methods pm ON pm.id = e.payment_method_id
+     WHERE e.church_id = ? AND e.type = 'receipt' AND e.deleted_at IS NULL
+       AND e.entry_date BETWEEN ? AND ?
+       ${receiptBranchFilter}
+     GROUP BY LOWER(COALESCE(pm.code, pm.name, 'cash'))`,
+    receiptParams
+  );
+
+  // 4. Church Payments / Operating Expenses
+  const paymentParams = [churchId, from, to];
+  let paymentBranchFilter = '';
+  if (branchId) {
+    paymentBranchFilter = ' AND (e.branch_id = ? OR e.branch_id IS NULL)';
+    paymentParams.push(branchId);
+  }
+
+  const [[paymentAgg]] = await pool.query(
+    `SELECT COALESCE(SUM(e.amount), 0) AS total_amount, COUNT(e.id) AS total_count
+     FROM church_expenses e
+     WHERE e.church_id = ? AND e.type = 'payment' AND e.deleted_at IS NULL
+       AND e.entry_date BETWEEN ? AND ?
+       ${paymentBranchFilter}`,
+    paymentParams
+  );
+
+  const [paymentHeads] = await pool.query(
+    `SELECT COALESCE(ah.name, e.head_name, 'General Expense') AS head_name,
+            ah.tamil_name AS head_tamil_name,
+            ah.section,
+            COALESCE(SUM(e.amount), 0) AS total,
+            COUNT(e.id) AS count
+     FROM church_expenses e
+     LEFT JOIN account_heads ah ON ah.id = e.head_id
+     WHERE e.church_id = ? AND e.type = 'payment' AND e.deleted_at IS NULL
+       AND e.entry_date BETWEEN ? AND ?
+       ${paymentBranchFilter}
+     GROUP BY e.head_id, ah.name, ah.tamil_name, ah.section, e.head_name
+     ORDER BY total DESC`,
+    paymentParams
+  );
+
+  const [paymentMethods] = await pool.query(
+    `SELECT LOWER(COALESCE(pm.code, pm.name, 'cash')) AS method, COALESCE(SUM(e.amount), 0) AS total, COUNT(e.id) AS count
+     FROM church_expenses e
+     LEFT JOIN payment_methods pm ON pm.id = e.payment_method_id
+     WHERE e.church_id = ? AND e.type = 'payment' AND e.deleted_at IS NULL
+       AND e.entry_date BETWEEN ? AND ?
+       ${paymentBranchFilter}
+     GROUP BY LOWER(COALESCE(pm.code, pm.name, 'cash'))`,
+    paymentParams
+  );
+
+  // 5. Consolidated Calculations
+  const massTotal = Number(massAgg.total_amount || 0);
+  const massCount = Number(massAgg.total_count || 0);
+
+  const contribTotal = Number(contribAgg.total_amount || 0);
+  const contribCount = Number(contribAgg.total_count || 0);
+
+  const otherReceiptsTotal = Number(receiptAgg.total_amount || 0);
+  const otherReceiptsCount = Number(receiptAgg.total_count || 0);
+
+  const paymentsTotal = Number(paymentAgg.total_amount || 0);
+  const paymentsCount = Number(paymentAgg.total_count || 0);
+
+  const totalIncome = massTotal + contribTotal + otherReceiptsTotal;
+  const totalExpense = paymentsTotal;
+  const netBalance = totalIncome - totalExpense;
+
+  // Aggregate Payment Modes Map
+  const normalizeMethod = (m) => {
+    const lower = (m || '').toLowerCase();
+    if (lower.includes('cash')) return 'cash';
+    if (lower.includes('upi') || lower.includes('gpay') || lower.includes('phonepe') || lower.includes('paytm') || lower.includes('qr')) return 'upi';
+    if (lower.includes('bank') || lower.includes('transfer') || lower.includes('neft') || lower.includes('rtgs') || lower.includes('imps') || lower.includes('cheque') || lower.includes('card')) return 'bank';
+    return 'other';
+  };
+
+  const modeTotals = {
+    cash: { income: 0, expense: 0, balance: 0 },
+    bank: { income: 0, expense: 0, balance: 0 },
+    upi: { income: 0, expense: 0, balance: 0 },
+    other: { income: 0, expense: 0, balance: 0 },
+  };
+
+  // Add Mass Intention methods to mode totals
+  for (const m of massMethods) {
+    const mode = normalizeMethod(m.method);
+    modeTotals[mode].income += Number(m.total || 0);
+  }
+  // Add Contribution methods to mode totals
+  for (const m of contribMethods) {
+    const mode = normalizeMethod(m.method);
+    modeTotals[mode].income += Number(m.total || 0);
+  }
+  // Add Church Receipts methods to mode totals
+  for (const m of receiptMethods) {
+    const mode = normalizeMethod(m.method);
+    modeTotals[mode].income += Number(m.total || 0);
+  }
+  // Add Church Payments methods to mode totals
+  for (const m of paymentMethods) {
+    const mode = normalizeMethod(m.method);
+    modeTotals[mode].expense += Number(m.total || 0);
+  }
+
+  for (const key of Object.keys(modeTotals)) {
+    modeTotals[key].balance = modeTotals[key].income - modeTotals[key].expense;
+  }
+
+  return {
+    dateFrom,
+    dateTo,
+    summary: {
+      totalIncome,
+      totalExpense,
+      netBalance,
+      massTotal,
+      massCount,
+      contribTotal,
+      contribCount,
+      otherReceiptsTotal,
+      otherReceiptsCount,
+      paymentsTotal,
+      paymentsCount,
+      totalEntries: massCount + contribCount + otherReceiptsCount + paymentsCount,
+    },
+    modeTotals,
+    massIntentions: {
+      total: massTotal,
+      count: massCount,
+      methods: massMethods.map((m) => ({ method: m.method, total: Number(m.total), count: m.count })),
+    },
+    contributions: {
+      total: contribTotal,
+      count: contribCount,
+      types: contribTypes.map((t) => ({ typeName: t.type_name, typeNameTa: t.type_name_ta, total: Number(t.total), count: t.count })),
+      methods: contribMethods.map((m) => ({ method: m.method, total: Number(m.total), count: m.count })),
+    },
+    otherReceipts: {
+      total: otherReceiptsTotal,
+      count: otherReceiptsCount,
+      heads: receiptHeads.map((h) => ({ headName: h.head_name, headTamilName: h.head_tamil_name, section: h.section, total: Number(h.total), count: h.count })),
+      methods: receiptMethods.map((m) => ({ method: m.method, total: Number(m.total), count: m.count })),
+    },
+    expenses: {
+      total: paymentsTotal,
+      count: paymentsCount,
+      heads: paymentHeads.map((h) => ({ headName: h.head_name, headTamilName: h.head_tamil_name, section: h.section, total: Number(h.total), count: h.count })),
+      methods: paymentMethods.map((m) => ({ method: m.method, total: Number(m.total), count: m.count })),
+    },
+  };
+}
+
 module.exports = {
   massIntentionsReport,
   collectionsReport,
@@ -358,4 +626,5 @@ module.exports = {
   collectionsRangeDetail,
   contributionCollectionsReport,
   contributionCollectionsRangeDetail,
+  overallFinancialReport,
 };

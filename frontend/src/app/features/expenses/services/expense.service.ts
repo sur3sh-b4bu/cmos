@@ -83,6 +83,9 @@ export class ExpenseService {
     dateTo?: string;
     type?: string;
     headId?: number;
+    paymentMethodId?: number;
+    paymentMethodCode?: string;
+    search?: string;
     page?: number;
     limit?: number;
     branchId?: number | null;
@@ -128,9 +131,40 @@ export class ExpenseService {
       .pipe(map((res) => res.data));
   }
 
+  updateTransaction(
+    id: number,
+    data: {
+      entryDate?: string;
+      type?: 'receipt' | 'payment';
+      headId?: number | null;
+      headName?: string;
+      amount?: number;
+      paymentMethodId?: number | null;
+      voucherNo?: string | null;
+      paidTo?: string | null;
+      notes?: string | null;
+    }
+  ): Observable<ChurchExpenseTransaction> {
+    return this.http
+      .put<ApiResponse<ChurchExpenseTransaction>>(`${this.baseUrl}/transactions/${id}`, data)
+      .pipe(map((res) => res.data));
+  }
+
   deleteTransaction(id: number): Observable<boolean> {
     return this.http
       .delete<ApiResponse<{ success: boolean }>>(`${this.baseUrl}/transactions/${id}`)
       .pipe(map((res) => res.data?.success ?? true));
+  }
+
+  getDailyPrintUrl(date: string, lang: string = 'en'): string {
+    return `${this.baseUrl}/transactions/print-day?date=${date}${lang === 'ta' ? '&lang=ta' : ''}`;
+  }
+
+  getMonthlyPrintUrl(monthYear: string, lang: string = 'en'): string {
+    return `${this.baseUrl}/monthly/print?monthYear=${monthYear}${lang === 'ta' ? '&lang=ta' : ''}`;
+  }
+
+  getDaywiseMonthPrintUrl(monthYear: string, lang: string = 'en'): string {
+    return `${this.baseUrl}/transactions/print-daywise-month?monthYear=${monthYear}${lang === 'ta' ? '&lang=ta' : ''}`;
   }
 }

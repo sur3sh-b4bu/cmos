@@ -5,6 +5,7 @@ const { generateCollectionsDetailPdf } = require('../reports/collectionsDetailPd
 const { generateContributionCollectionsDetailPdf } = require('../reports/contributionCollectionsDetailPdf');
 const { generateMassIntentionsReportPdf } = require('../reports/massIntentionsReportPdf');
 const { generateCertificatesReportPdf } = require('../reports/certificatesReportPdf');
+const { generateOverallFinancialReportPdf } = require('../reports/overallFinancialReportPdf');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const { effectiveBranchId } = require('../utils/effectiveScope');
@@ -256,6 +257,59 @@ const certificatesPrint = asyncHandler(async (req, res) => {
   res.send(buffer);
 });
 
+const overallFinancial = asyncHandler(async (req, res) => {
+  const { dateFrom, dateTo } = req.query;
+  const result = await reportRepository.overallFinancialReport({
+    churchId: req.user.churchId,
+    branchId: effectiveBranchId(req),
+    dateFrom,
+    dateTo: dateTo || dateFrom,
+  });
+  res.json({ success: true, data: result });
+});
+
+const overallFinancialPrint = asyncHandler(async (req, res) => {
+  const { dateFrom, dateTo } = req.query;
+  const [result, church, currency] = await Promise.all([
+    reportRepository.overallFinancialReport({
+      churchId: req.user.churchId,
+      branchId: effectiveBranchId(req),
+      dateFrom,
+      dateTo: dateTo || dateFrom,
+    }),
+    lookupRepository.getChurchById(req.user.churchId),
+    lookupRepository.getDefaultCurrency(),
+  ]);
+
+  const buffer = await generateOverallFinancialReportPdf({
+    dateFrom,
+    dateTo: dateTo || dateFrom,
+    church,
+    data: result,
+    generatedBy: req.user.username,
+    currencySymbol: currency.symbol,
+    lang: req.query.lang === 'ta' ? 'ta' : 'en',
+  });
+
+  await auditService.fromRequest(req, {
+    action: 'PRINT_REPORT',
+    module: 'reports',
+    entityType: 'overall_financial_report',
+    newValues: {
+      dateFrom,
+      dateTo,
+      totalIncome: result.summary.totalIncome,
+      totalExpense: result.summary.totalExpense,
+      netBalance: result.summary.netBalance,
+    },
+  });
+
+  res.set('Content-Type', 'application/pdf');
+  const filenameSuffix = dateFrom === dateTo ? (dateFrom || 'all') : `${dateFrom}_to_${dateTo}`;
+  res.set('Content-Disposition', `inline; filename="OverallFinancial-${filenameSuffix}.pdf"`);
+  res.send(buffer);
+});
+
 module.exports = {
   massIntentions,
   massIntentionsPrint,
@@ -267,4 +321,6 @@ module.exports = {
   contributionCollectionsDetailPrint,
   certificates,
   certificatesPrint,
+  overallFinancial,
+  overallFinancialPrint,
 };

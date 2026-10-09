@@ -16,5 +16,7 @@ router.get('/contributions/detail', controller.contributionCollectionsDetail);
 router.get('/contributions/detail/print', controller.contributionCollectionsDetailPrint);
 router.get('/certificates', controller.certificates);
 router.get('/certificates/print', controller.certificatesPrint);
+router.get('/overall-financial', controller.overallFinancial);
+router.get('/overall-financial/print', controller.overallFinancialPrint);
 
 module.exports = router;

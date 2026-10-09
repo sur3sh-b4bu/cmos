@@ -39,6 +39,15 @@
 
       <!-- Action Buttons -->
       <div class="expenses-header__actions">
+        <a
+          mat-stroked-button
+          routerLink="/receipt-payment"
+          class="btn-receipt-payment"
+        >
+          <mat-icon>receipt_long</mat-icon>
+          <span>{{ 'nav.receiptPayment' | translate }}</span>
+        </a>
+
         <button
           mat-stroked-button
           class="btn-print"
@@ -53,22 +62,20 @@
           <span>{{ 'expenses.printTwoPage' | translate }}</span>
         </button>
 
-        @if (mainActiveTab() === 0) {
-          <button
-            mat-flat-button
-            color="primary"
-            class="btn-save"
-            (click)="saveLedger()"
-            [disabled]="saving() || loading()"
-          >
-            @if (saving()) {
-              <mat-spinner diameter="18"></mat-spinner>
-            } @else {
-              <mat-icon>save</mat-icon>
-            }
-            <span>{{ 'common.saveChanges' | translate }}</span>
-          </button>
-        }
+        <button
+          mat-flat-button
+          color="primary"
+          class="btn-save"
+          (click)="saveLedger()"
+          [disabled]="saving() || loading()"
+        >
+          @if (saving()) {
+            <mat-spinner diameter="18"></mat-spinner>
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          <span>{{ 'common.saveChanges' | translate }}</span>
+        </button>
       </div>
     </div>
   </header>
@@ -107,24 +114,8 @@
       <p>{{ 'common.loading' | translate }}</p>
     </div>
   } @else {
-    <!-- TWO MAIN TABS -->
-    <mat-tab-group
-      class="expenses-main-tabs"
-      animationDuration="250ms"
-      [selectedIndex]="mainActiveTab()"
-      (selectedIndexChange)="onMainTabChange($event)"
-    >
-      <!-- TAB 1: MONTHLY LEDGER & DIOCESE ABSTRACT -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <div class="tab-label-container">
-            <mat-icon class="tab-icon">menu_book</mat-icon>
-            <span class="tab-title">{{ 'expenses.tabMonthlyLedger' | translate }}</span>
-          </div>
-        </ng-template>
-
-        <div class="monthly-ledger-container">
-          <!-- Monthly Sub-Navigation Tabs (Front Journal vs Back Abstract) -->
+    <div class="monthly-ledger-container">
+      <!-- Monthly Sub-Navigation Tabs (Front Journal vs Back Abstract) -->
           <div class="sub-nav-bar glass-card">
             <div class="sub-nav-tabs">
               <button
@@ -682,441 +673,6 @@
               </div>
             </div>
           }
-        </div>
-      </mat-tab>
-
-      <!-- TAB 2: DAILY RECEIPTS & PAYMENTS ENTRY -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <div class="tab-label-container">
-            <mat-icon class="tab-icon">edit_calendar</mat-icon>
-            <span class="tab-title">{{ 'expenses.tabDailyEntry' | translate }}</span>
-          </div>
-        </ng-template>
-
-        <div class="daily-entry-container">
-          <!-- TOP: DEDICATED DATA ENTRY CARD -->
-          <div class="entry-card glass-card">
-            <div class="entry-card__header">
-              <div class="header-text">
-                <h3>
-                  <mat-icon class="icon-accent">post_add</mat-icon>
-                  {{ 'expenses.dailyEntryTitle' | translate }}
-                </h3>
-                <p>{{ 'expenses.dailyEntrySubtitle' | translate }} ({{ getSelectedMonthName() }} {{ currentYear() }})</p>
-              </div>
-
-              <!-- Type Toggle: Receipt vs Payment Radio Buttons -->
-              <div class="type-toggle-group">
-                <button
-                  type="button"
-                  class="type-toggle-btn type-toggle-btn--receipt"
-                  [class.selected]="dailyForm().type === 'receipt'"
-                  (click)="setDailyType('receipt')"
-                >
-                  <mat-icon>arrow_downward</mat-icon>
-                  <span>{{ 'expenses.receiptIncome' | translate }}</span>
-                </button>
-
-                <button
-                  type="button"
-                  class="type-toggle-btn type-toggle-btn--payment"
-                  [class.selected]="dailyForm().type === 'payment'"
-                  (click)="setDailyType('payment')"
-                >
-                  <mat-icon>arrow_upward</mat-icon>
-                  <span>{{ 'expenses.paymentExpense' | translate }}</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- FORM FIELDS GRID -->
-            <form (ngSubmit)="submitDailyTransaction()" class="entry-form">
-              <div class="form-grid">
-                <!-- Field 1: Entry Date with Date Icon -->
-                <div class="form-group field-date">
-                  <label>
-                    <mat-icon class="field-icon">calendar_month</mat-icon>
-                    {{ 'expenses.datePicker' | translate }} *
-                  </label>
-                  <div class="input-icon-wrap">
-                    <input
-                      type="date"
-                      class="form-control date-input"
-                      [ngModel]="dailyForm().entryDate"
-                      (ngModelChange)="dailyForm().entryDate = $event"
-                      name="entryDate"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <!-- Field 2: Account Head Dropdown -->
-                <div class="form-group field-head">
-                  <label>
-                    <mat-icon class="field-icon">account_tree</mat-icon>
-                    {{ 'expenses.accountHead' | translate }} ({{ dailyForm().type === 'receipt' ? 'Receipt' : 'Payment' }}) *
-                  </label>
-                  <select
-                    class="form-control select-head"
-                    [ngModel]="dailyForm().headId"
-                    (ngModelChange)="onDailyHeadChange($event)"
-                    name="headId"
-                    required
-                  >
-                    <option [ngValue]="null">{{ 'expenses.selectAccountHead' | translate }}</option>
-                    @for (group of groupedHeadsForType(); track group.section) {
-                      <optgroup [label]="group.section">
-                        @for (h of group.items; track h.id) {
-                          <option [value]="h.id">
-                            {{ h.name }} @if (h.tamil_name) { ({{ h.tamil_name }}) }
-                          </option>
-                        }
-                      </optgroup>
-                    }
-                  </select>
-                </div>
-
-                <!-- Field 3: Payment Mode Breakdown Selector -->
-                <div class="form-group field-mode">
-                  <label>
-                    <mat-icon class="field-icon">payments</mat-icon>
-                    {{ 'expenses.paymentMode' | translate }}
-                  </label>
-                  <div class="mode-pills">
-                    <button
-                      type="button"
-                      class="mode-pill"
-                      [class.active]="dailyForm().paymentModeCode === 'CASH'"
-                      (click)="setPaymentMode('CASH')"
-                    >
-                      <mat-icon>payments</mat-icon>
-                      <span>{{ 'expenses.cashHand' | translate }}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      class="mode-pill"
-                      [class.active]="dailyForm().paymentModeCode === 'BANK_TRANSFER' || dailyForm().paymentModeCode === 'CHEQUE'"
-                      (click)="setPaymentMode('BANK_TRANSFER')"
-                    >
-                      <mat-icon>account_balance</mat-icon>
-                      <span>{{ 'expenses.cashBank' | translate }}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      class="mode-pill"
-                      [class.active]="dailyForm().paymentModeCode === 'UPI'"
-                      (click)="setPaymentMode('UPI')"
-                    >
-                      <mat-icon>qr_code_2</mat-icon>
-                      <span>{{ 'expenses.onlineUpi' | translate }}</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Field 4: Amount Input (₹) -->
-                <div class="form-group field-amount">
-                  <label>
-                    <mat-icon class="field-icon">currency_rupee</mat-icon>
-                    {{ 'expenses.amountRs' | translate }} *
-                  </label>
-                  <div class="amount-entry-wrap">
-                    <span class="currency-symbol">₹</span>
-                    <input
-                      type="number"
-                      class="form-control amount-large-input"
-                      [ngModel]="dailyForm().amount"
-                      (ngModelChange)="dailyForm().amount = $event"
-                      name="amount"
-                      placeholder="0.00"
-                      min="0.01"
-                      step="any"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <!-- Field 5: Voucher / Ref No. -->
-                <div class="form-group field-voucher">
-                  <label>
-                    <mat-icon class="field-icon">receipt_long</mat-icon>
-                    {{ 'expenses.voucherNo' | translate }}
-                  </label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    [ngModel]="dailyForm().voucherNo"
-                    (ngModelChange)="dailyForm().voucherNo = $event"
-                    name="voucherNo"
-                    placeholder="e.g. VCH-001 / Cheque #"
-                  />
-                </div>
-
-                <!-- Field 6: Paid To / Received From -->
-                <div class="form-group field-payee">
-                  <label>
-                    <mat-icon class="field-icon">person</mat-icon>
-                    {{ 'expenses.payerOrPayee' | translate }}
-                  </label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    [ngModel]="dailyForm().paidTo"
-                    (ngModelChange)="dailyForm().paidTo = $event"
-                    name="paidTo"
-                    placeholder="e.g. Vendor name, Parishioner name"
-                  />
-                </div>
-
-                <!-- Field 7: Description / Remarks -->
-                <div class="form-group field-notes">
-                  <label>
-                    <mat-icon class="field-icon">notes</mat-icon>
-                    {{ 'expenses.notes' | translate }}
-                  </label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    [ngModel]="dailyForm().notes"
-                    (ngModelChange)="dailyForm().notes = $event"
-                    name="notes"
-                    placeholder="Brief description or purpose of transaction..."
-                  />
-                </div>
-              </div>
-
-              <!-- Form Buttons -->
-              <div class="form-actions">
-                <button
-                  type="button"
-                  mat-stroked-button
-                  class="btn-reset"
-                  (click)="resetDailyForm()"
-                  [disabled]="dailySubmitting()"
-                >
-                  <mat-icon>refresh</mat-icon>
-                  <span>{{ 'expenses.resetForm' | translate }}</span>
-                </button>
-
-                <button
-                  type="submit"
-                  mat-flat-button
-                  color="primary"
-                  class="btn-submit"
-                  [disabled]="dailySubmitting() || !dailyForm().amount"
-                >
-                  @if (dailySubmitting()) {
-                    <mat-spinner diameter="18"></mat-spinner>
-                  } @else {
-                    <mat-icon>check_circle</mat-icon>
-                  }
-                  <span>{{ 'expenses.saveAndRecord' | translate }}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- SUMMARY CARDS BANNER -->
-          <div class="daily-summary-grid">
-            <div class="summary-card summary-card--receipts glass-card">
-              <div class="summary-card__icon">
-                <mat-icon>arrow_downward</mat-icon>
-              </div>
-              <div class="summary-card__content">
-                <span class="summary-card__label">{{ 'expenses.monthReceiptsTotal' | translate }}</span>
-                <span class="summary-card__value">{{ formatCurrency(dailySummaryStats().totalReceipts) }}</span>
-                <div class="summary-card__breakdown">
-                  <span>💵 Cash: {{ formatCurrency(dailySummaryStats().cashReceipts) }}</span>
-                  <span>🏦 Bank: {{ formatCurrency(dailySummaryStats().bankReceipts) }}</span>
-                  <span>📱 UPI: {{ formatCurrency(dailySummaryStats().upiReceipts) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="summary-card summary-card--payments glass-card">
-              <div class="summary-card__icon">
-                <mat-icon>arrow_upward</mat-icon>
-              </div>
-              <div class="summary-card__content">
-                <span class="summary-card__label">{{ 'expenses.monthPaymentsTotal' | translate }}</span>
-                <span class="summary-card__value">{{ formatCurrency(dailySummaryStats().totalPayments) }}</span>
-                <div class="summary-card__breakdown">
-                  <span>💵 Cash: {{ formatCurrency(dailySummaryStats().cashPayments) }}</span>
-                  <span>🏦 Bank: {{ formatCurrency(dailySummaryStats().bankPayments) }}</span>
-                  <span>📱 UPI: {{ formatCurrency(dailySummaryStats().upiPayments) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="summary-card summary-card--net glass-card">
-              <div class="summary-card__icon">
-                <mat-icon>account_balance_wallet</mat-icon>
-              </div>
-              <div class="summary-card__content">
-                <span class="summary-card__label">{{ 'expenses.netDailyBalance' | translate }}</span>
-                <span
-                  class="summary-card__value"
-                  [class.text-success]="dailySummaryStats().netCashflow >= 0"
-                  [class.text-danger]="dailySummaryStats().netCashflow < 0"
-                >
-                  {{ formatCurrency(dailySummaryStats().netCashflow) }}
-                </span>
-                <span class="summary-card__count">
-                  {{ dailySummaryStats().count }} {{ 'expenses.monthlyTransactionsTitle' | translate }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- AUDIT LOG / TRANSACTIONS LIST -->
-          <div class="transactions-wrapper glass-card">
-            <div class="transactions-header">
-              <div class="transactions-header__info">
-                <h3>
-                  <mat-icon class="icon-accent">receipt_long</mat-icon>
-                  {{ 'expenses.monthlyTransactionsTitle' | translate }}
-                </h3>
-                <p class="text-muted">
-                  {{ 'expenses.monthlyTransactionsSubtitle' | translate }} ({{ getSelectedMonthName() }} {{ currentYear() }})
-                </p>
-              </div>
-
-              <!-- Filter Toolbar -->
-              <div class="transactions-filters">
-                <!-- Date Filter -->
-                <div class="filter-item">
-                  <label>{{ 'expenses.filterByDate' | translate }}:</label>
-                  <input
-                    type="date"
-                    class="form-control filter-input"
-                    [ngModel]="dailyFilterDate()"
-                    (ngModelChange)="dailyFilterDate.set($event)"
-                  />
-                  @if (dailyFilterDate()) {
-                    <button mat-icon-button class="btn-clear-date" (click)="dailyFilterDate.set('')" matTooltip="Clear date filter">
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  }
-                </div>
-
-                <!-- Type Filter -->
-                <div class="filter-item">
-                  <select
-                    class="form-control filter-select"
-                    [ngModel]="dailyFilterType()"
-                    (ngModelChange)="dailyFilterType.set($event)"
-                  >
-                    <option value="ALL">{{ 'expenses.allTypes' | translate }}</option>
-                    <option value="receipt">{{ 'expenses.onlyReceipts' | translate }}</option>
-                    <option value="payment">{{ 'expenses.onlyPayments' | translate }}</option>
-                  </select>
-                </div>
-
-                <!-- Search box -->
-                <div class="filter-item search-wrap">
-                  <mat-icon class="search-icon">search</mat-icon>
-                  <input
-                    type="text"
-                    class="form-control search-input"
-                    placeholder="Search payees, vouchers..."
-                    [ngModel]="dailySearchQuery()"
-                    (ngModelChange)="dailySearchQuery.set($event)"
-                  />
-                </div>
-              </div>
-            </div>
-
-            @if (txLoading()) {
-              <div class="loading-state">
-                <mat-spinner diameter="36"></mat-spinner>
-              </div>
-            } @else if (filteredTransactions().length === 0) {
-              <div class="empty-state">
-                <mat-icon>inbox</mat-icon>
-                <h4>{{ 'expenses.noTransactionsFound' | translate }}</h4>
-                <p>{{ 'expenses.noTransactionsHint' | translate }}</p>
-              </div>
-            } @else {
-              <div class="table-responsive">
-                <table class="tx-table">
-                  <thead>
-                    <tr>
-                      <th class="col-date">{{ 'common.date' | translate }}</th>
-                      <th class="col-type">{{ 'common.type' | translate }}</th>
-                      <th class="col-head">{{ 'expenses.accountHead' | translate }}</th>
-                      <th class="col-mode">{{ 'expenses.paymentMode' | translate }}</th>
-                      <th class="col-voucher">{{ 'expenses.voucherNo' | translate }}</th>
-                      <th class="col-payee">{{ 'expenses.payerOrPayee' | translate }}</th>
-                      <th class="col-notes">{{ 'common.description' | translate }}</th>
-                      <th class="col-amount text-right">{{ 'expenses.amountRs' | translate }}</th>
-                      <th class="col-actions text-center">{{ 'common.actions' | translate }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (tx of filteredTransactions(); track tx.id) {
-                      <tr class="tx-row">
-                        <td class="col-date font-mono text-nowrap">
-                          <mat-icon class="row-date-icon">event</mat-icon>
-                          <span>{{ tx.entry_date }}</span>
-                        </td>
-                        <td class="col-type">
-                          <span
-                            class="type-pill"
-                            [class.type-pill--receipt]="tx.type === 'receipt'"
-                            [class.type-pill--payment]="tx.type === 'payment'"
-                          >
-                            <mat-icon>{{ tx.type === 'receipt' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
-                            {{ tx.type === 'receipt' ? 'Receipt' : 'Payment' }}
-                          </span>
-                        </td>
-                        <td class="col-head">
-                          <div class="tx-head-cell">
-                            <span class="head-primary">{{ tx.account_head_name || tx.head_name }}</span>
-                            @if (tx.account_head_tamil_name) {
-                              <span class="head-secondary">{{ tx.account_head_tamil_name }}</span>
-                            }
-                            @if (tx.section) {
-                              <span class="head-badge">{{ tx.section }}</span>
-                            }
-                          </div>
-                        </td>
-                        <td class="col-mode">
-                          <span class="mode-badge" [class.mode-badge--cash]="(tx.payment_method_code || '').toUpperCase() === 'CASH'" [class.mode-badge--upi]="(tx.payment_method_code || '').toUpperCase() === 'UPI'" [class.mode-badge--bank]="(tx.payment_method_code || '').toUpperCase() === 'BANK_TRANSFER' || (tx.payment_method_code || '').toUpperCase() === 'CHEQUE'">
-                            <mat-icon>{{ getPaymentMethodIcon(tx.payment_method_code) }}</mat-icon>
-                            <span>{{ getPaymentMethodLabel(tx.payment_method_code) }}</span>
-                          </span>
-                        </td>
-                        <td class="col-voucher font-mono">{{ tx.voucher_no || '—' }}</td>
-                        <td class="col-payee">{{ tx.paid_to || '—' }}</td>
-                        <td class="col-notes text-muted">{{ tx.notes || '—' }}</td>
-                        <td
-                          class="col-amount text-right text-bold font-mono"
-                          [class.text-success]="tx.type === 'receipt'"
-                          [class.text-danger]="tx.type === 'payment'"
-                        >
-                          {{ tx.type === 'receipt' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
-                        </td>
-                        <td class="col-actions text-center">
-                          <button
-                            mat-icon-button
-                            color="warn"
-                            (click)="deleteTransaction(tx.id)"
-                            [matTooltip]="'common.delete' | translate"
-                          >
-                            <mat-icon>delete_outline</mat-icon>
-                          </button>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
-          </div>
-        </div>
-      </mat-tab>
-    </mat-tab-group>
+    </div>
   }
 </div>

@@ -20,8 +20,11 @@ router.post('/monthly/save', authorize('expenses.create', 'expenses.update'), ex
 router.get('/monthly/print', authorize('expenses.view', 'expenses.print'), expenseController.printMonthlyAccountsPdf);
 
 // Individual Transactions (Daily entries / audit list)
+router.get('/transactions/print-day', authorize('expenses.view', 'expenses.print'), expenseController.printDailyReceiptPaymentPdf);
+router.get('/transactions/print-daywise-month', authorize('expenses.view', 'expenses.print'), expenseController.printDaywiseMonthReceiptPaymentPdf);
 router.get('/transactions', authorize('expenses.view'), expenseController.listTransactions);
 router.post('/transactions', authorize('expenses.create'), expenseController.createTransaction);
+router.put('/transactions/:id', authorize('expenses.update'), expenseController.updateTransaction);
 router.delete('/transactions/:id', authorize('expenses.delete'), expenseController.deleteTransaction);
 
 module.exports = router;

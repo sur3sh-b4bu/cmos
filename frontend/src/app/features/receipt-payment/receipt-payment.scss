@@ -54,7 +54,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 
   .date-form-field {
-    width: 150px;
+    width: 145px;
     margin-bottom: 0 !important;
 
     ::ng-deep {
@@ -62,19 +62,72 @@
         height: 36px !important;
         min-height: 36px !important;
         background: transparent !important;
-        padding: 0 6px !important;
-        border: none !important;
+        padding: 0 4px 0 8px !important;
+        display: flex !important;
+        align-items: center !important;
       }
+
+      .mat-mdc-form-field-flex {
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+      }
+
       .mat-mdc-form-field-subscript-wrapper {
         display: none !important;
       }
+
       .mat-mdc-form-field-infix {
+        display: flex !important;
+        align-items: center !important;
         padding: 0 !important;
+        min-height: unset !important;
+        height: 100% !important;
+        width: auto !important;
       }
-      input {
-        font-weight: 600;
-        font-size: 13.5px;
-        color: var(--coms-text, #0f172a);
+
+      .mdc-notched-outline {
+        top: 0 !important;
+      }
+
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: #cbd5e1 !important;
+      }
+
+      input.mat-mdc-input-element {
+        font-weight: 600 !important;
+        font-size: 13.5px !important;
+        color: var(--coms-text, #0f172a) !important;
+        line-height: normal !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        vertical-align: middle !important;
+      }
+
+      .mat-datepicker-toggle {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+
+        button {
+          width: 28px !important;
+          height: 28px !important;
+          padding: 0 !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          color: #64748b !important;
+
+          mat-icon {
+            font-size: 18px !important;
+            width: 18px !important;
+            height: 18px !important;
+          }
+        }
       }
     }
   }
@@ -84,6 +137,64 @@
     border-radius: 8px;
     font-size: 12px;
     font-weight: 600;
+  }
+}
+
+.print-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .btn-print-action {
+    height: 42px;
+    padding: 0 14px;
+    border-radius: var(--coms-radius-md, 10px);
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 150ms ease;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    &--day {
+      background: var(--coms-color-primary, #072a63);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(7, 42, 99, 0.2);
+
+      &:hover {
+        opacity: 0.95;
+        box-shadow: 0 4px 10px rgba(7, 42, 99, 0.3);
+      }
+    }
+
+    &--daywise {
+      background: #ffffff;
+      border: 1.5px solid #0284c7;
+      color: #0369a1;
+
+      &:hover {
+        background: #f0f9ff;
+        border-color: #0369a1;
+      }
+    }
+
+    &--monthly {
+      background: #ffffff;
+      border: 1.5px solid #059669;
+      color: #047857;
+
+      &:hover {
+        background: #ecfdf5;
+        border-color: #047857;
+      }
+    }
   }
 }
 
@@ -839,8 +950,12 @@
   .head-tamil { font-size: 11.5px; color: #64748b; }
 }
 
-.btn-preview-row {
+.action-btn--edit {
   color: var(--coms-color-primary, #072a63);
+}
+
+.btn-preview-row {
+  color: #0284c7;
 }
 
 .loading-wrap,
@@ -863,19 +978,48 @@
 
 /* Print Styling */
 @media print {
+  @page {
+    size: auto;
+    margin: 10mm;
+  }
+
   .no-print {
     display: none !important;
   }
 
+  .receipt-payment-page {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
   .main-layout-grid {
     display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .preview-column {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .voucher-preview-container {
+    display: block !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
   }
 
   .voucher-card {
     border: 1.5px solid #000000 !important;
     box-shadow: none !important;
     page-break-inside: avoid;
-    margin: 0 auto;
-    max-width: 500px;
+    margin: 10px auto 0 !important;
+    max-width: 550px !important;
+    width: 100% !important;
+    background: #ffffff !important;
   }
 }

@@ -745,6 +745,7 @@ export const ta = {
     contributionsForRange: 'பங்களிப்புகள்: {{from}} - {{to}}',
     emptyCertificates: 'இந்த தேதி வரம்பில் சான்றிதழ்கள் வழங்கப்படவில்லை.',
     enteredDate: 'பதிவு செய்யப்பட்ட தேதி',
+    printOverallFinancial: 'ஒட்டுமொத்த நிதி அறிக்கை',
   },
 
   masters: {
@@ -1452,5 +1453,12 @@ export const ta = {
     printVoucher: 'வவுச்சரை அச்சிடு',
     receiptVoucher: 'வரவு ரசீது வவுச்சர்',
     paymentVoucher: 'செலவு வவுச்சர்',
+    printOptions: 'அறிக்கை அச்சிடு',
+    printSelectedDay: 'தேர்ந்தெடுத்த நாள் அறிக்கை',
+    printSelectedDayDesc: 'தேர்ந்தெடுக்கப்பட்ட தேதிக்கான அனைத்து வரவு & செலவு அறிக்கை',
+    printOverallMonthly: 'ஒட்டுமொத்த மாதாந்திர அறிக்கை',
+    printOverallMonthlyDesc: 'தேர்ந்தெடுக்கப்பட்ட மாதத்திற்கான ஒருங்கிணைந்த கணக்கு சுருக்கம்',
+    printDaywiseMonth: '31 நாட்கள் தினசரி பதிவேடு',
+    printDaywiseMonthDesc: 'மாதத்தின் 1 முதல் 31 நாட்கள் வரை தினசரி பதிவு விவரம்',
   },
 };

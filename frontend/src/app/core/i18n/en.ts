@@ -750,6 +750,7 @@ export const en = {
     contributionsForRange: 'Contributions: {{from}} - {{to}}',
     emptyCertificates: 'No certificates issued in this date range.',
     enteredDate: 'Entered Date',
+    printOverallFinancial: 'Overall Financial Print',
   },
 
   masters: {
@@ -1492,5 +1493,12 @@ export const en = {
     printVoucher: 'Print Voucher',
     receiptVoucher: 'RECEIPT VOUCHER',
     paymentVoucher: 'PAYMENT VOUCHER',
+    printOptions: 'Print Statements',
+    printSelectedDay: 'Selected Day Print',
+    printSelectedDayDesc: 'Daily statement of all receipts & payments for the selected date',
+    printOverallMonthly: 'Overall Monthly Print',
+    printOverallMonthlyDesc: 'Consolidated accounts summary for the selected month',
+    printDaywiseMonth: '31 Days Day-Wise Print',
+    printDaywiseMonthDesc: 'Day-by-day 1 to 31 days transaction register for the month',
   },
 };

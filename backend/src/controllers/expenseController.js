@@ -75,7 +75,7 @@ const saveMonthlyLedger = asyncHandler(async (req, res) => {
 });
 
 const listTransactions = asyncHandler(async (req, res) => {
-  const { dateFrom, dateTo, type, headId, page = 1, limit = 50 } = req.query;
+  const { dateFrom, dateTo, type, headId, paymentMethodId, paymentMethodCode, search, page = 1, limit = 50 } = req.query;
   const result = await expenseRepository.listTransactions({
     churchId: req.user.churchId,
     branchId: effectiveBranchId(req),
@@ -83,6 +83,9 @@ const listTransactions = asyncHandler(async (req, res) => {
     dateTo,
     type,
     headId: headId ? parseInt(headId, 10) : undefined,
+    paymentMethodId: paymentMethodId ? parseInt(paymentMethodId, 10) : undefined,
+    paymentMethodCode,
+    search,
     page: parseInt(page, 10),
     limit: parseInt(limit, 10),
   });
@@ -103,6 +106,20 @@ const createTransaction = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: created });
 });
 
+const updateTransaction = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { entryDate, type, headId, headName, amount, paymentMethodId, voucherNo, paidTo, notes } = req.body;
+  const updated = await expenseRepository.updateTransaction(
+    id,
+    req.user.churchId,
+    { entryDate, type, headId, headName, amount, paymentMethodId, voucherNo, paidTo, notes }
+  );
+  if (!updated) {
+    throw ApiError.notFound('Transaction not found');
+  }
+  res.json({ success: true, data: updated });
+});
+
 const deleteTransaction = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const deleted = await expenseRepository.deleteTransaction(id, req.user.churchId);
@@ -111,6 +128,11 @@ const deleteTransaction = asyncHandler(async (req, res) => {
   }
   res.json({ success: true, message: 'Transaction deleted' });
 });
+
+const {
+  generateDailyReceiptPaymentPdf,
+  generateDaywiseMonthReceiptPaymentPdf,
+} = require('../reports/dailyAndDaywiseExpensePdf');
 
 const printMonthlyAccountsPdf = asyncHandler(async (req, res) => {
   const { monthYear, lang = 'en' } = req.query;
@@ -136,6 +158,64 @@ const printMonthlyAccountsPdf = asyncHandler(async (req, res) => {
   res.send(buffer);
 });
 
+const printDailyReceiptPaymentPdf = asyncHandler(async (req, res) => {
+  const { date, lang = 'en' } = req.query;
+  const targetDate = date || new Date().toISOString().slice(0, 10);
+
+  const [{ transactions, totals }, church, currency] = await Promise.all([
+    expenseRepository.getDailyReceiptPaymentData({
+      churchId: req.user.churchId,
+      branchId: effectiveBranchId(req),
+      date: targetDate,
+    }),
+    lookupRepository.getChurchById(req.user.churchId),
+    lookupRepository.getDefaultCurrency(),
+  ]);
+
+  const buffer = await generateDailyReceiptPaymentPdf({
+    date: targetDate,
+    church,
+    transactions,
+    totals,
+    generatedBy: req.user.fullName || req.user.username,
+    currencySymbol: currency?.symbol || '₹',
+    lang,
+  });
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="daily-receipts-payments-${targetDate}.pdf"`);
+  res.send(buffer);
+});
+
+const printDaywiseMonthReceiptPaymentPdf = asyncHandler(async (req, res) => {
+  const { monthYear, lang = 'en' } = req.query;
+  const targetMonthYear = monthYear || new Date().toISOString().slice(0, 7);
+
+  const [{ dailyBreakdown, totals }, church, currency] = await Promise.all([
+    expenseRepository.getMonthDaywiseReceiptPaymentData({
+      churchId: req.user.churchId,
+      branchId: effectiveBranchId(req),
+      monthYear: targetMonthYear,
+    }),
+    lookupRepository.getChurchById(req.user.churchId),
+    lookupRepository.getDefaultCurrency(),
+  ]);
+
+  const buffer = await generateDaywiseMonthReceiptPaymentPdf({
+    monthYear: targetMonthYear,
+    church,
+    dailyBreakdown,
+    totals,
+    generatedBy: req.user.fullName || req.user.username,
+    currencySymbol: currency?.symbol || '₹',
+    lang,
+  });
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="daywise-month-register-${targetMonthYear}.pdf"`);
+  res.send(buffer);
+});
+
 module.exports = {
   listAccountHeads,
   createAccountHead,
@@ -145,6 +225,9 @@ module.exports = {
   saveMonthlyLedger,
   listTransactions,
   createTransaction,
+  updateTransaction,
   deleteTransaction,
   printMonthlyAccountsPdf,
+  printDailyReceiptPaymentPdf,
+  printDaywiseMonthReceiptPaymentPdf,
 };

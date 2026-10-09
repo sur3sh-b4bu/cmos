@@ -4,7 +4,24 @@
       <h1>{{ 'nav.reports' | translate }}</h1>
       <p class="text-muted">{{ 'reports.subtitle' | translate }}</p>
     </div>
-    <coms-date-range-filter (rangeChange)="onRangeChange($event)" />
+    <div class="reports__header-controls">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        class="reports__print-btn reports__overall-btn"
+        (click)="printOverallFinancialReport()"
+        [disabled]="printingOverall()"
+      >
+        @if (printingOverall()) {
+          <mat-progress-spinner diameter="18" mode="indeterminate" />
+        } @else {
+          <mat-icon>print</mat-icon>
+        }
+        <span>{{ 'reports.printOverallFinancial' | translate }}</span>
+      </button>
+      <coms-date-range-filter (rangeChange)="onRangeChange($event)" />
+    </div>
   </div>
 
   <mat-tab-group animationDuration="150ms">

@@ -577,11 +577,53 @@ a[mat-button] {
 
 /* Printer-friendly reset used by receipt/register print views */
 @media print {
-  body {
+  html, body {
+    background: #ffffff !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+  }
+
+  .no-print,
+  coms-sidebar,
+  coms-header,
+  .shell__setup,
+  header,
+  aside,
+  .cdk-overlay-container,
+  mat-sidenav,
+  .mat-drawer {
+    display: none !important;
+  }
+
+  .shell {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
     background: #ffffff !important;
   }
-  .no-print {
-    display: none !important;
+
+  .shell__main {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .shell__content {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
   }
 }
 

@@ -3,11 +3,69 @@
 const crypto = require('crypto');
 const { pool } = require('../src/config/db');
 
+async function ensureColumn(table, column, definition) {
+  try {
+    const [cols] = await pool.query(
+      `SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      [table, column]
+    );
+    if (cols[0].c === 0) {
+      await pool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+    }
+  } catch (err) {
+    // ignore if already exists or table doesn't exist
+  }
+}
+
 async function seedAllMockData() {
   console.log('--- Seeding Comprehensive Mock Data across COMS ---');
   const churchId = 1;
   const branchId = 1;
   const userId = 1;
+
+  // Ensure any optional migration columns exist
+  await ensureColumn('prayer_intentions', 'status_id', 'INT UNSIGNED NULL');
+  await ensureColumn('prayer_intentions', 'branch_id', 'INT UNSIGNED NULL');
+  await ensureColumn('prayer_intentions', 'booked_by', 'VARCHAR(150) NULL');
+  await ensureColumn('contributions', 'branch_id', 'INT UNSIGNED NULL');
+  
+  await ensureColumn('baptism_certificates', 'branch_id', 'INT UNSIGNED NULL');
+  await ensureColumn('baptism_certificates', 'place_of_baptism', 'VARCHAR(200) NULL');
+  await ensureColumn('baptism_certificates', 'parent_residence', 'VARCHAR(300) NULL');
+  await ensureColumn('baptism_certificates', 'custom_priest_name', 'VARCHAR(150) NULL');
+
+  await ensureColumn('marriage_certificates', 'branch_id', 'INT UNSIGNED NULL');
+  await ensureColumn('marriage_certificates', 'where_married', 'VARCHAR(200) NULL');
+  await ensureColumn('marriage_certificates', 'groom_age', 'VARCHAR(10) NULL');
+  await ensureColumn('marriage_certificates', 'bride_age', 'VARCHAR(10) NULL');
+  await ensureColumn('marriage_certificates', 'groom_condition', 'VARCHAR(50) NULL');
+  await ensureColumn('marriage_certificates', 'bride_condition', 'VARCHAR(50) NULL');
+  await ensureColumn('marriage_certificates', 'groom_profession', 'VARCHAR(100) NULL');
+  await ensureColumn('marriage_certificates', 'bride_profession', 'VARCHAR(100) NULL');
+  await ensureColumn('marriage_certificates', 'groom_residence', 'VARCHAR(200) NULL');
+  await ensureColumn('marriage_certificates', 'bride_residence', 'VARCHAR(200) NULL');
+  await ensureColumn('marriage_certificates', 'groom_father_name', 'VARCHAR(150) NULL');
+  await ensureColumn('marriage_certificates', 'bride_father_name', 'VARCHAR(150) NULL');
+  await ensureColumn('marriage_certificates', 'banns_or_licence', 'VARCHAR(200) NULL');
+  await ensureColumn('marriage_certificates', 'impediments_dispensed', 'VARCHAR(200) NULL');
+  await ensureColumn('marriage_certificates', 'witness3_name', 'VARCHAR(150) NULL');
+  await ensureColumn('marriage_certificates', 'witness4_name', 'VARCHAR(150) NULL');
+  await ensureColumn('marriage_certificates', 'custom_priest_name', 'VARCHAR(150) NULL');
+
+  await ensureColumn('death_certificates', 'branch_id', 'INT UNSIGNED NULL');
+  await ensureColumn('death_certificates', 'age', 'VARCHAR(10) NULL');
+  await ensureColumn('death_certificates', 'place', 'VARCHAR(200) NULL');
+  await ensureColumn('death_certificates', 'profession', 'VARCHAR(100) NULL');
+  await ensureColumn('death_certificates', 'parents', 'VARCHAR(300) NULL');
+  await ensureColumn('death_certificates', 'place_of_death', 'VARCHAR(200) NULL');
+  await ensureColumn('death_certificates', 'cause', 'VARCHAR(200) NULL');
+  await ensureColumn('death_certificates', 'confession_received', 'VARCHAR(100) NULL');
+  await ensureColumn('death_certificates', 'viaticum_received', 'VARCHAR(100) NULL');
+  await ensureColumn('death_certificates', 'anointing_received', 'VARCHAR(100) NULL');
+  await ensureColumn('death_certificates', 'custom_priest_name', 'VARCHAR(150) NULL');
+  await ensureColumn('death_certificates', 'family_contact', 'VARCHAR(50) NULL');
+  await ensureColumn('death_certificates', 'burial_date', 'DATE NULL');
+  await ensureColumn('death_certificates', 'cemetery', 'VARCHAR(200) NULL');
 
   // 1. Priests Master
   console.log('1. Ensuring priests master data...');
@@ -31,6 +89,8 @@ async function seedAllMockData() {
   const [intentions] = await pool.query('SELECT id, name FROM prayer_intention_master ORDER BY id');
   const [contributionTypes] = await pool.query('SELECT id, name FROM contribution_types WHERE is_deleted = 0 ORDER BY id');
   const [genders] = await pool.query('SELECT id, code FROM genders ORDER BY id');
+  const [statuses] = await pool.query("SELECT id, code FROM statuses WHERE entity_type = 'prayer_intention'");
+  const completedStatusId = statuses.find((s) => s.code === 'COMPLETED')?.id || 2;
   const maleGenderId = genders.find((g) => g.code === 'M')?.id || 1;
   const femaleGenderId = genders.find((g) => g.code === 'F')?.id || 2;
 
@@ -144,12 +204,13 @@ async function seedAllMockData() {
 
       const [res] = await pool.query(
         `INSERT INTO prayer_intentions (
-          church_id, branch_id, receipt_no, booked_by, public_token, name, phone,
+          church_id, branch_id, status_id, receipt_no, booked_by, public_token, name, phone,
           prayer_date, mass_id, prayer_intention_master_id, offering_amount,
           payment_method_id, remarks, created_at, created_by, updated_at, updated_by, is_active, is_deleted
-        ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
+        ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)`,
         [
           churchId,
+          completedStatusId,
           receiptNo,
           donor.bookedBy,
           token,

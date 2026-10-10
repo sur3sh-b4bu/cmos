@@ -3,10 +3,11 @@
 const express = require('express');
 const router = express.Router();
 const familyController = require('../controllers/familyController');
-const { authenticate } = require('../middlewares/authenticate');
-const { authorize } = require('../middlewares/authorize');
+const authenticate = require('../middlewares/authenticate');
+const authorize = require('../middlewares/authorize');
+const requireChurchContext = require('../middlewares/requireChurchContext');
 
-router.use(authenticate);
+router.use(authenticate, requireChurchContext);
 
 // Census & stats
 router.get('/stats/census', authorize('families.view'), familyController.getCensus);

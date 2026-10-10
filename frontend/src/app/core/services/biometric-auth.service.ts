@@ -2,8 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
-  browserSupportsWebAuthn,
-  platformAuthenticatorIsAvailable,
   startAuthentication,
   startRegistration,
 } from '@simplewebauthn/browser';
@@ -45,19 +43,10 @@ export class BiometricAuthService {
   readonly available = signal(false);
 
   async detectAvailability(): Promise<boolean> {
-    try {
-      if (!window.isSecureContext || !browserSupportsWebAuthn()) {
-        this.available.set(false);
-        return false;
-      }
-      const hasPlatformAuthenticator = await platformAuthenticatorIsAvailable();
-      this.available.set(hasPlatformAuthenticator);
-      return hasPlatformAuthenticator;
-    } catch {
-      this.available.set(false);
-      return false;
-    }
+    this.available.set(false);
+    return false;
   }
+
 
   /** True when this username has at least one enrolled device on this server. */
   async hasEnrolledDevice(username: string): Promise<boolean> {

@@ -1266,6 +1266,178 @@ async function seedAllMockData() {
   await pool.query("UPDATE certificate_series SET next_number = GREATEST(next_number, 20) WHERE church_id = ?", [churchId]);
   await pool.query("UPDATE receipt_series SET next_number = GREATEST(next_number, 500) WHERE church_id = ?", [churchId]);
 
+  // 9. Seeding Wards / Anbiams
+  console.log('8. Seeding Wards / Anbiams...');
+  const wardDefs = [
+    { code: 'WARD-01', name: 'St. Antony Anbiam', name_ta: 'புனித அந்தோணியார் அன்பியம்', leader_name: 'Antony Cruz', leader_phone: '+91 98765 43210', sort_order: 1 },
+    { code: 'WARD-02', name: 'St. Joseph Anbiam', name_ta: 'புனித சூசையப்பர் அன்பியம்', leader_name: 'Joseph Vijay', leader_phone: '+91 98765 43211', sort_order: 2 },
+    { code: 'WARD-03', name: 'Our Lady of Lourdes Anbiam', name_ta: 'தூய லூர்து அன்னை அன்பியம்', leader_name: 'Mary Stella', leader_phone: '+91 98765 43212', sort_order: 3 },
+    { code: 'WARD-04', name: 'St. Francis Xavier Anbiam', name_ta: 'புனித சவேரியார் அன்பியம்', leader_name: 'Francis Paul', leader_phone: '+91 98765 43213', sort_order: 4 },
+  ];
+  for (const w of wardDefs) {
+    const [exist] = await pool.query('SELECT id FROM wards WHERE church_id = ? AND code = ?', [churchId, w.code]);
+    if (!exist.length) {
+      await pool.query('INSERT INTO wards (church_id, name, name_ta, code, leader_name, leader_phone, sort_order) VALUES (?,?,?,?,?,?,?)', [
+        churchId, w.name, w.name_ta, w.code, w.leader_name, w.leader_phone, w.sort_order,
+      ]);
+    }
+  }
+  const [wards] = await pool.query('SELECT id, code FROM wards WHERE church_id = ? ORDER BY sort_order', [churchId]);
+  const wardMap = {};
+  wards.forEach(w => wardMap[w.code] = w.id);
+
+  // 10. Seeding Parish Families & Members
+  console.log('9. Seeding Parish Families, Members & Census...');
+  await pool.query('UPDATE families SET parent_family_id = NULL, head_member_id = NULL WHERE church_id = ?', [churchId]);
+  await pool.query('DELETE FROM family_events_history WHERE church_id = ?', [churchId]);
+  await pool.query('DELETE FROM family_members WHERE church_id = ?', [churchId]);
+  await pool.query('DELETE FROM families WHERE church_id = ?', [churchId]);
+
+  // Family 1: Multi-generation Household (Active)
+  const [f1] = await pool.query(
+    `INSERT INTO families (church_id, family_code, family_name, family_name_ta, ward_id, address_line1, address_ta, city, pincode, phone, email, status, marriage_date)
+     VALUES (?, 'FAM-0001', 'John Doe Family', 'ஜான் டோ குடும்பம்', ?, '12 Church Street', '12 சர்ச் தெரு', 'Chennai', '600001', '+91 98765 00001', 'johndoe@example.com', 'ACTIVE', '1985-05-20')`,
+    [churchId, wardMap['WARD-01'] || 1]
+  );
+  const fam1Id = f1.insertId;
+
+  const [h1] = await pool.query(
+    `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, phone, marital_status, occupation, education, is_baptised, baptism_date, is_communion_received, communion_date, is_confirmed, confirmation_date, is_head)
+     VALUES (?, ?, 'John', 'Doe', 'ஜான்', 'HEAD', 'M', '1960-04-12', '+91 98765 00001', 'MARRIED', 'Retired Teacher', 'M.A., B.Ed', 1, '1960-05-10', 1, '1970-04-15', 1, '1974-05-20', 1)`,
+    [churchId, fam1Id]
+  );
+  await pool.query('UPDATE families SET head_member_id = ? WHERE id = ?', [h1.insertId, fam1Id]);
+
+  await pool.query(
+    `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, phone, marital_status, occupation, is_baptised, is_communion_received, is_confirmed, is_head)
+     VALUES
+     (?, ?, 'Mary', 'Doe', 'மேரி', 'SPOUSE', 'F', '1965-08-25', '+91 98765 00002', 'MARRIED', 'Homemaker', 1, 1, 1, 0),
+     (?, ?, 'Sarah', 'Doe', 'சாரா', 'DAUGHTER', 'F', '1995-11-10', '+91 98765 00003', 'SINGLE', 'Software Engineer', 1, 1, 1, 0),
+     (?, ?, 'Joseph', 'Doe', 'சூசை', 'GRANDFATHER', 'M', '1935-02-18', NULL, 'WIDOWED', 'Retired', 1, 1, 1, 0)`,
+    [churchId, fam1Id, churchId, fam1Id, churchId, fam1Id]
+  );
+
+  // Family 2: Split / Division Household (Branched from FAM-0001)
+  const [f2] = await pool.query(
+    `INSERT INTO families (church_id, family_code, family_name, family_name_ta, ward_id, parent_family_id, address_line1, address_ta, city, pincode, phone, email, status, marriage_date, remarks)
+     VALUES (?, 'FAM-0002', 'David Doe Family', 'டேவிட் டோ குடும்பம்', ?, ?, '24 East Avenue', '24 கிழக்கு அவென்யூ', 'Chennai', '600001', '+91 98765 00004', 'daviddoc@example.com', 'ACTIVE', '2018-06-15', 'Divided / Split from John Doe Family (FAM-0001)')`,
+    [churchId, wardMap['WARD-02'] || 2, fam1Id]
+  );
+  const fam2Id = f2.insertId;
+
+  const [h2] = await pool.query(
+    `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, phone, marital_status, occupation, is_baptised, is_communion_received, is_confirmed, is_head)
+     VALUES (?, ?, 'David', 'Doe', 'டேவிட்', 'HEAD', 'M', '1990-03-14', '+91 98765 00004', 'MARRIED', 'Civil Engineer', 1, 1, 1, 1)`,
+    [churchId, fam2Id]
+  );
+  await pool.query('UPDATE families SET head_member_id = ? WHERE id = ?', [h2.insertId, fam2Id]);
+
+  await pool.query(
+    `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, marital_status, occupation, is_baptised, is_communion_received, is_confirmed, is_head)
+     VALUES
+     (?, ?, 'Rachel', 'Doe', 'ரேச்சல்', 'SPOUSE', 'F', '1992-09-08', 'MARRIED', 'Professor', 1, 1, 1, 0),
+     (?, ?, 'Grace', 'Doe', 'கிரேஸ்', 'DAUGHTER', 'F', '2020-01-20', 'SINGLE', 'Student', 1, 0, 0, 0)`,
+    [churchId, fam2Id, churchId, fam2Id]
+  );
+
+  // Family 3: Migrated In Family
+  const [f3] = await pool.query(
+    `INSERT INTO families (church_id, family_code, family_name, family_name_ta, ward_id, address_line1, address_ta, city, pincode, phone, status, migrated_from_parish, migration_date, migration_reason)
+     VALUES (?, 'FAM-0003', 'Francis Family', 'பிரான்சிஸ் குடும்பம்', ?, '5 Cross Road', '5 குறுக்கு சாலை', 'Chennai', '600001', '+91 98765 00005', 'MIGRATED_IN', 'St. Anne Parish, Madurai', '2025-01-10', 'Job relocation')`,
+    [churchId, wardMap['WARD-03'] || 3]
+  );
+  const fam3Id = f3.insertId;
+
+  const [h3] = await pool.query(
+    `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, phone, marital_status, occupation, is_baptised, is_communion_received, is_confirmed, is_head)
+     VALUES (?, ?, 'Francis', 'Xavier', 'பிரான்சிஸ் சேவியர்', 'HEAD', 'M', '1982-12-03', '+91 98765 00005', 'MARRIED', 'Accountant', 1, 1, 1, 1)`,
+    [churchId, fam3Id]
+  );
+  await pool.query('UPDATE families SET head_member_id = ? WHERE id = ?', [h3.insertId, fam3Id]);
+
+  await pool.query(
+    `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, marital_status, occupation, is_baptised, is_communion_received, is_confirmed, is_head)
+     VALUES
+     (?, ?, 'Stella', 'Francis', 'ஸ்டெல்லா', 'SPOUSE', 'F', '1986-07-19', 'MARRIED', 'Nurse', 1, 1, 1, 0),
+     (?, ?, 'Jude', 'Francis', 'யூதா', 'SON', 'M', '2012-04-30', 'SINGLE', 'Student', 1, 1, 0, 0)`,
+    [churchId, fam3Id, churchId, fam3Id]
+  );
+
+  // Family 4: Anthony Raj Family (Active)
+  const [f4] = await pool.query(
+    `INSERT INTO families (church_id, family_code, family_name, family_name_ta, ward_id, address_line1, address_ta, city, pincode, phone, status, marriage_date)
+     VALUES (?, 'FAM-0004', 'Antony Raj Family', 'அந்தோணி ராஜ் குடும்பம்', ?, '88 Santhome Road', '88 சாந்தோம் சாலை', 'Chennai', '600004', '+91 98423 34455', 'ACTIVE', '2010-09-12')`,
+    [churchId, wardMap['WARD-04'] || 4]
+  );
+  const fam4Id = f4.insertId;
+
+  const [h4] = await pool.query(
+    `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, phone, marital_status, occupation, is_baptised, is_communion_received, is_confirmed, is_head)
+     VALUES (?, ?, 'Antony', 'Raj', 'அந்தோணி ராஜ்', 'HEAD', 'M', '1983-06-18', '+91 98423 34455', 'MARRIED', 'Advocate', 1, 1, 1, 1)`,
+    [churchId, fam4Id]
+  );
+  await pool.query('UPDATE families SET head_member_id = ? WHERE id = ?', [h4.insertId, fam4Id]);
+
+  await pool.query(
+    `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, marital_status, occupation, is_baptised, is_communion_received, is_confirmed, is_head)
+     VALUES
+     (?, ?, 'Selvi', 'Antony', 'செல்வி', 'SPOUSE', 'F', '1987-03-22', 'MARRIED', 'Architect', 1, 1, 1, 0),
+     (?, ?, 'Kevin', 'Raj', 'கெவின்', 'SON', 'M', '2015-08-14', 'SINGLE', 'Student', 1, 1, 0, 0),
+     (?, ?, 'Angela', 'Raj', 'ஏஞ்சலா', 'DAUGHTER', 'F', '2018-11-05', 'SINGLE', 'Student', 1, 0, 0, 0)`,
+    [churchId, fam4Id, churchId, fam4Id, churchId, fam4Id]
+  );
+
+  // 11. Seeding Church Expenses & Financial Accounts
+  console.log('10. Seeding Church Expenses & Accounts...');
+  await pool.query('DELETE FROM church_expenses WHERE church_id = ?', [churchId]);
+  await pool.query('DELETE FROM monthly_financial_abstracts WHERE church_id = ?', [churchId]);
+
+  const [heads] = await pool.query('SELECT id, name, type FROM account_heads WHERE is_active = 1');
+  const headMap = {};
+  heads.forEach(h => headMap[h.name] = h.id);
+
+  const sampleExpenses = [
+    // Receipts
+    { date: '2026-08-15', my: '2026-08', type: 'receipt', name: 'Sunday Collections', amt: 18500, paidTo: 'Parishioners', note: 'Feast day Sunday mass collection' },
+    { date: '2026-08-20', my: '2026-08', type: 'receipt', name: 'Shrine Boxes', amt: 12000, paidTo: 'Devotees', note: 'Monthly shrine box opening' },
+    { date: '2026-09-06', my: '2026-09', type: 'receipt', name: 'Sunday Collections', amt: 14200, paidTo: 'Parishioners', note: 'Sunday 1st week collection' },
+    { date: '2026-09-08', my: '2026-09', type: 'receipt', name: 'Special Collection / Novena', amt: 25000, paidTo: 'Devotees', note: 'Nativity feast collections' },
+    { date: '2026-09-20', my: '2026-09', type: 'receipt', name: 'Parish Hall Rent', amt: 15000, paidTo: 'Wedding reception tenant', note: 'Hall booking rent' },
+    { date: '2026-10-04', my: '2026-10', type: 'receipt', name: 'Sunday Collections', amt: 16800, paidTo: 'Parishioners', note: 'Sunday collections' },
+    // Payments
+    { date: '2026-08-28', my: '2026-08', type: 'payment', name: 'Electricity / Water Charges', amt: 6500, paidTo: 'TNEB Electricity Board', note: 'Church electricity bill payment' },
+    { date: '2026-08-30', my: '2026-08', type: 'payment', name: 'Sacristan / Staff Salary', amt: 18000, paidTo: 'Office & Sacristan Staff', note: 'Monthly salaries' },
+    { date: '2026-09-15', my: '2026-09', type: 'payment', name: 'Church Maintenance & Repairs', amt: 12500, paidTo: 'Sound & Audio Solutions', note: 'Audio system repair' },
+    { date: '2026-09-25', my: '2026-09', type: 'payment', name: 'Altar Wine / Hosts / Candles', amt: 4800, paidTo: 'Catholic Liturgical Supply', note: 'Liturgical supplies purchase' },
+    { date: '2026-09-30', my: '2026-09', type: 'payment', name: 'Sacristan / Staff Salary', amt: 18000, paidTo: 'Office Staff', note: 'September salaries' },
+    { date: '2026-10-05', my: '2026-10', type: 'payment', name: 'Charity & Poor Relief', amt: 8000, paidTo: 'Parish Poor Aid Fund', note: 'Monthly medical assistance' },
+  ];
+
+  for (let idx = 0; idx < sampleExpenses.length; idx++) {
+    const e = sampleExpenses[idx];
+    const headId = headMap[e.name] || null;
+    const voucherNo = e.type === 'payment' ? `VOU-2026-${String(idx + 1).padStart(4, '0')}` : null;
+    await pool.query(
+      `INSERT INTO church_expenses (
+        church_id, branch_id, entry_date, month_year, type, head_id, head_name,
+        amount, payment_method_id, voucher_no, paid_to, notes, created_by
+      ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, 1)`,
+      [churchId, e.date, e.my, e.type, headId, e.name, e.amt, voucherNo, e.paidTo, e.note]
+    );
+  }
+
+  // Monthly Abstracts
+  await pool.query(
+    `INSERT INTO monthly_financial_abstracts (
+      church_id, branch_id, month_year, opening_cash_hand, opening_cash_bank, opening_fixed_deposits,
+      closing_cash_hand, closing_cash_bank, closing_fixed_deposits, created_by
+    ) VALUES 
+    (?, 1, '2026-08', 25000.00, 185000.00, 500000.00, 31200.00, 192000.00, 500000.00, 1),
+    (?, 1, '2026-09', 31200.00, 192000.00, 500000.00, 42000.00, 215000.00, 500000.00, 1),
+    (?, 1, '2026-10', 42000.00, 215000.00, 500000.00, 50800.00, 222000.00, 500000.00, 1)`,
+    [churchId, churchId, churchId]
+  );
+
   console.log('\n--- Mock Data Seeding Summary ---');
   console.log(`Mass Intentions: ${totalMiCount} across August, September, October 2026`);
   console.log(`Contributions: ${totalContribCount} across multiple categories`);
@@ -1273,7 +1445,9 @@ async function seedAllMockData() {
   console.log(`Marriage Certificates: ${marriageData.length} records (with 2, 3, 4 witnesses)`);
   console.log(`Confirmation Certificates: ${confirmationData.length} records`);
   console.log(`Death Certificates: ${deathData.length} records`);
-  console.log('Successfully seeded all places mock data!');
+  console.log(`Parish Families: 4 diverse household demo records`);
+  console.log(`Church Accounts & Expenses: 12 ledger entries & monthly abstracts`);
+  console.log('Successfully seeded all places mock data across all modules!');
   process.exit(0);
 }
 

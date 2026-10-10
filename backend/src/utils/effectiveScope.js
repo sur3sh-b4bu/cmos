@@ -17,7 +17,14 @@
  * consumed -- never "filter to branch_id IS NULL only".
  */
 function effectiveBranchId(req) {
-  return req.user.branchId;
+  return req.user?.branchId || null;
 }
 
-module.exports = { effectiveBranchId };
+function getEffectiveScope(req) {
+  return {
+    churchId: req.user?.churchId || null,
+    branchId: req.user?.branchId || null,
+  };
+}
+
+module.exports = { effectiveBranchId, getEffectiveScope };

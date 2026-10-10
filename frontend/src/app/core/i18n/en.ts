@@ -1283,6 +1283,7 @@ export const en = {
     confirmationCertificates: 'Confirmation Certificates',
     deathCertificates: 'Death Certificates',
     contributions: 'Contributions',
+    families: 'Parish Families',
     receiptPayment: 'Receipt / Payment',
     expenses: 'Expenses & Accounts',
     reports: 'Reports',

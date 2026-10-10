@@ -875,6 +875,7 @@ export const hi = {
     confirmationCertificates: 'दृढ़ीकरण प्रमाणपत्र',
     deathCertificates: 'मृत्यु प्रमाणपत्र',
     contributions: 'दान व अंशदान',
+    families: 'पल्ली परिवार',
     receiptPayment: 'रसीद / भुगतान',
     expenses: 'खर्च व वित्तीय खाते',
     reports: 'रिपोर्ट्स',

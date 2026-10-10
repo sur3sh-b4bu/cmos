@@ -1247,6 +1247,7 @@ export const ta = {
     confirmationCertificates: 'உறுதிப்பூசுதல் சான்றிதழ்கள்',
     deathCertificates: 'இறப்பு சான்றிதழ்கள்',
     contributions: 'பங்களிப்புகள்',
+    families: 'குடும்பங்கள்',
     receiptPayment: 'ரசீது / செலுத்துகை',
     expenses: 'செலவுகள் & வரவுசெலவு',
     reports: 'அறிக்கைகள்',

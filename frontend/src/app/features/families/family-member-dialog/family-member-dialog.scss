@@ -1,0 +1,105 @@
+.member-dialog {
+  max-width: 720px;
+
+  .dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.25rem 1.5rem 0.5rem;
+
+    .title-wrap {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+
+      .member-icon {
+        color: #2563eb;
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+        margin-top: 2px;
+      }
+
+      h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary, #0f172a);
+        margin: 0;
+      }
+
+      .subtitle {
+        font-size: 0.8125rem;
+        color: var(--text-secondary, #64748b);
+        display: block;
+        margin-top: 0.25rem;
+      }
+    }
+  }
+
+  .dialog-content {
+    padding: 1rem 1.5rem;
+    max-height: 72vh;
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: #1e3a8a;
+      margin-bottom: 0.75rem;
+
+      mat-icon {
+        color: #2563eb;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      &.mt-4 {
+        margin-top: 1.25rem;
+      }
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .sacraments-box {
+      border: 1px solid var(--border-color, #e2e8f0);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      background: var(--surface-header, #f8fafc);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .sacrament-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+
+        .inline-field {
+          width: 180px;
+          margin-bottom: -1.25em;
+        }
+      }
+    }
+
+    .w-full {
+      width: 100%;
+    }
+
+    .mt-3 {
+      margin-top: 0.75rem;
+    }
+  }
+
+  .dialog-actions {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+  }
+}

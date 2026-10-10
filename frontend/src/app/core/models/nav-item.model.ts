@@ -14,6 +14,7 @@ export const NAV_ITEMS: NavItem[] = [
   { labelKey: 'nav.massIntentions', icon: 'volunteer_activism', route: '/mass-intentions', permissions: ['mass_intentions.view'] },
   { labelKey: 'nav.dailyRegister', icon: 'menu_book', route: '/mass-intentions/register', permissions: ['prayer_register.view'] },
   { labelKey: 'nav.contributions', icon: 'redeem', route: '/contributions', permissions: ['contributions.view'] },
+  { labelKey: 'nav.families', icon: 'groups', route: '/families', permissions: ['families.view'] },
   { labelKey: 'nav.receiptPayment', icon: 'receipt_long', route: '/receipt-payment' },
   { labelKey: 'nav.expenses', icon: 'account_balance_wallet', route: '/expenses', permissions: ['expenses.view'] },
   { labelKey: 'nav.baptismCertificates', icon: 'water_drop', route: '/certificates/baptism', permissions: ['baptism_certificates.view'] },

@@ -1,0 +1,136 @@
+<div class="family-form-page">
+  <div class="page-header">
+    <div class="header-left">
+      <button mat-icon-button routerLink="/families" class="back-btn">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div>
+        <h1 class="page-title">{{ isEditMode() ? 'Edit Family Record' : 'Register New Family' }}</h1>
+        <p class="page-subtitle">Enter household details, ward assignment, address and contact information.</p>
+      </div>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <mat-card class="form-card">
+      <div class="section-title">
+        <mat-icon>home</mat-icon>
+        <span>General Family Information</span>
+      </div>
+
+      <div class="form-grid">
+        <!-- Family Code -->
+        <mat-form-field appearance="outline">
+          <mat-label>Family Code / Reg No.</mat-label>
+          <input matInput formControlName="family_code" placeholder="e.g. FAM-0001" required />
+          <mat-error *ngIf="form.get('family_code')?.hasError('required')">Family code is required</mat-error>
+        </mat-form-field>
+
+        <!-- Family Name -->
+        <mat-form-field appearance="outline">
+          <mat-label>Family Name (English)</mat-label>
+          <input matInput formControlName="family_name" placeholder="e.g. Fernandes Family" required />
+          <mat-error *ngIf="form.get('family_name')?.hasError('required')">Family name is required</mat-error>
+        </mat-form-field>
+
+        <!-- Family Name Tamil -->
+        <mat-form-field appearance="outline">
+          <mat-label>Family Name (Tamil)</mat-label>
+          <input matInput formControlName="family_name_ta" placeholder="e.g. பெர்னாண்டஸ் குடும்பம்" />
+        </mat-form-field>
+
+        <!-- Ward / Anbiam -->
+        <mat-form-field appearance="outline">
+          <mat-label>Ward / Anbiam</mat-label>
+          <mat-select formControlName="ward_id">
+            <mat-option [value]="null">— Select Ward —</mat-option>
+            @for (w of wards(); track w.id) {
+              <mat-option [value]="w.id">{{ w.name }} @if (w.name_ta) { ({{ w.name_ta }}) }</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Status -->
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status" required>
+            <mat-option value="ACTIVE">Active</mat-option>
+            <mat-option value="MIGRATED_OUT">Migrated Out</mat-option>
+            <mat-option value="MIGRATED_IN">Migrated In</mat-option>
+            <mat-option value="DIVIDED">Divided</mat-option>
+            <mat-option value="INACTIVE">Inactive</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Marriage Date -->
+        <mat-form-field appearance="outline">
+          <mat-label>Family / Head Marriage Date</mat-label>
+          <input matInput type="date" formControlName="marriage_date" />
+        </mat-form-field>
+      </div>
+
+      <div class="section-title mt-4">
+        <mat-icon>location_on</mat-icon>
+        <span>Address & Contact Details</span>
+      </div>
+
+      <div class="form-grid">
+        <!-- Phone -->
+        <mat-form-field appearance="outline">
+          <mat-label>Contact Phone</mat-label>
+          <input matInput formControlName="phone" placeholder="e.g. +91 98765 43210" />
+        </mat-form-field>
+
+        <!-- Email -->
+        <mat-form-field appearance="outline">
+          <mat-label>Email Address</mat-label>
+          <input matInput type="email" formControlName="email" placeholder="e.g. family@example.com" />
+        </mat-form-field>
+
+        <!-- Address Line 1 -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Door No. & Street (Address Line 1)</mat-label>
+          <input matInput formControlName="address_line1" placeholder="e.g. 12 Church Street" />
+        </mat-form-field>
+
+        <!-- Address Line 2 -->
+        <mat-form-field appearance="outline">
+          <mat-label>Area / Landmark (Address Line 2)</mat-label>
+          <input matInput formControlName="address_line2" />
+        </mat-form-field>
+
+        <!-- City -->
+        <mat-form-field appearance="outline">
+          <mat-label>City / Town</mat-label>
+          <input matInput formControlName="city" />
+        </mat-form-field>
+
+        <!-- Pincode -->
+        <mat-form-field appearance="outline">
+          <mat-label>Postal Pincode</mat-label>
+          <input matInput formControlName="pincode" placeholder="e.g. 600001" />
+        </mat-form-field>
+
+        <!-- Address Tamil -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Address in Tamil</mat-label>
+          <input matInput formControlName="address_ta" placeholder="e.g. 12 சர்ச் தெரு, சென்னை" />
+        </mat-form-field>
+
+        <!-- Remarks -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Remarks / Notes</mat-label>
+          <textarea matInput formControlName="remarks" rows="3" placeholder="Additional details, background or history..."></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="form-actions">
+        <button mat-button type="button" routerLink="/families">Cancel</button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+          <mat-icon>{{ saving() ? 'hourglass_top' : 'save' }}</mat-icon>
+          {{ isEditMode() ? 'Update Family' : 'Save Family' }}
+        </button>
+      </div>
+    </mat-card>
+  </form>
+</div>

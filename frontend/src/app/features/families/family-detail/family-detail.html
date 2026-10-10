@@ -1,0 +1,247 @@
+<div class="family-detail-page">
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-icon class="spin-icon">hourglass_top</mat-icon>
+      <span>Loading family record...</span>
+    </div>
+  } @else if (family()) {
+    <!-- Navigation & Quick Actions -->
+    <div class="top-nav">
+      <button mat-icon-button routerLink="/families" class="back-btn" matTooltip="Back to Families List">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="nav-breadcrumbs">
+        <a routerLink="/families">Parish Families</a>
+        <mat-icon class="sep">chevron_right</mat-icon>
+        <span>{{ family()?.family_name }}</span>
+      </div>
+      <div class="nav-actions">
+        <button mat-stroked-button (click)="printFamilyCard()">
+          <mat-icon>print</mat-icon>
+          Print Family Card
+        </button>
+        @if (canEdit) {
+          <button mat-stroked-button color="accent" (click)="openSplitFamily()" matTooltip="Divide or branch off family members into a new household">
+            <mat-icon>call_split</mat-icon>
+            Divide / Split Family
+          </button>
+          <button mat-stroked-button (click)="openMigrateFamily()" matTooltip="Record family relocation or transfer">
+            <mat-icon>transfer_within_a_station</mat-icon>
+            Migrate / Transfer
+          </button>
+          <button mat-flat-button color="primary" [routerLink]="['/families', family()?.id, 'edit']">
+            <mat-icon>edit</mat-icon>
+            Edit Family
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Family Overview Banner Card -->
+    <mat-card class="family-banner-card">
+      <div class="banner-content">
+        <div class="family-crest-wrap">
+          <div class="crest-circle">
+            <mat-icon>home</mat-icon>
+          </div>
+        </div>
+
+        <div class="family-main-info">
+          <div class="title-row">
+            <span class="family-code-badge font-mono">{{ family()?.family_code }}</span>
+            <h1 class="family-title">{{ family()?.family_name }}</h1>
+            @if (family()?.family_name_ta) {
+              <span class="tamil-title">({{ family()?.family_name_ta }})</span>
+            }
+            <span [class]="getStatusClass(family()?.status || 'ACTIVE')">
+              {{ family()?.status }}
+            </span>
+          </div>
+
+          @if (family()?.parent_family_code) {
+            <div class="parent-link-box">
+              <mat-icon class="icon">call_split</mat-icon>
+              <span>Branched off / Divided from parent household: </span>
+              <a [routerLink]="['/families', family()?.parent_family_id]" class="parent-link">
+                <strong>{{ family()?.parent_family_name }}</strong> ({{ family()?.parent_family_code }})
+              </a>
+            </div>
+          }
+
+          <div class="meta-row">
+            @if (family()?.ward_name) {
+              <div class="meta-item">
+                <mat-icon>location_city</mat-icon>
+                <span>Ward: <strong>{{ family()?.ward_name }}</strong></span>
+              </div>
+            }
+
+            @if (family()?.address_line1) {
+              <div class="meta-item">
+                <mat-icon>place</mat-icon>
+                <span>{{ family()?.address_line1 }}{{ family()?.city ? ', ' + family()?.city : '' }}</span>
+              </div>
+            }
+
+            @if (family()?.phone) {
+              <div class="meta-item">
+                <mat-icon>phone</mat-icon>
+                <span>{{ family()?.phone }}</span>
+              </div>
+            }
+
+            @if (family()?.marriage_date) {
+              <div class="meta-item">
+                <mat-icon>favorite</mat-icon>
+                <span>Married: <strong>{{ family()?.marriage_date | date:'dd-MM-yyyy' }}</strong></span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="banner-stats">
+          <div class="stat-pill">
+            <span class="num">{{ family()?.members?.length || 0 }}</span>
+            <span class="lbl">Total Souls</span>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- Household Members Grid -->
+    <div class="members-section">
+      <div class="section-header">
+        <div class="sec-title">
+          <mat-icon>groups</mat-icon>
+          <h2>Household Members ({{ family()?.members?.length || 0 }})</h2>
+        </div>
+        @if (canEdit) {
+          <button mat-flat-button color="primary" (click)="openAddMember()">
+            <mat-icon>person_add</mat-icon>
+            Add Member
+          </button>
+        }
+      </div>
+
+      <div class="members-grid">
+        @for (m of family()?.members || []; track m.id) {
+          <mat-card class="member-card" [class.is-head]="m.is_head">
+            <div class="member-card-header">
+              <div class="avatar-wrap" [class.female]="m.gender === 'F'">
+                <mat-icon>{{ m.is_head ? 'account_circle' : (m.gender === 'F' ? 'face_3' : 'face') }}</mat-icon>
+              </div>
+              <div class="member-names">
+                <div class="name-row">
+                  <h3 class="name">{{ m.first_name }} {{ m.last_name || '' }}</h3>
+                  @if (m.is_head) {
+                    <span class="head-badge">
+                      <mat-icon class="head-star">star</mat-icon>
+                      Head
+                    </span>
+                  }
+                </div>
+                @if (m.name_ta) {
+                  <span class="name-ta">{{ m.name_ta }}</span>
+                }
+                <span [class]="getRelationshipClass(m.relationship_to_head)">
+                  {{ m.relationship_to_head }}
+                </span>
+              </div>
+            </div>
+
+            <div class="member-card-body">
+              <div class="info-row">
+                <span class="lbl">Gender / Age:</span>
+                <span class="val">{{ m.gender === 'M' ? 'Male' : (m.gender === 'F' ? 'Female' : 'Other') }} @if (m.age !== null && m.age !== undefined) { • {{ m.age }} yrs }</span>
+              </div>
+
+              @if (m.dob) {
+                <div class="info-row">
+                  <span class="lbl">Date of Birth:</span>
+                  <span class="val">{{ m.dob | date:'dd-MM-yyyy' }}</span>
+                </div>
+              }
+
+              @if (m.phone) {
+                <div class="info-row">
+                  <span class="lbl">Phone:</span>
+                  <span class="val">{{ m.phone }}</span>
+                </div>
+              }
+
+              @if (m.marital_status) {
+                <div class="info-row">
+                  <span class="lbl">Marital Status:</span>
+                  <span class="val">{{ m.marital_status }}</span>
+                </div>
+              }
+
+              @if (m.blood_group) {
+                <div class="info-row">
+                  <span class="lbl">Blood Group:</span>
+                  <span class="val font-mono">{{ m.blood_group }}</span>
+                </div>
+              }
+
+              <!-- Sacramental Milestones -->
+              <div class="sacraments-tags">
+                <span class="sacrament-chip" [class.received]="m.is_baptised" [matTooltip]="m.baptism_date ? 'Baptised on ' + (m.baptism_date | date:'dd-MM-yyyy') : 'Baptised'">
+                  <mat-icon class="chip-ico">{{ m.is_baptised ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                  Baptism
+                </span>
+
+                <span class="sacrament-chip" [class.received]="m.is_communion_received" [matTooltip]="m.communion_date ? 'Holy Communion on ' + (m.communion_date | date:'dd-MM-yyyy') : 'First Communion'">
+                  <mat-icon class="chip-ico">{{ m.is_communion_received ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                  Communion
+                </span>
+
+                <span class="sacrament-chip" [class.received]="m.is_confirmed" [matTooltip]="m.confirmation_date ? 'Confirmed on ' + (m.confirmation_date | date:'dd-MM-yyyy') : 'Confirmation'">
+                  <mat-icon class="chip-ico">{{ m.is_confirmed ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                  Confirmation
+                </span>
+              </div>
+            </div>
+
+            @if (canEdit) {
+              <div class="member-card-footer">
+                <button mat-button color="primary" (click)="openEditMember(m)">
+                  <mat-icon>edit</mat-icon>
+                  Edit
+                </button>
+                <button mat-button color="warn" (click)="deleteMember(m)">
+                  <mat-icon>remove_circle_outline</mat-icon>
+                  Remove
+                </button>
+              </div>
+            }
+          </mat-card>
+        }
+      </div>
+    </div>
+
+    <!-- Family Events Timeline -->
+    @if (family()?.events && family()!.events!.length > 0) {
+      <mat-card class="timeline-card">
+        <div class="timeline-title">
+          <mat-icon>history</mat-icon>
+          <h3>Household History & Event Log</h3>
+        </div>
+
+        <div class="timeline-list">
+          @for (ev of family()?.events; track ev.id) {
+            <div class="timeline-item">
+              <div class="tl-bullet"></div>
+              <div class="tl-content">
+                <div class="tl-header">
+                  <span class="tl-type">{{ ev.event_type }}</span>
+                  <span class="tl-date">{{ ev.created_at | date:'dd-MM-yyyy HH:mm' }}</span>
+                </div>
+                <p class="tl-desc">{{ ev.description }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </mat-card>
+    }
+  }
+</div>

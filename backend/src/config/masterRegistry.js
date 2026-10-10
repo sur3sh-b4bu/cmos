@@ -79,6 +79,18 @@ const registry = {
     joins: [{ column: 'church_id', table: 'churches', labelColumn: 'name', alias: 'church_name' }],
     churchScope: 'strict',
   },
+  wards: {
+    table: 'wards',
+    columns: ['church_id', 'branch_id', 'name', 'name_ta', 'code', 'leader_name', 'leader_phone', 'sort_order'],
+    required: ['church_id', 'name'],
+    searchable: ['name', 'code', 'leader_name'],
+    hasSortOrder: true,
+    joins: [
+      { column: 'church_id', table: 'churches', labelColumn: 'name', alias: 'church_name' },
+      { column: 'branch_id', table: 'branches', labelColumn: 'name', alias: 'branch_name' },
+    ],
+    churchScope: 'strict',
+  },
   masses: {
     table: 'masses',
     // default_offering_amount drives the Mass Intention form's Offering

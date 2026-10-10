@@ -1,0 +1,100 @@
+<div class="split-dialog">
+  <div class="dialog-header">
+    <div class="title-wrap">
+      <mat-icon class="split-icon">call_split</mat-icon>
+      <div>
+        <h2 mat-dialog-title class="m-0">Divide / Split Family</h2>
+        <span class="subtitle">Branch off members from <strong>{{ parentFamily.family_name }}</strong> ({{ parentFamily.family_code }}) into a new household.</span>
+      </div>
+    </div>
+    <button mat-icon-button mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <mat-dialog-content class="dialog-content">
+      <!-- Step 1: Member Selection -->
+      <div class="section-label">
+        <span class="step-badge">1</span>
+        <span>Select Member(s) Moving to the New Family</span>
+      </div>
+
+      <div class="members-selection-box">
+        @for (m of parentFamily.members || []; track m.id) {
+          <div class="member-select-item" [class.selected]="m.id && isMemberSelected(m.id)">
+            <mat-checkbox
+              [checked]="!!m.id && isMemberSelected(m.id)"
+              (change)="m.id && toggleMember(m.id, $event.checked)"
+            >
+              <div class="member-row-info">
+                <span class="member-name">{{ m.first_name }} {{ m.last_name || '' }}</span>
+                <span class="rel-tag">{{ m.relationship_to_head }}</span>
+                @if (m.is_head) { <span class="head-tag">Current Head</span> }
+              </div>
+            </mat-checkbox>
+          </div>
+        }
+      </div>
+
+      <!-- Step 2: New Family Information -->
+      <div class="section-label mt-4">
+        <span class="step-badge">2</span>
+        <span>New Household Details</span>
+      </div>
+
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>New Family Code</mat-label>
+          <input matInput formControlName="family_code" required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>New Family Name</mat-label>
+          <input matInput formControlName="family_name" placeholder="e.g. John Antony Family" required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>New Family Head</mat-label>
+          <mat-select formControlName="head_member_id" required>
+            @for (m of getSelectedMembers(); track m.id) {
+              <mat-option [value]="m.id">{{ m.first_name }} {{ m.last_name || '' }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Ward / Anbiam</mat-label>
+          <mat-select formControlName="ward_id">
+            @for (w of wards(); track w.id) {
+              <mat-option [value]="w.id">{{ w.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Address (Door No. & Street)</mat-label>
+          <input matInput formControlName="address_line1" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Contact Phone</mat-label>
+          <input matInput formControlName="phone" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>City</mat-label>
+          <input matInput formControlName="city" />
+        </mat-form-field>
+      </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end" class="dialog-actions">
+      <button mat-button type="button" mat-dialog-close>Cancel</button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="saving() || selectedMemberIds().length === 0">
+        <mat-icon>{{ saving() ? 'hourglass_top' : 'call_split' }}</mat-icon>
+        Confirm & Divide Family
+      </button>
+    </mat-dialog-actions>
+  </form>
+</div>

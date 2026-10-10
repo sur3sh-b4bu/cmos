@@ -14,6 +14,7 @@ const centralRoutes = require('./centralRoutes');
 const publicRoutes = require('./publicRoutes');
 const trashRoutes = require('./trashRoutes');
 const expenseRoutes = require('./expenseRoutes');
+const familyRoutes = require('./familyRoutes');
 
 const router = express.Router();
 
@@ -31,6 +32,7 @@ router.use('/auth', authRoutes);
 router.use('/masters', mastersRoutes);
 router.use('/mass-intentions', massIntentionRoutes);
 router.use('/contributions', contributionRoutes);
+router.use('/families', familyRoutes);
 router.use('/certificates', certificateRoutes);
 router.use('/certificate-templates', certificateTemplateRoutes);
 router.use('/reports', reportRoutes);

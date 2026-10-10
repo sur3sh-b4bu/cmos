@@ -1,0 +1,232 @@
+<div class="families-page">
+  <!-- Header with Title and Quick Actions -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Parish Families & Census</h1>
+      <p class="page-subtitle">Parish family register, household census, member relationships and division history.</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button class="action-btn" (click)="printDirectory()">
+        <mat-icon>print</mat-icon>
+        Print Directory
+      </button>
+      @if (canCreate) {
+        <button mat-flat-button color="primary" class="action-btn-primary" routerLink="/families/new">
+          <mat-icon>person_add</mat-icon>
+          New Family
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Census Metric KPI Cards -->
+  @if (census()) {
+    <div class="census-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon blue"><mat-icon>home</mat-icon></div>
+        <div class="kpi-data">
+          <span class="kpi-value">{{ census()?.families?.active_families || 0 }}</span>
+          <span class="kpi-label">Active Families</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon gold"><mat-icon>groups</mat-icon></div>
+        <div class="kpi-data">
+          <span class="kpi-value">{{ census()?.members?.total_souls || 0 }}</span>
+          <span class="kpi-label">Total Souls (Parishioners)</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon teal"><mat-icon>male</mat-icon></div>
+        <div class="kpi-data">
+          <span class="kpi-value">{{ census()?.members?.male_count || 0 }} M / {{ census()?.members?.female_count || 0 }} F</span>
+          <span class="kpi-label">Gender Demographics</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon purple"><mat-icon>child_care</mat-icon></div>
+        <div class="kpi-data">
+          <span class="kpi-value">{{ census()?.members?.children_count || 0 }}</span>
+          <span class="kpi-label">Children (&lt;18 yrs)</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Filter & Search Toolbar -->
+  <mat-card class="filter-card">
+    <div class="filters-row">
+      <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Search family code, name, head, or phone..." />
+        @if (search()) {
+          <button matSuffix mat-icon-button (click)="search.set(''); onSearchChange()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field" subscriptSizing="dynamic">
+        <mat-label>Ward / Anbiam</mat-label>
+        <mat-select [(ngModel)]="wardFilter" (selectionChange)="onFilterChange()">
+          <mat-option [value]="null">All Wards</mat-option>
+          @for (w of wards(); track w.id) {
+            <mat-option [value]="w.id">{{ w.name }} @if (w.name_ta) { ({{ w.name_ta }}) }</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field" subscriptSizing="dynamic">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="statusFilter" (selectionChange)="onFilterChange()">
+          <mat-option value="">All Statuses</mat-option>
+          <mat-option value="ACTIVE">Active</mat-option>
+          <mat-option value="MIGRATED_OUT">Migrated Out</mat-option>
+          <mat-option value="MIGRATED_IN">Migrated In</mat-option>
+          <mat-option value="DIVIDED">Divided</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </mat-card>
+
+  <!-- Families Data Table -->
+  <mat-card class="table-card">
+    <div class="table-container">
+      <table mat-table [dataSource]="families()" matSort (matSortChange)="onSortChange($event)">
+        <!-- Family Code -->
+        <ng-container matColumnDef="family_code">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Family Code</th>
+          <td mat-cell *matCellDef="let f" class="code-cell font-mono">
+            <span class="family-code-badge">{{ f.family_code }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Family Name -->
+        <ng-container matColumnDef="family_name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Family Name</th>
+          <td mat-cell *matCellDef="let f">
+            <div class="name-col">
+              <span class="primary-name">{{ f.family_name }}</span>
+              @if (f.family_name_ta) {
+                <span class="tamil-name">{{ f.family_name_ta }}</span>
+              }
+              @if (f.parent_family_code) {
+                <span class="split-tag">
+                  <mat-icon class="split-icon">call_split</mat-icon>
+                  from {{ f.parent_family_code }}
+                </span>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Head of Family -->
+        <ng-container matColumnDef="head_member">
+          <th mat-header-cell *matHeaderCellDef>Family Head</th>
+          <td mat-cell *matCellDef="let f">
+            @if (f.head_first_name) {
+              <div class="head-info">
+                <mat-icon class="head-icon">account_circle</mat-icon>
+                <span>{{ f.head_first_name }} {{ f.head_last_name || '' }}</span>
+              </div>
+            } @else {
+              <span class="text-muted">—</span>
+            }
+          </td>
+        </ng-container>
+
+        <!-- Ward -->
+        <ng-container matColumnDef="ward_name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Ward / Anbiam</th>
+          <td mat-cell *matCellDef="let f">
+            {{ f.ward_name || '—' }}
+          </td>
+        </ng-container>
+
+        <!-- Total Members -->
+        <ng-container matColumnDef="total_members">
+          <th mat-header-cell *matHeaderCellDef class="text-center">Members</th>
+          <td mat-cell *matCellDef="let f" class="text-center">
+            <span class="members-chip">
+              <mat-icon class="chip-icon">people</mat-icon>
+              {{ f.total_members || 0 }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Contact Phone -->
+        <ng-container matColumnDef="phone">
+          <th mat-header-cell *matHeaderCellDef>Contact Phone</th>
+          <td mat-cell *matCellDef="let f">
+            {{ f.phone || f.head_phone || '—' }}
+          </td>
+        </ng-container>
+
+        <!-- Status -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let f">
+            <span [class]="getStatusClass(f.status)">
+              {{ getStatusLabel(f.status) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Actions -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Actions</th>
+          <td mat-cell *matCellDef="let f" class="text-right">
+            <div class="row-actions" (click)="$event.stopPropagation()">
+              <button mat-icon-button color="primary" (click)="viewDetail(f)" matTooltip="View Household & Members">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (canEdit) {
+                <button mat-icon-button [routerLink]="['/families', f.id, 'edit']" matTooltip="Edit Family">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              @if (canDelete) {
+                <button mat-icon-button color="warn" (click)="deleteFamily(f, $event)" matTooltip="Delete Family">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          class="clickable-row"
+          (click)="viewDetail(row)"
+        ></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell empty-state" [attr.colspan]="displayedColumns.length">
+            @if (loading()) {
+              <div class="empty-message">Loading families...</div>
+            } @else {
+              <div class="empty-message">
+                <mat-icon class="empty-icon">groups</mat-icon>
+                <span>No parish families found. Click <strong>New Family</strong> to add one.</span>
+              </div>
+            }
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="total()"
+      [pageSize]="pageSize()"
+      [pageIndex]="page() - 1"
+      [pageSizeOptions]="[10, 25, 50, 100]"
+      (page)="onPageChange($event)"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+</div>

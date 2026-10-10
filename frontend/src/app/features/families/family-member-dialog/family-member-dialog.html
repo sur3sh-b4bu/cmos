@@ -1,0 +1,153 @@
+<div class="member-dialog">
+  <div class="dialog-header">
+    <div class="title-wrap">
+      <mat-icon class="member-icon">person</mat-icon>
+      <div>
+        <h2 mat-dialog-title class="m-0">{{ isEditMode() ? 'Edit Family Member' : 'Add Household Member' }}</h2>
+        <span class="subtitle">Record individual personal data, relationship, and sacramental milestones.</span>
+      </div>
+    </div>
+    <button mat-icon-button mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <mat-dialog-content class="dialog-content">
+      <!-- Personal Information -->
+      <div class="section-label">
+        <mat-icon>badge</mat-icon>
+        <span>Personal Information</span>
+      </div>
+
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>First Name / Given Name</mat-label>
+          <input matInput formControlName="first_name" placeholder="e.g. John" required />
+          <mat-error *ngIf="form.get('first_name')?.hasError('required')">First name is required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Last Name / Surname</mat-label>
+          <input matInput formControlName="last_name" placeholder="e.g. Fernandes" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tamil Name</mat-label>
+          <input matInput formControlName="name_ta" placeholder="e.g. யோவான்" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Relationship to Head</mat-label>
+          <mat-select formControlName="relationship_to_head" required>
+            @for (rel of relationships; track rel.value) {
+              <mat-option [value]="rel.value">{{ rel.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Gender</mat-label>
+          <mat-select formControlName="gender" required>
+            <mat-option value="M">Male</mat-option>
+            <mat-option value="F">Female</mat-option>
+            <mat-option value="OTHER">Other</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Date of Birth</mat-label>
+          <input matInput type="date" formControlName="dob" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Marital Status</mat-label>
+          <mat-select formControlName="marital_status" required>
+            @for (ms of maritalStatuses; track ms.value) {
+              <mat-option [value]="ms.value">{{ ms.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Phone Number</mat-label>
+          <input matInput formControlName="phone" placeholder="e.g. +91 98765 43210" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email Address</mat-label>
+          <input matInput type="email" formControlName="email" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Blood Group</mat-label>
+          <input matInput formControlName="blood_group" placeholder="e.g. O+, B+, A+" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Occupation</mat-label>
+          <input matInput formControlName="occupation" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Education</mat-label>
+          <input matInput formControlName="education" />
+        </mat-form-field>
+      </div>
+
+      <!-- Sacramental Status -->
+      <div class="section-label mt-4">
+        <mat-icon>church</mat-icon>
+        <span>Sacramental Life</span>
+      </div>
+
+      <div class="sacraments-box">
+        <div class="sacrament-item">
+          <mat-checkbox formControlName="is_baptised">Baptised</mat-checkbox>
+          @if (form.get('is_baptised')?.value) {
+            <mat-form-field appearance="outline" class="inline-field">
+              <mat-label>Baptism Date</mat-label>
+              <input matInput type="date" formControlName="baptism_date" />
+            </mat-form-field>
+          }
+        </div>
+
+        <div class="sacrament-item">
+          <mat-checkbox formControlName="is_communion_received">First Holy Communion Received</mat-checkbox>
+          @if (form.get('is_communion_received')?.value) {
+            <mat-form-field appearance="outline" class="inline-field">
+              <mat-label>Communion Date</mat-label>
+              <input matInput type="date" formControlName="communion_date" />
+            </mat-form-field>
+          }
+        </div>
+
+        <div class="sacrament-item">
+          <mat-checkbox formControlName="is_confirmed">Confirmed (Chrismation)</mat-checkbox>
+          @if (form.get('is_confirmed')?.value) {
+            <mat-form-field appearance="outline" class="inline-field">
+              <mat-label>Confirmation Date</mat-label>
+              <input matInput type="date" formControlName="confirmation_date" />
+            </mat-form-field>
+          }
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="mt-3">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Notes / Pastoral Remarks</mat-label>
+          <textarea matInput formControlName="notes" rows="2"></textarea>
+        </mat-form-field>
+      </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end" class="dialog-actions">
+      <button mat-button type="button" mat-dialog-close>Cancel</button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+        <mat-icon>{{ saving() ? 'hourglass_top' : 'save' }}</mat-icon>
+        {{ isEditMode() ? 'Save Changes' : 'Add Member' }}
+      </button>
+    </mat-dialog-actions>
+  </form>
+</div>

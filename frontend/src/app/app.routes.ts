@@ -147,6 +147,41 @@ export const routes: Routes = [
         ],
       },
       {
+        path: 'families',
+        canActivate: [churchContextGuard],
+        data: { breadcrumb: 'nav.families' },
+        children: [
+          {
+            path: '',
+            canActivate: [permissionGuard],
+            data: { permissions: ['families.view'] },
+            loadComponent: () =>
+              import('./features/families/families-list/families-list').then((m) => m.FamiliesListComponent),
+          },
+          {
+            path: 'new',
+            canActivate: [permissionGuard],
+            data: { breadcrumb: 'common.new', permissions: ['families.create'] },
+            loadComponent: () =>
+              import('./features/families/family-form/family-form').then((m) => m.FamilyFormComponent),
+          },
+          {
+            path: ':id',
+            canActivate: [permissionGuard],
+            data: { permissions: ['families.view'] },
+            loadComponent: () =>
+              import('./features/families/family-detail/family-detail').then((m) => m.FamilyDetailComponent),
+          },
+          {
+            path: ':id/edit',
+            canActivate: [permissionGuard],
+            data: { breadcrumb: 'common.edit', permissions: ['families.update'] },
+            loadComponent: () =>
+              import('./features/families/family-form/family-form').then((m) => m.FamilyFormComponent),
+          },
+        ],
+      },
+      {
         path: 'receipt-payment',
         canActivate: [churchContextGuard],
         data: { breadcrumb: 'nav.receiptPayment' },

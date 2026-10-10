@@ -1,0 +1,267 @@
+.families-page {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+
+    .page-title {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary, #1e293b);
+      margin: 0 0 0.25rem 0;
+    }
+
+    .page-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary, #64748b);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+
+      .action-btn-primary {
+        background: linear-gradient(135deg, #1e3a8a, #2563eb);
+        color: #ffffff;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 0 1.25rem;
+        height: 40px;
+      }
+    }
+  }
+
+  .census-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+
+    .kpi-card {
+      background: var(--surface, #ffffff);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border: 1px solid var(--border-color, #e2e8f0);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+      .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &.blue { background: #eff6ff; color: #2563eb; }
+        &.gold { background: #fefce8; color: #ca8a04; }
+        &.teal { background: #f0fdf4; color: #16a34a; }
+        &.purple { background: #faf5ff; color: #9333ea; }
+      }
+
+      .kpi-data {
+        display: flex;
+        flex-direction: column;
+
+        .kpi-value {
+          font-size: 1.375rem;
+          font-weight: 700;
+          color: var(--text-primary, #0f172a);
+          line-height: 1.2;
+        }
+
+        .kpi-label {
+          font-size: 0.8125rem;
+          color: var(--text-secondary, #64748b);
+          margin-top: 0.25rem;
+        }
+      }
+    }
+  }
+
+  .filter-card {
+    margin-bottom: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+    .filters-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+
+      .search-field {
+        flex: 1;
+        min-width: 260px;
+      }
+
+      .filter-field {
+        min-width: 180px;
+      }
+    }
+  }
+
+  .table-card {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+
+      th.mat-header-cell {
+        font-weight: 600;
+        font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary, #64748b);
+        background: var(--surface-header, #f8fafc);
+        padding: 0.875rem 1rem;
+      }
+
+      td.mat-cell {
+        padding: 0.875rem 1rem;
+        font-size: 0.875rem;
+        color: var(--text-primary, #334155);
+      }
+
+      tr.clickable-row {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+
+        &:hover {
+          background-color: var(--surface-hover, #f1f5f9);
+        }
+      }
+
+      .family-code-badge {
+        font-family: monospace;
+        font-weight: 700;
+        background: #f1f5f9;
+        color: #1e293b;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+      }
+
+      .name-col {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+
+        .primary-name {
+          font-weight: 600;
+          color: var(--text-primary, #0f172a);
+        }
+
+        .tamil-name {
+          font-size: 0.8125rem;
+          color: var(--text-secondary, #64748b);
+        }
+
+        .split-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-size: 0.75rem;
+          color: #d97706;
+          font-weight: 500;
+          margin-top: 0.125rem;
+
+          .split-icon {
+            font-size: 14px;
+            width: 14px;
+            height: 14px;
+          }
+        }
+      }
+
+      .head-info {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+
+        .head-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          color: #2563eb;
+        }
+      }
+
+      .members-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.625rem;
+        background: #e0f2fe;
+        color: #0369a1;
+        border-radius: 16px;
+        font-weight: 600;
+        font-size: 0.8125rem;
+
+        .chip-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.625rem;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: capitalize;
+
+        &.active { background: #dcfce7; color: #15803d; }
+        &.migrated-out { background: #fee2e2; color: #b91c1c; }
+        &.migrated-in { background: #fef3c7; color: #b45309; }
+        &.divided { background: #ffedd5; color: #c2410c; }
+      }
+
+      .row-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.25rem;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 3rem 1rem !important;
+
+        .empty-message {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
+          color: var(--text-secondary, #64748b);
+
+          .empty-icon {
+            font-size: 40px;
+            width: 40px;
+            height: 40px;
+            color: #94a3b8;
+          }
+        }
+      }
+    }
+  }
+}

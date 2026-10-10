@@ -16,7 +16,11 @@ const PAYMENT_JOIN = `
 
 const BASE_SELECT = `
   SELECT
-    d.*,
+    d.id, d.church_id, d.branch_id, d.receipt_no, d.name, d.phone,
+    d.contribution_type_id, d.custom_donation_type, d.custom_contribution_type,
+    d.contribution_amount, d.payment_method_id, d.remarks,
+    d.created_at, d.created_by, d.updated_at, d.updated_by,
+    d.is_active, d.is_deleted, d.is_refunded, d.refunded_at, d.refunded_by, d.refund_reason, d.refund_amount,
     dt.name AS contribution_type_name, dt.name_ta AS contribution_type_name_ta, (dt.code = 'OTHERS') AS contribution_type_is_custom,
     pm.name AS payment_method_name,
     u.full_name AS created_by_name,

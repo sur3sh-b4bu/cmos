@@ -206,31 +206,37 @@ async function run() {
   console.log('Seeding default church, branch, priest & masses...');
   let churchId;
   if (await tableEmpty(conn, 'churches')) {
+    const [cols] = await conn.query(
+      "SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'churches'"
+    );
+    const churchCols = new Set(cols.map((c) => c.COLUMN_NAME));
+
+    const churchData = {
+      name: "St. Mary's Church",
+      name_ta: 'புனித மரியாள் ஆலயம்',
+      code: 'SMC',
+      diocese: 'Diocese',
+      registration_no: 'REG-0001',
+      address_line1: '1 Church Street',
+      address_line2: '',
+      address_ta: '1 சர்ச் தெரு',
+      city: 'City',
+      district_id: districtIdByName['Chennai'] || 1,
+      state_id: stateIdByName['Tamil Nadu'] || 1,
+      country_id: countryIdByIso.IN || 1,
+      pincode: '600001',
+      phone: '+91 00000 00000',
+      email: 'office@church.example.org',
+      theme_color: 'blue',
+      established_date: '1950-01-01',
+    };
+
+    const validKeys = Object.keys(churchData).filter((k) => churchCols.has(k));
+    const validValues = validKeys.map((k) => churchData[k]);
+    const placeholders = validKeys.map(() => '?').join(', ');
     const [result] = await conn.query(
-      `INSERT INTO churches
-        (name, name_ta, registration_no, address_line1, address_ta, city, district_id, state_id, country_id, pincode, phone, email, established_date)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [
-        "St. Mary's Church",
-        // Demo default -- a real installation renames this to its own
-        // church (see master-form.ts, Masters > Churches) and should
-        // replace this with its own actual Tamil name at that point; this
-        // just means a fresh install isn't blank/English-only on the
-        // printed receipt/register/header the moment Tamil is switched on,
-        // before anyone's touched Masters yet.
-        'புனித மரியாள் ஆலயம்',
-        'REG-0001',
-        '1 Church Street',
-        '1 சர்ச் தெரு, சென்னை',
-        'Chennai',
-        districtIdByName['Chennai'],
-        stateIdByName['Tamil Nadu'],
-        countryIdByIso.IN,
-        '600001',
-        '+91 44 0000 0000',
-        'office@stmarys.example.org',
-        '1950-01-01',
-      ]
+      `INSERT INTO churches (${validKeys.join(', ')}) VALUES (${placeholders})`,
+      validValues
     );
     churchId = result.insertId;
   } else {
@@ -242,7 +248,7 @@ async function run() {
   if (await tableEmpty(conn, 'branches')) {
     const [result] = await conn.query(
       'INSERT INTO branches (church_id, name, code, address) VALUES (?,?,?,?)',
-      [churchId, 'Main Church', 'MAIN', '1 Church Street, Chennai']
+      [churchId, 'Main Church', 'MAIN', '1 Church Street']
     );
     branchId = result.insertId;
   } else {
@@ -264,21 +270,21 @@ async function run() {
     // matched nothing; without this, Masses stayed English-only until
     // someone edited them by hand.
     await conn.query(
-      `INSERT INTO masses (church_id, branch_id, name, name_ta, mass_time, day_type, sort_order) VALUES
-        (?,?,?,?,?,?,?), (?,?,?,?,?,?,?), (?,?,?,?,?,?,?), (?,?,?,?,?,?,?)`,
+      `INSERT INTO masses (church_id, branch_id, name, name_ta, mass_time, start_time, day_type, sort_order) VALUES
+        (?,?,?,?,?,?,?,?), (?,?,?,?,?,?,?,?), (?,?,?,?,?,?,?,?), (?,?,?,?,?,?,?,?)`,
       [
-        churchId, branchId, 'Weekday Morning Mass', 'காலை திருப்பலி', '06:00:00', 'Daily', 1,
-        churchId, branchId, 'Weekday Evening Mass', 'மாலை திருப்பலி', '18:00:00', 'Daily', 2,
-        churchId, branchId, 'Sunday Morning Mass', 'ஞாயிறு காலை திருப்பலி', '08:00:00', 'Sunday', 3,
-        churchId, branchId, 'Sunday Evening Mass', 'ஞாயிறு மாலை திருப்பலி', '17:30:00', 'Sunday', 4,
+        churchId, branchId, 'Weekday Morning Mass', 'காலை திருப்பலி', '06:00:00', '06:00:00', 'Daily', 1,
+        churchId, branchId, 'Weekday Evening Mass', 'மாலை திருப்பலி', '18:00:00', '18:00:00', 'Daily', 2,
+        churchId, branchId, 'Sunday Morning Mass', 'ஞாயிறு காலை திருப்பலி', '08:00:00', '08:00:00', 'Sunday', 3,
+        churchId, branchId, 'Sunday Evening Mass', 'ஞாயிறு மாலை திருப்பலி', '17:30:00', '17:30:00', 'Sunday', 4,
       ]
     );
   }
 
   if (await tableEmpty(conn, 'receipt_series')) {
     await conn.query(
-      'INSERT INTO receipt_series (church_id, series_name, prefix, next_number, number_padding) VALUES (?,?,?,?,?)',
-      [churchId, 'Default Receipt Series', 'RCT', 1, 4]
+      'INSERT INTO receipt_series (church_id, series_name, series_type, prefix, next_number, number_padding) VALUES (?,?,?,?,?,?)',
+      [churchId, 'Default Receipt Series', 'general', 'RCT', 1, 4]
     );
   }
 
@@ -324,8 +330,8 @@ async function run() {
     ];
     for (const [name, nameTa, categoryId, sortOrder, isCustom] of intentions) {
       await conn.query(
-        'INSERT INTO prayer_intention_master (category_id, name, name_ta, sort_order, is_custom) VALUES (?,?,?,?,?)',
-        [categoryId, name, nameTa, sortOrder, isCustom]
+        'INSERT INTO prayer_intention_master (church_id, category_id, name, name_ta, sort_order, is_custom) VALUES (?,?,?,?,?,?)',
+        [churchId, categoryId, name, nameTa, sortOrder, isCustom]
       );
     }
   }
@@ -413,47 +419,6 @@ async function run() {
     console.log('----------------------------------------------------------');
   } else {
     console.log('Master Administrator user already exists — skipping.');
-  }
-
-  console.log('Seeding sample marriage certificate...');
-  if (await tableEmpty(conn, 'marriage_certificates')) {
-    await conn.query(
-      `INSERT INTO marriage_certificates (
-        church_id, branch_id, certificate_no,
-        marriage_date, where_married,
-        groom_name, bride_name,
-        groom_age, bride_age,
-        groom_condition, bride_condition,
-        groom_residence, bride_residence,
-        groom_father_name, bride_father_name,
-        banns_or_licence, impediments_dispensed,
-        witness1_name, witness2_name,
-        custom_priest_name
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [
-        churchId,
-        branchId,
-        'MAR-0001',
-        '2023-10-25',
-        'ST.THOMAS CHURCH',
-        'SRIDHER',
-        'BELCIYA',
-        '36',
-        '19',
-        'BACHELOR',
-        'SPINSTER',
-        'THOOTHUKUDI',
-        'THOOTHUKUDI',
-        'RAJA',
-        'SATHISKUMAR',
-        'BY BANNS',
-        'NIL',
-        'RATHNAM',
-        'AROCKIA RAJAN',
-        'REV. FR. PRATHEEP',
-      ]
-    );
-    await conn.query("UPDATE certificate_series SET next_number = 2 WHERE church_id = ? AND certificate_type = 'Marriage'", [churchId]);
   }
 
   console.log('Seed complete.');

@@ -147,6 +147,12 @@ const registry = {
     required: ['name', 'code'],
     searchable: ['name'],
   },
+  donation_types: {
+    table: 'contribution_types',
+    columns: ['name', 'name_ta', 'code', 'description'],
+    required: ['name', 'code'],
+    searchable: ['name'],
+  },
   document_types: {
     table: 'document_types',
     columns: ['name', 'code'],

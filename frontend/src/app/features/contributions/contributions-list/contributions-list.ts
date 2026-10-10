@@ -139,7 +139,7 @@ export class ContributionsListComponent implements OnInit {
         ],
       },
     ]);
-    this.masterLookup.list<{ id: number; name: string }>('donation_types').subscribe((rows) => {
+    this.masterLookup.list<{ id: number; name: string }>('contribution_types').subscribe((rows) => {
       this.setFieldOptions('contributionTypeId', rows);
     });
     this.masterLookup.list<{ id: number; name: string }>('payment_methods').subscribe((rows) => {

@@ -28,5 +28,7 @@ coverage/
 screenshot_ref.png
 coms_build_repo/
 temp_coms_build/
+*DATA*.sql
+*.dump.sql
 
 

@@ -119,11 +119,11 @@ async function getMonthlyAccountsData({ churchId, branchId = null, monthYear }) 
 
   // 3. Fetch Contributions grouped by contribution type / name
   let contribSql = `
-    SELECT ct.code, ct.name, COALESCE(SUM(COALESCE(c.amount, c.contribution_amount, 0)), 0) AS total_amount, COUNT(c.id) AS count
+    SELECT ct.code, ct.name, COALESCE(SUM(c.contribution_amount), 0) AS total_amount, COUNT(c.id) AS count
     FROM contributions c
     LEFT JOIN contribution_types ct ON ct.id = c.contribution_type_id
     WHERE c.church_id = ? AND c.is_deleted = 0 AND COALESCE(c.is_refunded, 0) = 0
-      AND COALESCE(c.payment_date, DATE(c.created_at)) >= ? AND COALESCE(c.payment_date, DATE(c.created_at)) <= ?
+      AND DATE(c.created_at) >= ? AND DATE(c.created_at) <= ?
   `;
   const contribParams = [churchId, startDate, endDate];
   if (branchId) {

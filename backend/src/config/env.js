@@ -28,4 +28,11 @@ module.exports = {
     database: required('DB_NAME', 'coms_db'),
     connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
   },
+
+  webauthn: {
+    rpId: process.env.WEBAUTHN_RP_ID || 'localhost',
+    rpName: process.env.WEBAUTHN_RP_NAME || 'COMS - Church Office Management System',
+    expectedOrigins: (process.env.WEBAUTHN_ORIGINS || 'http://localhost:4200,http://localhost:4000,http://127.0.0.1:4200,http://127.0.0.1:4000').split(',').map(s => s.trim()),
+  },
 };
+

@@ -21,9 +21,15 @@ const env = require('../config/env');
  * public key and a signature. There is no fingerprint image to store or leak.
  */
 
-const rpID = env.webauthn.rpId;
-const rpName = env.webauthn.rpName;
-const expectedOrigins = env.webauthn.expectedOrigins;
+const rpID = env.webauthn?.rpId || 'localhost';
+const rpName = env.webauthn?.rpName || 'COMS - Church Office Management System';
+const expectedOrigins = env.webauthn?.expectedOrigins || [
+  'http://localhost:4200',
+  'http://localhost:4000',
+  'http://127.0.0.1:4200',
+  'http://127.0.0.1:4000',
+];
+
 
 // ---------------------------------------------------------------- registration
 

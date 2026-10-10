@@ -270,21 +270,21 @@ async function run() {
     // matched nothing; without this, Masses stayed English-only until
     // someone edited them by hand.
     await conn.query(
-      `INSERT INTO masses (church_id, branch_id, name, name_ta, mass_time, start_time, day_type, sort_order) VALUES
-        (?,?,?,?,?,?,?,?), (?,?,?,?,?,?,?,?), (?,?,?,?,?,?,?,?), (?,?,?,?,?,?,?,?)`,
+      `INSERT INTO masses (church_id, branch_id, name, name_ta, mass_time, day_type, sort_order) VALUES
+        (?,?,?,?,?,?,?), (?,?,?,?,?,?,?), (?,?,?,?,?,?,?), (?,?,?,?,?,?,?)`,
       [
-        churchId, branchId, 'Weekday Morning Mass', 'காலை திருப்பலி', '06:00:00', '06:00:00', 'Daily', 1,
-        churchId, branchId, 'Weekday Evening Mass', 'மாலை திருப்பலி', '18:00:00', '18:00:00', 'Daily', 2,
-        churchId, branchId, 'Sunday Morning Mass', 'ஞாயிறு காலை திருப்பலி', '08:00:00', '08:00:00', 'Sunday', 3,
-        churchId, branchId, 'Sunday Evening Mass', 'ஞாயிறு மாலை திருப்பலி', '17:30:00', '17:30:00', 'Sunday', 4,
+        churchId, branchId, 'Weekday Morning Mass', 'காலை திருப்பலி', '06:00:00', 'Daily', 1,
+        churchId, branchId, 'Weekday Evening Mass', 'மாலை திருப்பலி', '18:00:00', 'Daily', 2,
+        churchId, branchId, 'Sunday Morning Mass', 'ஞாயிறு காலை திருப்பலி', '08:00:00', 'Sunday', 3,
+        churchId, branchId, 'Sunday Evening Mass', 'ஞாயிறு மாலை திருப்பலி', '17:30:00', 'Sunday', 4,
       ]
     );
   }
 
   if (await tableEmpty(conn, 'receipt_series')) {
     await conn.query(
-      'INSERT INTO receipt_series (church_id, series_name, series_type, prefix, next_number, number_padding) VALUES (?,?,?,?,?,?)',
-      [churchId, 'Default Receipt Series', 'general', 'RCT', 1, 4]
+      'INSERT INTO receipt_series (church_id, series_name, prefix, next_number, number_padding) VALUES (?,?,?,?,?)',
+      [churchId, 'Default Receipt Series', 'RCT', 1, 4]
     );
   }
 
@@ -330,8 +330,8 @@ async function run() {
     ];
     for (const [name, nameTa, categoryId, sortOrder, isCustom] of intentions) {
       await conn.query(
-        'INSERT INTO prayer_intention_master (church_id, category_id, name, name_ta, sort_order, is_custom) VALUES (?,?,?,?,?,?)',
-        [churchId, categoryId, name, nameTa, sortOrder, isCustom]
+        'INSERT INTO prayer_intention_master (category_id, name, name_ta, sort_order, is_custom) VALUES (?,?,?,?,?)',
+        [categoryId, name, nameTa, sortOrder, isCustom]
       );
     }
   }

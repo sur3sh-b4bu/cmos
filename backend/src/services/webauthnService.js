@@ -30,6 +30,23 @@ const expectedOrigins = env.webauthn?.expectedOrigins || [
   'http://127.0.0.1:4000',
 ];
 
+function getDynamicOrigins(req) {
+  const list = [...expectedOrigins];
+  if (req) {
+    const reqOrigin = req.get('origin');
+    if (reqOrigin && !list.includes(reqOrigin)) list.push(reqOrigin);
+    const host = req.get('host');
+    if (host) {
+      const httpHost = `http://${host}`;
+      const httpsHost = `https://${host}`;
+      if (!list.includes(httpHost)) list.push(httpHost);
+      if (!list.includes(httpsHost)) list.push(httpsHost);
+    }
+  }
+  return list;
+}
+
+
 
 // ---------------------------------------------------------------- registration
 
@@ -74,7 +91,7 @@ async function verifyRegistration(user, response, deviceLabel, req) {
     verification = await verifyRegistrationResponse({
       response,
       expectedChallenge,
-      expectedOrigin: expectedOrigins,
+      expectedOrigin: getDynamicOrigins(req),
       expectedRPID: rpID,
       requireUserVerification: true,
     });
@@ -165,7 +182,7 @@ async function verifyAuthentication(username, response, req) {
     verification = await verifyAuthenticationResponse({
       response,
       expectedChallenge,
-      expectedOrigin: expectedOrigins,
+      expectedOrigin: getDynamicOrigins(req),
       expectedRPID: rpID,
       credential: {
         id: stored.credential_id,
@@ -175,6 +192,7 @@ async function verifyAuthentication(username, response, req) {
       },
       requireUserVerification: true,
     });
+
   } catch (err) {
     throw ApiError.unauthorized(`Biometric sign-in failed: ${err.message}`);
   }

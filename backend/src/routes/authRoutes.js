@@ -1,5 +1,6 @@
 const express = require('express');
 const authController = require('../controllers/authController');
+const webauthnController = require('../controllers/webauthnController');
 const authenticate = require('../middlewares/authenticate');
 const validate = require('../middlewares/validate');
 const { loginSchema, changePasswordSchema } = require('../validators/authValidators');
@@ -24,4 +25,13 @@ router.post(
   authController.changePassword
 );
 
+// WebAuthn Biometric Passkeys
+router.post('/webauthn/login/options', webauthnController.getLoginOptions);
+router.post('/webauthn/login/verify', webauthnController.verifyLogin);
+router.post('/webauthn/register/options', authenticate, webauthnController.getRegisterOptions);
+router.post('/webauthn/register/verify', authenticate, webauthnController.verifyRegister);
+router.get('/webauthn/devices', authenticate, webauthnController.listDevices);
+router.delete('/webauthn/devices/:id', authenticate, webauthnController.removeDevice);
+
 module.exports = router;
+

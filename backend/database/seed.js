@@ -76,6 +76,7 @@ async function run() {
     marriage_certificates: ['view', 'create', 'update', 'delete', 'print', 'export'],
     death_certificates: ['view', 'create', 'update', 'delete', 'print', 'export'],
     confirmation_certificates: ['view', 'create', 'update', 'delete', 'print', 'export'],
+    families: ['view', 'create', 'update', 'delete', 'print', 'export'],
     masters: ['view', 'create', 'update', 'delete'],
     // print_all gates the "day-wise, ALL users" Reports print button (shows
     // who billed each row) -- ADMIN gets it automatically below along with
@@ -115,9 +116,10 @@ async function run() {
       'marriage_certificates.view', 'marriage_certificates.create', 'marriage_certificates.update', 'marriage_certificates.print', 'marriage_certificates.export',
       'death_certificates.view', 'death_certificates.create', 'death_certificates.update', 'death_certificates.print', 'death_certificates.export',
       'confirmation_certificates.view', 'confirmation_certificates.create', 'confirmation_certificates.update', 'confirmation_certificates.print', 'confirmation_certificates.export',
+      'families.view', 'families.create', 'families.update', 'families.print', 'families.export',
       'reports.view', 'reports.export',
     ],
-    PRIEST: ['dashboard.view', 'prayer_register.view', 'prayer_register.print', 'reports.view'],
+    PRIEST: ['dashboard.view', 'prayer_register.view', 'prayer_register.print', 'families.view', 'families.print', 'reports.view'],
     ACCOUNTANT: ['dashboard.view', 'reports.view', 'reports.export', 'mass_intentions.view', 'contributions.view'],
   };
   const rolePermRows = [];
@@ -346,6 +348,92 @@ async function run() {
   await insertIgnore(conn, 'contribution_types', ['name', 'name_ta', 'code', 'description'], [
     { name: 'Others', name_ta: 'மற்றவை', code: 'OTHERS', description: 'Any other contribution purpose not listed above' },
   ]);
+
+  console.log('Seeding default wards & parish families mock data...');
+  if (await tableEmpty(conn, 'wards')) {
+    await insertIgnore(conn, 'wards', ['church_id', 'name', 'name_ta', 'code', 'leader_name', 'leader_phone', 'sort_order'], [
+      { church_id: churchId, name: 'St. Antony Anbiam', name_ta: 'புனித அந்தோணியார் அன்பியம்', code: 'WARD-01', leader_name: 'Antony Cruz', leader_phone: '+91 98765 43210', sort_order: 1 },
+      { church_id: churchId, name: 'St. Joseph Anbiam', name_ta: 'புனித சூசையப்பர் அன்பியம்', code: 'WARD-02', leader_name: 'Joseph Vijay', leader_phone: '+91 98765 43211', sort_order: 2 },
+      { church_id: churchId, name: 'Our Lady of Lourdes Anbiam', name_ta: 'தூய லூர்து அன்னை அன்பியம்', code: 'WARD-03', leader_name: 'Mary Stella', leader_phone: '+91 98765 43212', sort_order: 3 },
+      { church_id: churchId, name: 'St. Francis Xavier Anbiam', name_ta: 'புனித சவேரியார் அன்பியம்', code: 'WARD-04', leader_name: 'Francis Paul', leader_phone: '+91 98765 43213', sort_order: 4 },
+    ]);
+  }
+
+  const wardIdByCode = await getIdMap(conn, 'wards', 'code');
+
+  if (await tableEmpty(conn, 'families')) {
+    // 1. Parent Family (Multi-generation)
+    const [resFam1] = await conn.query(
+      `INSERT INTO families (church_id, family_code, family_name, family_name_ta, ward_id, address_line1, address_ta, city, pincode, phone, status, marriage_date)
+       VALUES (?, 'FAM-0001', 'John Doe Family', 'ஜான் டோ குடும்பம்', ?, '12 Church Street', '12 சர்ச் தெரு', 'Chennai', '600001', '+91 98765 00001', 'ACTIVE', '1985-05-20')`,
+      [churchId, wardIdByCode['WARD-01'] || null]
+    );
+    const fam1Id = resFam1.insertId;
+
+    const [resHead1] = await conn.query(
+      `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, phone, marital_status, is_baptised, is_communion_received, is_confirmed, is_head)
+       VALUES (?, ?, 'John', 'Doe', 'ஜான்', 'HEAD', 'M', '1960-04-12', '+91 98765 00001', 'MARRIED', 1, 1, 1, 1)`,
+      [churchId, fam1Id]
+    );
+    await conn.query('UPDATE families SET head_member_id = ? WHERE id = ?', [resHead1.insertId, fam1Id]);
+
+    await conn.query(
+      `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, marital_status, is_baptised, is_communion_received, is_confirmed, is_head)
+       VALUES 
+       (?, ?, 'Mary', 'Doe', 'மேரி', 'SPOUSE', 'F', '1965-08-25', 'MARRIED', 1, 1, 1, 0),
+       (?, ?, 'Sarah', 'Doe', 'சாரா', 'DAUGHTER', 'F', '1995-11-10', 'SINGLE', 1, 1, 1, 0),
+       (?, ?, 'Joseph', 'Doe', 'சூசை', 'GRANDFATHER', 'M', '1935-02-18', 'WIDOWED', 1, 1, 1, 0)`,
+      [churchId, fam1Id, churchId, fam1Id, churchId, fam1Id]
+    );
+
+    // 2. Split Family (Son branched off from FAM-0001)
+    const [resFam2] = await conn.query(
+      `INSERT INTO families (church_id, family_code, family_name, family_name_ta, ward_id, parent_family_id, address_line1, address_ta, city, pincode, phone, status, marriage_date)
+       VALUES (?, 'FAM-0002', 'David Doe Family', 'டேவிட் டோ குடும்பம்', ?, ?, '24 East Avenue', '24 கிழக்கு அவென்யூ', 'Chennai', '600001', '+91 98765 00002', 'ACTIVE', '2018-06-15')`,
+      [churchId, wardIdByCode['WARD-02'] || null, fam1Id]
+    );
+    const fam2Id = resFam2.insertId;
+
+    const [resHead2] = await conn.query(
+      `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, phone, marital_status, is_baptised, is_communion_received, is_confirmed, is_head)
+       VALUES (?, ?, 'David', 'Doe', 'டேவிட்', 'HEAD', 'M', '1990-03-14', '+91 98765 00002', 'MARRIED', 1, 1, 1, 1)`,
+      [churchId, fam2Id]
+    );
+    await conn.query('UPDATE families SET head_member_id = ? WHERE id = ?', [resHead2.insertId, fam2Id]);
+
+    await conn.query(
+      `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, marital_status, is_baptised, is_communion_received, is_confirmed, is_head)
+       VALUES 
+       (?, ?, 'Rachel', 'Doe', 'ரேச்சல்', 'SPOUSE', 'F', '1992-09-08', 'MARRIED', 1, 1, 1, 0),
+       (?, ?, 'Grace', 'Doe', 'கிரேஸ்', 'DAUGHTER', 'F', '2020-01-20', 'SINGLE', 1, 0, 0, 0)`,
+      [churchId, fam2Id, churchId, fam2Id]
+    );
+
+    // 3. Migrated In Family
+    const [resFam3] = await conn.query(
+      `INSERT INTO families (church_id, family_code, family_name, family_name_ta, ward_id, address_line1, address_ta, city, pincode, phone, status, migrated_from_parish, migration_date, migration_reason)
+       VALUES (?, 'FAM-0003', 'Francis Family', 'பிரான்சிஸ் குடும்பம்', ?, '5 Cross Road', '5 குறுக்கு சாலை', 'Chennai', '600001', '+91 98765 00003', 'MIGRATED_IN', 'St. Anne Parish, Madurai', '2025-01-10', 'Job relocation')`,
+      [churchId, wardIdByCode['WARD-03'] || null]
+    );
+    const fam3Id = resFam3.insertId;
+
+    const [resHead3] = await conn.query(
+      `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, phone, marital_status, is_baptised, is_communion_received, is_confirmed, is_head)
+       VALUES (?, ?, 'Francis', 'Xavier', 'பிரான்சிஸ் சேவியர்', 'HEAD', 'M', '1982-12-03', '+91 98765 00003', 'MARRIED', 1, 1, 1, 1)`,
+      [churchId, fam3Id]
+    );
+    await conn.query('UPDATE families SET head_member_id = ? WHERE id = ?', [resHead3.insertId, fam3Id]);
+
+    await conn.query(
+      `INSERT INTO family_members (church_id, family_id, first_name, last_name, name_ta, relationship_to_head, gender, dob, marital_status, is_baptised, is_communion_received, is_confirmed, is_head)
+       VALUES 
+       (?, ?, 'Stella', 'Francis', 'ஸ்டெல்லா', 'SPOUSE', 'F', '1986-07-19', 'MARRIED', 1, 1, 1, 0),
+       (?, ?, 'Jude', 'Francis', 'யூதா', 'SON', 'M', '2012-04-30', 'SINGLE', 1, 1, 0, 0)`,
+      [churchId, fam3Id, churchId, fam3Id]
+    );
+
+    console.log('Parish families mock test data seeded successfully.');
+  }
 
   console.log('Seeding system settings...');
   await insertIgnore(conn, 'system_settings', ['setting_key', 'setting_value', 'description'], [

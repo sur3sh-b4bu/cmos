@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CensusStats, Family, FamilyMember, Ward } from './family.model';
+import { environment } from '../../../environments/environment';
 
 export interface FamilyListParams {
   page?: number;
@@ -26,7 +27,7 @@ export interface FamilyListResponse {
 })
 export class FamilyService {
   private http = inject(HttpClient);
-  private baseUrl = '/api/families';
+  private baseUrl = `${environment.apiBaseUrl}/families`;
 
   list(params: FamilyListParams = {}): Observable<FamilyListResponse> {
     let httpParams = new HttpParams();
@@ -110,7 +111,7 @@ export class FamilyService {
 
   getWards(): Observable<Ward[]> {
     return this.http
-      .get<{ success: boolean; rows: Ward[] }>('/api/masters/wards?pageSize=500')
+      .get<{ success: boolean; rows: Ward[] }>(`${environment.apiBaseUrl}/masters/wards?pageSize=500`)
       .pipe(map((res) => res.rows || []));
   }
 }

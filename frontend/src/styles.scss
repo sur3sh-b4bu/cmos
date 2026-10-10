@@ -322,19 +322,29 @@ coms-data-table {
   min-height: 0 !important;
 }
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+/* Global Ultra-Thin Elegant Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
 }
-::-webkit-scrollbar-track {
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+*::-webkit-scrollbar-track {
   background: transparent;
 }
-::-webkit-scrollbar-thumb {
-  background: var(--coms-border);
-  border-radius: 999px;
+*::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--coms-text-muted);
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.75);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 a {

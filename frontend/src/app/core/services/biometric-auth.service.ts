@@ -127,3 +127,5 @@ export class BiometricAuthService {
     return message || 'Biometric sign-in failed. Please use your password.';
   }
 }
+
+

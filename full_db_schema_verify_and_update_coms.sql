@@ -1067,8 +1067,8 @@ CREATE TABLE IF NOT EXISTS `family_events_history` (
   `details_json` TEXT NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` INT UNSIGNED NULL,
-  `KEY` idx_feh_family (`family_id`),
-  `KEY` idx_feh_church (`church_id`)
+  KEY `idx_feh_family` (`family_id`),
+  KEY `idx_feh_church` (`church_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
